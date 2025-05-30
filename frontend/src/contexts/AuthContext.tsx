@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (username: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  isReconnecting: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,32 +26,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
+  const [isReconnecting, setIsReconnecting] = useState(false);
 
-  // Check for room reconnection after auth is established
+  // **CRITICAL FIX**: Better reconnection flow with loading states
   useEffect(() => {
     const checkRoomReconnection = async () => {
-      if (user && token) {
+      if (user && token && !isReconnecting) {
         try {
+          setIsReconnecting(true);
+          console.log('🔄 Checking for room reconnection...');
+          
           const roomStatus: UserRoomStatus | null = await roomApi.getCurrentRoom();
           if (roomStatus) {
-            // User is in a room, redirect them
+            console.log(`🎯 Found active room ${roomStatus.roomId} (${roomStatus.roomStatus})`);
+            
+            // **CRITICAL FIX**: Only auto-redirect if NOT on home page
+            // Let home page banner handle reconnection instead
+            const currentPath = window.location.pathname;
+            if (currentPath === '/' || currentPath === '/home') {
+              console.log('📍 User on home page - letting banner handle reconnection');
+              return;
+            }
+            
+            // Add a small delay to ensure proper state initialization
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             const path = roomStatus.roomStatus === 'playing' 
               ? `/game/${roomStatus.roomId}` 
               : `/room/${roomStatus.roomId}`;
             
-            // Use setTimeout to avoid navigation during render
-            setTimeout(() => {
+            // Auto-redirect only if user is on other pages
+            if (window.location.pathname !== path) {
+              console.log(`🚀 Auto-redirecting to ${path}`);
               window.location.href = path;
-            }, 100);
+            }
+          } else {
+            console.log('✅ No active room found');
           }
         } catch (error) {
-          console.error('Failed to check room status:', error);
+          console.error('❌ Failed to check room status:', error);
+          // Don't block user if reconnection check fails
+        } finally {
+          setIsReconnecting(false);
         }
       }
     };
 
-    checkRoomReconnection();
-  }, [user, token]);
+    // Only check reconnection after auth is fully loaded
+    if (!isLoading) {
+      checkRoomReconnection();
+    }
+  }, [user, token, isLoading]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -59,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = await authApi.getProfile();
           setUser(profile);
         } catch (error) {
+          console.error('Auth init failed:', error);
           localStorage.removeItem('token');
           setToken(null);
         }
@@ -96,7 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       logout,
-      isLoading
+      isLoading,
+      isReconnecting
     }}>
       {children}
     </AuthContext.Provider>

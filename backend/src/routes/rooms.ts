@@ -29,6 +29,12 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
   const user = req.user as any;
   const roomData = createRoomSchema.parse(req.body);
 
+  // **CRITICAL FIX**: Ensure user can only be in one room at a time
+  // Remove user from any existing rooms before creating/joining new one
+  await db
+    .delete(roomMembers)
+    .where(eq(roomMembers.userId, user.id));
+
   // Generate unique room code
   let code: string;
   let attempts = 0;
@@ -94,6 +100,12 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
   const user = req.user as any;
   const { code } = joinRoomSchema.parse(req.body);
 
+  // **CRITICAL FIX**: Ensure user can only be in one room at a time
+  // Remove user from any existing rooms before joining new one
+  await db
+    .delete(roomMembers)
+    .where(eq(roomMembers.userId, user.id));
+
   // Find room
   const roomResult = await db
     .select()
@@ -110,21 +122,8 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
 
   const room = roomResult[0];
 
-  // Check if user already in room
-  const existingMember = await db
-    .select()
-    .from(roomMembers)
-    .where(and(
-      eq(roomMembers.roomId, room.id),
-      eq(roomMembers.userId, user.id)
-    ))
-    .limit(1);
-
-  if (existingMember.length > 0) {
-    throw new AppError(400, 'ALREADY_IN_ROOM', 'You are already in this room');
-  }
-
-  // Check room capacity
+  // Note: No need to check if user already in room since we just removed them
+  // But we still need to check room capacity
   const currentMembers = await db
     .select()
     .from(roomMembers)

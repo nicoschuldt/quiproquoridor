@@ -60,11 +60,24 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     
     console.log(`🔌 User ${user.username} connected (${socket.id})`);
 
+    // **CRITICAL FIX**: Track user's socket rooms for cleanup
+    let userCurrentRoomId: string | null = null;
+
     // Handle room events
     authenticatedSocket.on('join-room', async (data: { roomId: string }) => {
       try {
         const { roomId } = data;
         console.log(`👤 ${user.username} joining room ${roomId}`);
+        
+        // **CRITICAL FIX**: Leave any previous socket rooms before joining new one
+        if (userCurrentRoomId && userCurrentRoomId !== roomId) {
+          console.log(`👤 ${user.username} leaving previous socket room ${userCurrentRoomId}`);
+          await authenticatedSocket.leave(userCurrentRoomId);
+          socket.to(userCurrentRoomId).emit('player-left', {
+            playerId: user.id,
+            room: {} as any
+          });
+        }
         
         // Verify user is member of room in database
         const membership = await db
@@ -88,6 +101,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         
         // Join the socket room
         await authenticatedSocket.join(roomId);
+        userCurrentRoomId = roomId;
         
         // Get room details with players
         const roomResult = await db
@@ -252,11 +266,83 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     });
 
     // Handle disconnection
-    authenticatedSocket.on('disconnect', (reason: string) => {
+    authenticatedSocket.on('disconnect', async (reason: string) => {
       console.log(`🔌 User ${user.username} disconnected (${reason})`);
       
-      // TODO: Update user's connected status in active rooms
-      // TODO: Notify other players in rooms
+      try {
+        // **CRITICAL FIX**: Clean up user's room memberships on disconnect
+        // Find all rooms the user is in
+        const userRooms = await db
+          .select({
+            roomId: roomMembers.roomId,
+            isHost: roomMembers.isHost,
+            roomStatus: rooms.status,
+          })
+          .from(roomMembers)
+          .innerJoin(rooms, eq(roomMembers.roomId, rooms.id))
+          .where(eq(roomMembers.userId, user.id));
+
+        for (const userRoom of userRooms) {
+          const { roomId, isHost } = userRoom;
+          
+          // For lobby rooms: remove user completely (they can reconnect via normal flow)
+          // For playing games: mark as disconnected but keep in room (for reconnection)
+          if (userRoom.roomStatus === 'lobby') {
+            // Remove user from lobby room
+            await db
+              .delete(roomMembers)
+              .where(and(
+                eq(roomMembers.roomId, roomId),
+                eq(roomMembers.userId, user.id)
+              ));
+
+            // Notify other players in the room
+            socket.to(roomId).emit('player-left', {
+              playerId: user.id,
+              room: {} as any
+            });
+
+            // Check remaining members for cleanup
+            const remainingMembers = await db
+              .select()
+              .from(roomMembers)
+              .where(eq(roomMembers.roomId, roomId));
+
+            if (remainingMembers.length === 0) {
+              // Delete empty room
+              await db
+                .delete(rooms)
+                .where(eq(rooms.id, roomId));
+            } else if (isHost) {
+              // Transfer host to oldest member
+              const oldestMember = remainingMembers.sort((a, b) => 
+                new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+              )[0];
+
+              await db
+                .update(roomMembers)
+                .set({ isHost: true })
+                .where(and(
+                  eq(roomMembers.roomId, roomId),
+                  eq(roomMembers.userId, oldestMember.userId)
+                ));
+
+              await db
+                .update(rooms)
+                .set({ hostId: oldestMember.userId })
+                .where(eq(rooms.id, roomId));
+            }
+          } else if (userRoom.roomStatus === 'playing') {
+            // For playing games, just notify disconnection but keep user in room
+            // They can reconnect and resume the game
+            socket.to(roomId).emit('player-disconnected', {
+              playerId: user.id
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error handling user disconnect:', error);
+      }
     });
   });
 

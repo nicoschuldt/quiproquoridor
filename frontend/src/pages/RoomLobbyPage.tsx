@@ -67,6 +67,24 @@ const RoomLobbyPage: React.FC = () => {
       setRoom(data.room);
     };
 
+    const handlePlayerDisconnected = (data: { playerId: string }) => {
+      // **CRITICAL FIX**: Show visual indication when players disconnect
+      setPlayers(prev => prev.map(p => 
+        p.id === data.playerId 
+          ? { ...p, isConnected: false } 
+          : p
+      ));
+    };
+
+    const handlePlayerReconnected = (data: { playerId: string }) => {
+      // **CRITICAL FIX**: Show visual indication when players reconnect
+      setPlayers(prev => prev.map(p => 
+        p.id === data.playerId 
+          ? { ...p, isConnected: true } 
+          : p
+      ));
+    };
+
     const handleRoomFull = (data: { room: Room }) => {
       setRoom(data.room);
       setPlayers(data.room.players || []);
@@ -80,12 +98,22 @@ const RoomLobbyPage: React.FC = () => {
 
     const handleError = (data: { error: any }) => {
       setError(data.error.message || 'An error occurred');
+      
+      // **CRITICAL FIX**: Auto-retry on connection errors
+      if (data.error.code === 'NOT_ROOM_MEMBER') {
+        console.log('❌ Not a room member, attempting to rejoin...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
     };
 
     // Register event listeners
     socket.on('room-updated', handleRoomUpdated);
     socket.on('player-joined', handlePlayerJoined);
     socket.on('player-left', handlePlayerLeft);
+    socket.on('player-disconnected', handlePlayerDisconnected);
+    socket.on('player-reconnected', handlePlayerReconnected);
     socket.on('room-full', handleRoomFull);
     socket.on('game-started', handleGameStarted);
     socket.on('error', handleError);
@@ -95,6 +123,8 @@ const RoomLobbyPage: React.FC = () => {
       socket.off('room-updated', handleRoomUpdated);
       socket.off('player-joined', handlePlayerJoined);
       socket.off('player-left', handlePlayerLeft);
+      socket.off('player-disconnected', handlePlayerDisconnected);
+      socket.off('player-reconnected', handlePlayerReconnected);
       socket.off('room-full', handleRoomFull);
       socket.off('game-started', handleGameStarted);
       socket.off('error', handleError);
@@ -255,13 +285,23 @@ const RoomLobbyPage: React.FC = () => {
                               {player.id === room.hostId && ' 👑'}
                             </p>
                             <p className="text-sm text-gray-500">
-                              Online
+                              {player.isConnected ? (
+                                <span className="text-green-600 flex items-center">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                  Online
+                                </span>
+                              ) : (
+                                <span className="text-orange-600 flex items-center">
+                                  <span className="w-2 h-2 bg-orange-500 rounded-full mr-1 animate-pulse"></span>
+                                  Reconnecting...
+                                </span>
+                              )}
                             </p>
                           </div>
                         </div>
                         <div className={`w-2 h-2 rounded-full ${
-                          player.isConnected ? 'bg-green-500' : 'bg-red-500'
-                        }`} title={player.isConnected ? 'Online' : 'Offline'}></div>
+                          player.isConnected ? 'bg-green-500' : 'bg-orange-500 animate-pulse'
+                        }`} title={player.isConnected ? 'Online' : 'Disconnected'}></div>
                       </div>
                     ) : (
                       <div className="text-center text-gray-500">

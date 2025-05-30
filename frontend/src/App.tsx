@@ -1,6 +1,6 @@
 // frontend/src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -11,51 +11,85 @@ import RoomLobbyPage from './pages/RoomLobbyPage';
 import GamePage from './pages/GamePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
+const AppContent: React.FC = () => {
+  const { isLoading, isReconnecting } = useAuth();
+
+  // **CRITICAL FIX**: Show reconnection screen with clear messaging
+  if (isReconnecting) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Reconnecting to your game...</h2>
+          <p className="text-gray-600">
+            We found an active game session. You'll be redirected automatically.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route 
+            path="/create-game" 
+            element={
+              <ProtectedRoute>
+                <CreateGamePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/join-game" 
+            element={
+              <ProtectedRoute>
+                <JoinGamePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/room/:roomId" 
+            element={
+              <ProtectedRoute>
+                <RoomLobbyPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/game/:roomId" 
+            element={
+              <ProtectedRoute>
+                <GamePage />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </div>
+    </Router>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route 
-                path="/create-game" 
-                element={
-                  <ProtectedRoute>
-                    <CreateGamePage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/join-game" 
-                element={
-                  <ProtectedRoute>
-                    <JoinGamePage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/room/:roomId" 
-                element={
-                  <ProtectedRoute>
-                    <RoomLobbyPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/game/:roomId" 
-                element={
-                  <ProtectedRoute>
-                    <GamePage />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </div>
-        </Router>
+        <AppContent />
       </SocketProvider>
     </AuthProvider>
   );

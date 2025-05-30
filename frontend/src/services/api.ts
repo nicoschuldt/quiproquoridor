@@ -75,8 +75,7 @@ export const roomApi = {
   },
 
   getCurrentRoom: async (): Promise<UserRoomStatus | null> => {
-    const response = await api.get('/rooms/user/current');
-    return response.data;
+    return await api.get('/rooms/user/current');
   },
 
   leaveRoom: async (roomId: string): Promise<{ message: string }> => {
