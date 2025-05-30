@@ -100,7 +100,6 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
   const user = req.user as any;
   const { code } = joinRoomSchema.parse(req.body);
 
-  // **CRITICAL FIX**: Ensure user can only be in one room at a time
   // Remove user from any existing rooms before joining new one
   await db
     .delete(roomMembers)

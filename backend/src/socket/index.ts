@@ -4,6 +4,8 @@ import { config } from '../config';
 import { db, users, rooms, roomMembers } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
+import { createGameHandler } from './gameHandler';
+import { gameStateService } from '../game/GameStateService';
 
 interface SocketUser {
   id: string;
@@ -18,9 +20,13 @@ interface AuthenticatedSocket {
   leave: Function;
   disconnect: Function;
   on: Function;
+  to: Function;
 }
 
 export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {
+  // **NEW**: Initialize game handler
+  const gameHandler = createGameHandler(io);
+
   // Socket authentication middleware
   io.use(async (socket, next) => {
     try {
@@ -62,6 +68,9 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
     // **CRITICAL FIX**: Track user's socket rooms for cleanup
     let userCurrentRoomId: string | null = null;
+
+    // **NEW**: Setup game event handlers
+    gameHandler.setupHandlers(authenticatedSocket);
 
     // Handle room events
     authenticatedSocket.on('join-room', async (data: { roomId: string }) => {
@@ -122,6 +131,16 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
         const room = roomResult[0];
 
+        // **NEW**: Check if there's already an active game
+        const existingGame = await gameStateService.hasActiveGame(roomId);
+        if (existingGame) {
+          console.log(`🎮 Player ${user.username} joining existing game in room ${roomId}`);
+          
+          // Send game state to reconnecting player
+          authenticatedSocket.emit('request-game-state', { roomId });
+          return;
+        }
+
         // Get all room members with user details
         const membersWithUsers = await db
           .select({
@@ -164,7 +183,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           room: roomData
         });
 
-        // Check if room is now full and should auto-start
+        // **ENHANCED**: Check if room is now full and should auto-start
         if (players.length === room.maxPlayers && room.status === 'lobby') {
           console.log(`🎮 Room ${roomId} is full, auto-starting game`);
           
@@ -174,22 +193,8 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
             .set({ status: 'playing' })
             .where(eq(rooms.id, roomId));
 
-          // TODO: Create game state and save to database
-          const gameState = {
-            id: crypto.randomUUID(),
-            players,
-            walls: [],
-            currentPlayerIndex: 0,
-            status: 'playing' as const,
-            moves: [],
-            createdAt: new Date(),
-            startedAt: new Date(),
-            maxPlayers: room.maxPlayers as 2 | 4,
-            timeLimit: room.hasTimeLimit && room.timeLimitSeconds ? room.timeLimitSeconds : undefined,
-          };
-
-          // Emit to entire room that game has started
-          io.to(roomId).emit('game-started', { gameState });
+          // **NEW**: Create and start the game using game handler
+          await gameHandler.createAndStartGame(roomId);
         } else {
           // Just emit room-full if we reached capacity but didn't start
           if (players.length === room.maxPlayers) {
@@ -230,35 +235,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
       }
     });
 
-    authenticatedSocket.on('make-move', async (data: { roomId: string; move: any }) => {
-      try {
-        const { roomId, move } = data;
-        console.log(`👤 ${user.username} making move in room ${roomId}:`, move);
-        
-        // TODO: Validate move with game engine
-        // TODO: Update game state in database
-        
-        // For now, just broadcast the move
-        const fullMove = {
-          id: crypto.randomUUID(),
-          timestamp: new Date(),
-          ...move
-        };
-        
-        // Broadcast move to all players in room
-        io.to(roomId).emit('move-made', {
-          move: fullMove,
-          gameState: {} as any // TODO: Return actual game state
-        });
-        
-      } catch (error) {
-        console.error('Error processing move:', error);
-        authenticatedSocket.emit('invalid-move', {
-          error: 'Failed to process move',
-          move: data.move
-        });
-      }
-    });
+    // **REMOVED**: Old basic make-move handler (now handled by gameHandler)
 
     // Handle ping for connection monitoring
     authenticatedSocket.on('ping', () => {
@@ -285,10 +262,9 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         for (const userRoom of userRooms) {
           const { roomId, isHost } = userRoom;
           
-          // For lobby rooms: remove user completely (they can reconnect via normal flow)
-          // For playing games: mark as disconnected but keep in room (for reconnection)
+          // **ENHANCED**: Handle disconnection based on room/game status
           if (userRoom.roomStatus === 'lobby') {
-            // Remove user from lobby room
+            // For lobby rooms: remove user completely (they can reconnect via normal flow)
             await db
               .delete(roomMembers)
               .where(and(
@@ -333,11 +309,8 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
                 .where(eq(rooms.id, roomId));
             }
           } else if (userRoom.roomStatus === 'playing') {
-            // For playing games, just notify disconnection but keep user in room
-            // They can reconnect and resume the game
-            socket.to(roomId).emit('player-disconnected', {
-              playerId: user.id
-            });
+            // **NEW**: For playing games, handle via game handler
+            await gameHandler.handlePlayerDisconnect(roomId, user.id, user.username);
           }
         }
       } catch (error) {
@@ -346,5 +319,5 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     });
   });
 
-  console.log('🔌 Socket.io server initialized');
+  console.log('🔌 Socket.io server initialized with game support');
 };
