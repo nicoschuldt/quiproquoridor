@@ -72,6 +72,10 @@ export const roomApi = {
   getRoom: async (roomId: string): Promise<RoomData> => {
     return await api.get(`/rooms/${roomId}`);
   },
+
+  updateReadyStatus: async (roomId: string, ready: boolean): Promise<{ ready: boolean }> => {
+    return await api.patch(`/rooms/${roomId}/ready`, { ready });
+  },
 };
 
 export const gameApi = {

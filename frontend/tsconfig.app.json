@@ -10,7 +10,8 @@
     /* Bundler mode */
     "baseUrl": "./src",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/types": ["../../shared/types"]
     },
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -23,7 +24,6 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

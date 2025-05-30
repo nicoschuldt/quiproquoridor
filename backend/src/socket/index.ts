@@ -1,8 +1,8 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { db, users } from '../db';
-import { eq } from 'drizzle-orm';
+import { db, users, rooms, roomMembers } from '../db';
+import { eq, and } from 'drizzle-orm';
 import { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
 
 interface SocketUser {
@@ -67,25 +67,90 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         const { roomId } = data;
         console.log(`👤 ${user.username} joining room ${roomId}`);
         
+        // Verify user is member of room in database
+        const membership = await db
+          .select()
+          .from(roomMembers)
+          .where(and(
+            eq(roomMembers.roomId, roomId),
+            eq(roomMembers.userId, user.id)
+          ))
+          .limit(1);
+
+        if (membership.length === 0) {
+          authenticatedSocket.emit('error', {
+            error: {
+              code: 'NOT_ROOM_MEMBER',
+              message: 'You are not a member of this room'
+            }
+          });
+          return;
+        }
+        
         // Join the socket room
         await authenticatedSocket.join(roomId);
         
-        // TODO: Verify user is member of room in database
-        // TODO: Update room state and notify other players
-        
-        // Broadcast to room that user joined
+        // Get room details with players
+        const roomResult = await db
+          .select()
+          .from(rooms)
+          .where(eq(rooms.id, roomId))
+          .limit(1);
+
+        if (roomResult.length === 0) {
+          authenticatedSocket.emit('error', {
+            error: {
+              code: 'ROOM_NOT_FOUND',
+              message: 'Room not found'
+            }
+          });
+          return;
+        }
+
+        const room = roomResult[0];
+
+        // Get all room members with user details
+        const membersWithUsers = await db
+          .select({
+            id: users.id,
+            username: users.username,
+            isHost: roomMembers.isHost,
+            isReady: roomMembers.isReady,
+            joinedAt: roomMembers.joinedAt,
+          })
+          .from(roomMembers)
+          .innerJoin(users, eq(roomMembers.userId, users.id))
+          .where(eq(roomMembers.roomId, roomId));
+
+        // Convert to Player format
+        const players = membersWithUsers.map((member, index) => ({
+          id: member.id,
+          username: member.username,
+          color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
+          position: { x: 4, y: index === 0 ? 0 : 8 },
+          wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
+          isReady: member.isReady,
+          isConnected: true,
+          joinedAt: member.joinedAt,
+        }));
+
+        const roomData = {
+          id: room.id,
+          code: room.code,
+          hostId: room.hostId,
+          players,
+          maxPlayers: room.maxPlayers as 2 | 4,
+          status: room.status,
+          isPrivate: room.isPrivate,
+          hasTimeLimit: room.hasTimeLimit,
+          timeLimitSeconds: room.timeLimitSeconds || undefined,
+          createdAt: room.createdAt,
+        };
+
+        // Notify others in the room that this player joined
         socket.to(roomId).emit('player-joined', {
-          player: {
-            id: user.id,
-            username: user.username,
-            color: 'red', // TODO: Assign proper color
-            position: { x: 4, y: 0 }, // TODO: Get from game state
-            wallsRemaining: 10,
-            isReady: false,
-            isConnected: true,
-            joinedAt: new Date(),
-          },
-          room: {} as any // TODO: Return actual room data
+          player: players.find(p => p.id === user.id)!,
+          room: roomData
         });
         
       } catch (error) {
@@ -107,12 +172,10 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         // Leave the socket room
         await authenticatedSocket.leave(roomId);
         
-        // TODO: Update room state in database
-        
-        // Broadcast to room that user left
+        // Notify others in the room that this player left
         socket.to(roomId).emit('player-left', {
           playerId: user.id,
-          room: {} as any // TODO: Return actual room data
+          room: {} as any // TODO: Return updated room data if needed
         });
         
       } catch (error) {
@@ -125,16 +188,29 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         const { roomId, ready } = data;
         console.log(`👤 ${user.username} ready status: ${ready} in room ${roomId}`);
         
-        // TODO: Update ready status in database
+        // Update ready status in database
+        await db
+          .update(roomMembers)
+          .set({ isReady: ready })
+          .where(and(
+            eq(roomMembers.roomId, roomId),
+            eq(roomMembers.userId, user.id)
+          ));
         
-        // Broadcast ready status change
-        socket.to(roomId).emit('player-ready-changed', {
+        // Broadcast ready status change to all players in room
+        io.to(roomId).emit('player-ready-changed', {
           playerId: user.id,
           ready
         });
         
       } catch (error) {
         console.error('Error updating ready status:', error);
+        authenticatedSocket.emit('error', {
+          error: {
+            code: 'UPDATE_READY_FAILED',
+            message: 'Failed to update ready status'
+          }
+        });
       }
     });
 

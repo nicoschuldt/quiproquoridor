@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,6 +10,12 @@ const RoomLobbyPage: React.FC = () => {
   const navigate = useNavigate();
   const { socket, isConnected } = useSocket();
   const { user } = useAuth();
+  const userRef = useRef(user);
+  
+  // Keep userRef updated
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
   
   const [room, setRoom] = useState<Room | null>(null);
   const [isHost, setIsHost] = useState(false);
@@ -27,8 +33,14 @@ const RoomLobbyPage: React.FC = () => {
         const roomData: RoomData = await roomApi.getRoom(roomId);
         setRoom(roomData.room);
         setIsHost(roomData.isHost);
-        // TODO: Load players from room members
-        setPlayers([]);
+        // Load players from room data
+        setPlayers(roomData.room.players || []);
+        
+        // Set our own ready state if we're in the room
+        if (user) {
+          const currentPlayer = roomData.room.players?.find(p => p.id === user.id);
+          setIsReady(currentPlayer?.isReady || false);
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load room');
       } finally {
@@ -37,11 +49,11 @@ const RoomLobbyPage: React.FC = () => {
     };
 
     loadRoomData();
-  }, [roomId]);
+  }, [roomId, user]);
 
   // WebSocket connection and event listeners
   useEffect(() => {
-    if (!socket || !roomId || !room) return;
+    if (!socket || !roomId) return;
 
     // Join the room
     socket.emit('join-room', { roomId });
@@ -49,6 +61,7 @@ const RoomLobbyPage: React.FC = () => {
     // Listen for room events
     const handleRoomUpdated = (data: { room: Room }) => {
       setRoom(data.room);
+      setPlayers(data.room.players || []);
     };
 
     const handlePlayerJoined = (data: { player: Player; room: Room }) => {
@@ -66,8 +79,16 @@ const RoomLobbyPage: React.FC = () => {
         p.id === data.playerId ? { ...p, isReady: data.ready } : p
       ));
       
+      // Update room players as well
+      setRoom(prev => prev ? {
+        ...prev,
+        players: prev.players?.map(p => 
+          p.id === data.playerId ? { ...p, isReady: data.ready } : p
+        ) || []
+      } : prev);
+      
       // Update our own ready state if it's us
-      if (user && data.playerId === user.id) {
+      if (data.playerId === userRef.current?.id) {
         setIsReady(data.ready);
       }
     };
@@ -99,7 +120,7 @@ const RoomLobbyPage: React.FC = () => {
       socket.off('error', handleError);
       socket.emit('leave-room', { roomId });
     };
-  }, [socket, roomId, room, user, navigate]);
+  }, [socket, roomId, navigate]);
 
   const handleReadyToggle = () => {
     if (!socket || !roomId) return;

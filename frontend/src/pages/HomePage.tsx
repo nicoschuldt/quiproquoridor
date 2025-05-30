@@ -43,10 +43,10 @@ const HomePage: React.FC = () => {
           
           {user ? (
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/room/create" className="btn-primary text-lg px-8 py-3">
+              <Link to="/create-game" className="btn-primary text-lg px-8 py-3">
                 Create Game
               </Link>
-              <Link to="/room/join" className="btn-secondary text-lg px-8 py-3">
+              <Link to="/join-game" className="btn-secondary text-lg px-8 py-3">
                 Join Game
               </Link>
             </div>

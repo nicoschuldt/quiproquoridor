@@ -2,7 +2,7 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import { z } from 'zod';
-import { db, rooms, roomMembers } from '../db';
+import { db, rooms, roomMembers, users } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
@@ -194,6 +194,31 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
     throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
   }
 
+  // Get all room members with user details
+  const membersWithUsers = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      isHost: roomMembers.isHost,
+      isReady: roomMembers.isReady,
+      joinedAt: roomMembers.joinedAt,
+    })
+    .from(roomMembers)
+    .innerJoin(users, eq(roomMembers.userId, users.id))
+    .where(eq(roomMembers.roomId, room.id));
+
+  // Convert to Player format expected by frontend
+  const players = membersWithUsers.map((member, index) => ({
+    id: member.id,
+    username: member.username,
+    color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
+    position: { x: 4, y: index === 0 ? 0 : 8 }, // Simple position assignment
+    wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
+    isReady: member.isReady,
+    isConnected: true,
+    joinedAt: member.joinedAt,
+  }));
+
   res.json({
     success: true,
     data: {
@@ -201,6 +226,7 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
         id: room.id,
         code: room.code,
         hostId: room.hostId,
+        players,
         maxPlayers: room.maxPlayers as 2 | 4,
         status: room.status,
         isPrivate: room.isPrivate,
@@ -210,6 +236,46 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
       },
       isHost: membership[0].isHost,
     },
+  });
+}));
+
+// Update player ready status
+router.patch('/:roomId/ready', asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const user = req.user as any;
+  const { roomId } = req.params;
+  const { ready } = req.body;
+
+  if (typeof ready !== 'boolean') {
+    throw new AppError(400, 'INVALID_READY_STATUS', 'Ready status must be a boolean');
+  }
+
+  // Check if user is member of the room
+  const membership = await db
+    .select()
+    .from(roomMembers)
+    .where(and(
+      eq(roomMembers.roomId, roomId),
+      eq(roomMembers.userId, user.id)
+    ))
+    .limit(1);
+
+  if (membership.length === 0) {
+    throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
+  }
+
+  // Update ready status
+  await db
+    .update(roomMembers)
+    .set({ isReady: ready })
+    .where(and(
+      eq(roomMembers.roomId, roomId),
+      eq(roomMembers.userId, user.id)
+    ));
+
+  res.json({
+    success: true,
+    data: { ready },
+    message: `Ready status updated to ${ready}`,
   });
 }));
 
