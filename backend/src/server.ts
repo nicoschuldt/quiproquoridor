@@ -7,7 +7,7 @@ import passport from 'passport';
 
 import { config } from './config';
 import { authRouter } from './routes/auth';
-import { roomRouter } from './routes/rooms';
+import { roomsRouter } from './routes/rooms';
 import { gameRouter } from './routes/games';
 import { socketHandler } from './socket';
 import { setupPassport } from './auth/passport';
@@ -42,7 +42,7 @@ app.set('io', io);
 
 // Routes
 app.use('/api/auth', authRouter);
-app.use('/api/rooms', roomRouter);
+app.use('/api/rooms', roomsRouter);
 app.use('/api/games', gameRouter);
 
 // Health check

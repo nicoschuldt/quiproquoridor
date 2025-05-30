@@ -3,7 +3,7 @@ import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import { z } from 'zod';
 import { db, rooms, roomMembers, users } from '../db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 
@@ -68,7 +68,6 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
     roomId: room.id,
     userId: user.id,
     isHost: true,
-    isReady: false,
   });
 
   res.json({
@@ -140,7 +139,6 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
     roomId: room.id,
     userId: user.id,
     isHost: false,
-    isReady: false,
   });
 
   res.json({
@@ -200,12 +198,11 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
       id: users.id,
       username: users.username,
       isHost: roomMembers.isHost,
-      isReady: roomMembers.isReady,
       joinedAt: roomMembers.joinedAt,
     })
     .from(roomMembers)
     .innerJoin(users, eq(roomMembers.userId, users.id))
-    .where(eq(roomMembers.roomId, room.id));
+    .where(eq(roomMembers.roomId, roomId));
 
   // Convert to Player format expected by frontend
   const players = membersWithUsers.map((member, index) => ({
@@ -214,7 +211,6 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
     color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
     position: { x: 4, y: index === 0 ? 0 : 8 }, // Simple position assignment
     wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
-    isReady: member.isReady,
     isConnected: true,
     joinedAt: member.joinedAt,
   }));
@@ -239,15 +235,49 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
   });
 }));
 
-// Update player ready status
-router.patch('/:roomId/ready', asyncHandler(async (req: Request, res: Response): Promise<void> => {
+// Check if user is currently in a room (for reconnection)
+router.get('/user/current', asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const user = req.user as any;
+
+  // Find if user is in any active room
+  const roomMembership = await db
+    .select({
+      roomId: roomMembers.roomId,
+      isHost: roomMembers.isHost,
+      roomStatus: rooms.status,
+    })
+    .from(roomMembers)
+    .innerJoin(rooms, eq(roomMembers.roomId, rooms.id))
+    .where(and(
+      eq(roomMembers.userId, user.id),
+      // Only get rooms that are not finished - include both lobby and playing
+      inArray(rooms.status, ['lobby', 'playing'])
+    ))
+    .limit(1);
+
+  if (roomMembership.length === 0) {
+    res.json({
+      success: true,
+      data: null,
+    });
+    return;
+  }
+
+  const membership = roomMembership[0];
+  res.json({
+    success: true,
+    data: {
+      roomId: membership.roomId,
+      roomStatus: membership.roomStatus,
+      isHost: membership.isHost,
+    },
+  });
+}));
+
+// Leave room
+router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { roomId } = req.params;
-  const { ready } = req.body;
-
-  if (typeof ready !== 'boolean') {
-    throw new AppError(400, 'INVALID_READY_STATUS', 'Ready status must be a boolean');
-  }
 
   // Check if user is member of the room
   const membership = await db
@@ -263,20 +293,52 @@ router.patch('/:roomId/ready', asyncHandler(async (req: Request, res: Response):
     throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
   }
 
-  // Update ready status
+  const isHost = membership[0].isHost;
+
+  // Remove user from room
   await db
-    .update(roomMembers)
-    .set({ isReady: ready })
+    .delete(roomMembers)
     .where(and(
       eq(roomMembers.roomId, roomId),
       eq(roomMembers.userId, user.id)
     ));
 
+  // Check remaining members
+  const remainingMembers = await db
+    .select()
+    .from(roomMembers)
+    .where(eq(roomMembers.roomId, roomId));
+
+  if (remainingMembers.length === 0) {
+    // Delete room if empty
+    await db
+      .delete(rooms)
+      .where(eq(rooms.id, roomId));
+  } else if (isHost) {
+    // Transfer host to oldest member
+    const oldestMember = remainingMembers.sort((a, b) => 
+      new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+    )[0];
+
+    await db
+      .update(roomMembers)
+      .set({ isHost: true })
+      .where(and(
+        eq(roomMembers.roomId, roomId),
+        eq(roomMembers.userId, oldestMember.userId)
+      ));
+
+    // Update room host
+    await db
+      .update(rooms)
+      .set({ hostId: oldestMember.userId })
+      .where(eq(rooms.id, roomId));
+  }
+
   res.json({
     success: true,
-    data: { ready },
-    message: `Ready status updated to ${ready}`,
+    message: 'Left room successfully',
   });
 }));
 
-export { router as roomRouter };
+export { router as roomsRouter };

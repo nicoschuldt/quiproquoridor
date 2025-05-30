@@ -21,37 +21,36 @@ interface AuthenticatedSocket {
 }
 
 export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {
-  // Authentication middleware
+  // Socket authentication middleware
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
       if (!token) {
-        return next(new Error('Authentication failed: No token provided'));
+        return next(new Error('Authentication token required'));
       }
 
-      // Verify JWT
-      const decoded = jwt.verify(token, config.jwtSecret) as any;
+      const decoded = jwt.verify(token, config.jwtSecret) as { userId: string; username: string };
       
-      // Get user from database
-      const userResult = await db
+      // Get fresh user data from database
+      const user = await db
         .select()
         .from(users)
         .where(eq(users.id, decoded.userId))
         .limit(1);
 
-      if (userResult.length === 0) {
-        return next(new Error('Authentication failed: User not found'));
+      if (user.length === 0) {
+        return next(new Error('User not found'));
       }
 
-      const user = userResult[0];
       (socket as any).user = {
-        id: user.id,
-        username: user.username,
+        id: user[0].id,
+        username: user[0].username,
       };
 
       next();
     } catch (error) {
-      next(new Error('Authentication failed: Invalid token'));
+      console.error('Socket authentication error:', error);
+      next(new Error('Invalid authentication token'));
     }
   });
 
@@ -115,7 +114,6 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
             id: users.id,
             username: users.username,
             isHost: roomMembers.isHost,
-            isReady: roomMembers.isReady,
             joinedAt: roomMembers.joinedAt,
           })
           .from(roomMembers)
@@ -129,7 +127,6 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
           position: { x: 4, y: index === 0 ? 0 : 8 },
           wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
-          isReady: member.isReady,
           isConnected: true,
           joinedAt: member.joinedAt,
         }));
@@ -152,6 +149,39 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           player: players.find(p => p.id === user.id)!,
           room: roomData
         });
+
+        // Check if room is now full and should auto-start
+        if (players.length === room.maxPlayers && room.status === 'lobby') {
+          console.log(`🎮 Room ${roomId} is full, auto-starting game`);
+          
+          // Update room status to 'playing'
+          await db
+            .update(rooms)
+            .set({ status: 'playing' })
+            .where(eq(rooms.id, roomId));
+
+          // TODO: Create game state and save to database
+          const gameState = {
+            id: crypto.randomUUID(),
+            players,
+            walls: [],
+            currentPlayerIndex: 0,
+            status: 'playing' as const,
+            moves: [],
+            createdAt: new Date(),
+            startedAt: new Date(),
+            maxPlayers: room.maxPlayers as 2 | 4,
+            timeLimit: room.hasTimeLimit && room.timeLimitSeconds ? room.timeLimitSeconds : undefined,
+          };
+
+          // Emit to entire room that game has started
+          io.to(roomId).emit('game-started', { gameState });
+        } else {
+          // Just emit room-full if we reached capacity but didn't start
+          if (players.length === room.maxPlayers) {
+            io.to(roomId).emit('room-full', { room: roomData });
+          }
+        }
         
       } catch (error) {
         console.error('Error joining room:', error);
@@ -172,45 +202,17 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         // Leave the socket room
         await authenticatedSocket.leave(roomId);
         
+        // Note: We don't remove from database here - that should be done via API call
+        // This is just for socket room management
+        
         // Notify others in the room that this player left
         socket.to(roomId).emit('player-left', {
           playerId: user.id,
-          room: {} as any // TODO: Return updated room data if needed
+          room: {} as any // Room data will be updated by the API call
         });
         
       } catch (error) {
         console.error('Error leaving room:', error);
-      }
-    });
-
-    authenticatedSocket.on('player-ready', async (data: { roomId: string; ready: boolean }) => {
-      try {
-        const { roomId, ready } = data;
-        console.log(`👤 ${user.username} ready status: ${ready} in room ${roomId}`);
-        
-        // Update ready status in database
-        await db
-          .update(roomMembers)
-          .set({ isReady: ready })
-          .where(and(
-            eq(roomMembers.roomId, roomId),
-            eq(roomMembers.userId, user.id)
-          ));
-        
-        // Broadcast ready status change to all players in room
-        io.to(roomId).emit('player-ready-changed', {
-          playerId: user.id,
-          ready
-        });
-        
-      } catch (error) {
-        console.error('Error updating ready status:', error);
-        authenticatedSocket.emit('error', {
-          error: {
-            code: 'UPDATE_READY_FAILED',
-            message: 'Failed to update ready status'
-          }
-        });
       }
     });
 

@@ -33,7 +33,6 @@ export interface Player {
   color: PlayerColor;
   position: Position;
   wallsRemaining: number;
-  isReady: boolean; // For lobby state
   isConnected: boolean; // For handling disconnections
   joinedAt: Date;
 }
@@ -94,7 +93,6 @@ export interface RoomMember {
   userId: string;
   username: string;
   isHost: boolean;
-  isReady: boolean;
   joinedAt: Date;
 }
 
@@ -167,6 +165,13 @@ export interface GameStateData {
   validMoves: Move[];
 }
 
+// User Reconnection Data
+export interface UserRoomStatus {
+  roomId: string;
+  roomStatus: RoomStatus;
+  isHost: boolean;
+}
+
 // ==========================================
 // SOCKET EVENT TYPES
 // ==========================================
@@ -176,7 +181,6 @@ export interface ClientToServerEvents {
   // Room events
   'join-room': (data: { roomId: string }) => void;
   'leave-room': (data: { roomId: string }) => void;
-  'player-ready': (data: { roomId: string; ready: boolean }) => void;
   'start-game': (data: { roomId: string }) => void;
   
   // Game events
@@ -193,7 +197,7 @@ export interface ServerToClientEvents {
   'room-updated': (data: { room: Room }) => void;
   'player-joined': (data: { player: Player; room: Room }) => void;
   'player-left': (data: { playerId: string; room: Room }) => void;
-  'player-ready-changed': (data: { playerId: string; ready: boolean }) => void;
+  'room-full': (data: { room: Room }) => void;
   'game-started': (data: { gameState: GameState }) => void;
   
   // Game events
@@ -327,7 +331,7 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 // Common API patterns
 export type CreateGameStateInput = Optional<GameState, 'id' | 'createdAt' | 'moves' | 'winner' | 'startedAt' | 'finishedAt'>;
-export type CreatePlayerInput = Optional<Player, 'id' | 'joinedAt' | 'isReady' | 'isConnected'>;
+export type CreatePlayerInput = Optional<Player, 'id' | 'joinedAt' | 'isConnected'>;
 export type CreateRoomInput = Optional<Room, 'id' | 'code' | 'createdAt' | 'players' | 'gameState'>;
 
 // Type guards for runtime checking

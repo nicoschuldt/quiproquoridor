@@ -1,6 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
+  "id": "fa66175e-e1ac-4ceb-a8fd-085f188c6e4a",
+  "prevId": "ec36cce2-215d-45fb-9490-dc8277d8698d",
   "tables": {
     "game_players": {
       "name": "game_players",
@@ -69,28 +71,28 @@
         "game_players_game_id_games_id_fk": {
           "name": "game_players_game_id_games_id_fk",
           "tableFrom": "game_players",
+          "tableTo": "games",
           "columnsFrom": [
             "game_id"
           ],
-          "tableTo": "games",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "game_players_user_id_users_id_fk": {
           "name": "game_players_user_id_users_id_fk",
           "tableFrom": "game_players",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -164,28 +166,28 @@
         "games_room_id_rooms_id_fk": {
           "name": "games_room_id_rooms_id_fk",
           "tableFrom": "games",
+          "tableTo": "rooms",
           "columnsFrom": [
             "room_id"
           ],
-          "tableTo": "rooms",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "games_winner_id_users_id_fk": {
           "name": "games_winner_id_users_id_fk",
           "tableFrom": "games",
+          "tableTo": "users",
           "columnsFrom": [
             "winner_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -224,14 +226,6 @@
           "autoincrement": false,
           "default": false
         },
-        "is_ready": {
-          "name": "is_ready",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
         "joined_at": {
           "name": "joined_at",
           "type": "integer",
@@ -246,28 +240,28 @@
         "room_members_room_id_rooms_id_fk": {
           "name": "room_members_room_id_rooms_id_fk",
           "tableFrom": "room_members",
+          "tableTo": "rooms",
           "columnsFrom": [
             "room_id"
           ],
-          "tableTo": "rooms",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "room_members_user_id_users_id_fk": {
           "name": "room_members_user_id_users_id_fk",
           "tableFrom": "room_members",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -366,15 +360,15 @@
         "rooms_host_id_users_id_fk": {
           "name": "rooms_host_id_users_id_fk",
           "tableFrom": "rooms",
+          "tableTo": "users",
           "columnsFrom": [
             "host_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -453,12 +447,14 @@
       "checkConstraints": {}
     }
   },
+  "views": {},
   "enums": {},
   "_meta": {
+    "schemas": {},
     "tables": {},
     "columns": {}
   },
-  "id": "ec36cce2-215d-45fb-9490-dc8277d8698d",
-  "prevId": "00000000-0000-0000-0000-000000000000",
-  "views": {}
+  "internal": {
+    "indexes": {}
+  }
 }

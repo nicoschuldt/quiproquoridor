@@ -71,7 +71,6 @@ export const roomMembers = sqliteTable('room_members', {
   roomId: text('room_id').references(() => rooms.id).notNull(),
   userId: text('user_id').references(() => users.id).notNull(),
   isHost: int('is_host', { mode: 'boolean' }).default(false).notNull(),
-  isReady: int('is_ready', { mode: 'boolean' }).default(false).notNull(),
   joinedAt: int('joined_at', { mode: 'timestamp' })
     .default(sql`(unixepoch())`)
     .notNull(),

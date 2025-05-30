@@ -7,7 +7,8 @@ import type {
   RoomData,
   UserProfile,
   GameStateData,
-  MakeMoveRequest
+  MakeMoveRequest,
+  UserRoomStatus
 } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -73,8 +74,13 @@ export const roomApi = {
     return await api.get(`/rooms/${roomId}`);
   },
 
-  updateReadyStatus: async (roomId: string, ready: boolean): Promise<{ ready: boolean }> => {
-    return await api.patch(`/rooms/${roomId}/ready`, { ready });
+  getCurrentRoom: async (): Promise<UserRoomStatus | null> => {
+    const response = await api.get('/rooms/user/current');
+    return response.data;
+  },
+
+  leaveRoom: async (roomId: string): Promise<{ message: string }> => {
+    return await api.delete(`/rooms/${roomId}/leave`);
   },
 };
 

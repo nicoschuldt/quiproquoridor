@@ -22,7 +22,6 @@ const RoomLobbyPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [isReady, setIsReady] = useState(false);
 
   // Load initial room data
   useEffect(() => {
@@ -35,12 +34,6 @@ const RoomLobbyPage: React.FC = () => {
         setIsHost(roomData.isHost);
         // Load players from room data
         setPlayers(roomData.room.players || []);
-        
-        // Set our own ready state if we're in the room
-        if (user) {
-          const currentPlayer = roomData.room.players?.find(p => p.id === user.id);
-          setIsReady(currentPlayer?.isReady || false);
-        }
       } catch (err: any) {
         setError(err.message || 'Failed to load room');
       } finally {
@@ -74,23 +67,10 @@ const RoomLobbyPage: React.FC = () => {
       setRoom(data.room);
     };
 
-    const handlePlayerReadyChanged = (data: { playerId: string; ready: boolean }) => {
-      setPlayers(prev => prev.map(p => 
-        p.id === data.playerId ? { ...p, isReady: data.ready } : p
-      ));
-      
-      // Update room players as well
-      setRoom(prev => prev ? {
-        ...prev,
-        players: prev.players?.map(p => 
-          p.id === data.playerId ? { ...p, isReady: data.ready } : p
-        ) || []
-      } : prev);
-      
-      // Update our own ready state if it's us
-      if (data.playerId === userRef.current?.id) {
-        setIsReady(data.ready);
-      }
+    const handleRoomFull = (data: { room: Room }) => {
+      setRoom(data.room);
+      setPlayers(data.room.players || []);
+      // Room is full but game hasn't started yet
     };
 
     const handleGameStarted = (data: { gameState: any }) => {
@@ -106,7 +86,7 @@ const RoomLobbyPage: React.FC = () => {
     socket.on('room-updated', handleRoomUpdated);
     socket.on('player-joined', handlePlayerJoined);
     socket.on('player-left', handlePlayerLeft);
-    socket.on('player-ready-changed', handlePlayerReadyChanged);
+    socket.on('room-full', handleRoomFull);
     socket.on('game-started', handleGameStarted);
     socket.on('error', handleError);
 
@@ -115,36 +95,24 @@ const RoomLobbyPage: React.FC = () => {
       socket.off('room-updated', handleRoomUpdated);
       socket.off('player-joined', handlePlayerJoined);
       socket.off('player-left', handlePlayerLeft);
-      socket.off('player-ready-changed', handlePlayerReadyChanged);
+      socket.off('room-full', handleRoomFull);
       socket.off('game-started', handleGameStarted);
       socket.off('error', handleError);
       socket.emit('leave-room', { roomId });
     };
   }, [socket, roomId, navigate]);
 
-  const handleReadyToggle = () => {
-    if (!socket || !roomId) return;
-    
-    const newReadyState = !isReady;
-    setIsReady(newReadyState);
-    socket.emit('player-ready', { roomId, ready: newReadyState });
-  };
-
-  const handleStartGame = () => {
-    if (!socket || !roomId || !isHost) return;
-    
-    // Check if all players are ready
-    const allReady = players.length >= 2 && players.every(p => p.isReady);
-    if (!allReady) {
-      setError('All players must be ready before starting the game');
-      return;
+  const handleLeaveRoom = async () => {
+    try {
+      if (roomId) {
+        await roomApi.leaveRoom(roomId);
+      }
+      navigate('/');
+    } catch (err: any) {
+      console.error('Failed to leave room:', err);
+      // Navigate anyway
+      navigate('/');
     }
-    
-    socket.emit('start-game', { roomId });
-  };
-
-  const handleLeaveRoom = () => {
-    navigate('/');
   };
 
   const copyRoomCode = async () => {
@@ -189,7 +157,7 @@ const RoomLobbyPage: React.FC = () => {
     );
   }
 
-  const allPlayersReady = players.length >= 2 && players.every(p => p.isReady);
+  const roomIsFull = players.length === room.maxPlayers;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -245,6 +213,12 @@ const RoomLobbyPage: React.FC = () => {
               {error}
             </div>
           )}
+
+          {roomIsFull && room.status === 'lobby' && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+              🎮 Room is full! Game will start automatically...
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -281,7 +255,7 @@ const RoomLobbyPage: React.FC = () => {
                               {player.id === room.hostId && ' 👑'}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {player.isReady ? '✅ Ready' : '⏳ Not Ready'}
+                              Online
                             </p>
                           </div>
                         </div>
@@ -299,27 +273,16 @@ const RoomLobbyPage: React.FC = () => {
               })}
             </div>
 
-            {/* Ready/Start Controls */}
+            {/* Status Message */}
             <div className="mt-6">
-              {isHost ? (
-                <button
-                  onClick={handleStartGame}
-                  disabled={!allPlayersReady}
-                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {allPlayersReady ? 'Start Game' : 'Waiting for all players to be ready...'}
-                </button>
+              {roomIsFull ? (
+                <div className="w-full py-3 px-4 bg-green-100 text-green-800 rounded-lg font-medium text-center">
+                  🎮 Ready to start! Game will begin automatically...
+                </div>
               ) : (
-                <button
-                  onClick={handleReadyToggle}
-                  className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                    isReady
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                  }`}
-                >
-                  {isReady ? '✅ Ready' : 'Mark as Ready'}
-                </button>
+                <div className="w-full py-3 px-4 bg-gray-100 text-gray-600 rounded-lg text-center">
+                  Waiting for {room.maxPlayers - players.length} more player{room.maxPlayers - players.length !== 1 ? 's' : ''}...
+                </div>
               )}
             </div>
           </div>
@@ -346,6 +309,9 @@ const RoomLobbyPage: React.FC = () => {
                   <strong>Time Limit:</strong> You have {room.timeLimitSeconds} seconds per move.
                 </p>
               )}
+              <p className="mt-4 text-blue-600">
+                <strong>Auto-Start:</strong> The game will start automatically when the room is full.
+              </p>
             </div>
           </div>
         </div>
