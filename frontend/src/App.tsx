@@ -10,6 +10,7 @@ import JoinGamePage from './pages/JoinGamePage';
 import RoomLobbyPage from './pages/RoomLobbyPage';
 import GamePage from './pages/GamePage';
 import ProtectedRoute from './components/ProtectedRoute';
+import BuyCoinsPage from './pages/BuyCoinsPage';
 
 const AppContent: React.FC = () => {
   const { isLoading, isReconnecting } = useAuth();
@@ -79,6 +80,7 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             } 
           />
+          <Route path="/buy-coins" element={<BuyCoinsPage />} />
         </Routes>
       </div>
     </Router>

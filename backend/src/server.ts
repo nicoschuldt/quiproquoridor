@@ -44,6 +44,8 @@ app.set('io', io);
 app.use('/api/auth', authRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/games', gameRouter);
+app.use('/api/purchase', purchaseRouter);
+app.use('/api/stripe', stripeWebhookRouter);
 
 // Health check
 app.get('/health', (req, res) => {

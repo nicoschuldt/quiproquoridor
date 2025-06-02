@@ -136,6 +136,7 @@ export interface UserProfile {
   gamesPlayed: number;
   gamesWon: number;
   createdAt: Date;
+  coins: number;
 }
 
 // Room Operations

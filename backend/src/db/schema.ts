@@ -15,6 +15,7 @@ export const users = sqliteTable('users', {
   updatedAt: int('updated_at', { mode: 'timestamp' })
     .default(sql`(unixepoch())`)
     .notNull(),
+    coins: int('coins').default(0).notNull(),
 });
 
 // Rooms table
