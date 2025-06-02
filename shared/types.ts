@@ -187,6 +187,7 @@ export interface ClientToServerEvents {
   'start-game': (data: { roomId: string }) => void;
   'make-move': (data: { roomId: string; move: Omit<Move, 'id' | 'timestamp'> }) => void;
   'request-game-state': (data: { roomId: string }) => void;
+  'forfeit-game': (data: { roomId: string }) => void;
   
   // Connection events
   'ping': () => void;
@@ -206,6 +207,9 @@ export interface ServerToClientEvents {
   'game-finished': (data: { gameState: GameState; winner: Player }) => void;
   'invalid-move': (data: { error: string; originalMove: Omit<Move, 'id' | 'timestamp'> }) => void;
   'game-state-sync': (data: { gameState: GameState; validMoves?: Move[] }) => void;
+  'player-forfeited': (data: { playerId: string; playerName: string; gameState: GameState }) => void;
+  'disconnection-warning': (data: { playerId: string; playerName: string; timeoutSeconds: number }) => void;
+  'reconnection-success': (data: { playerId: string; playerName: string; gameState: GameState }) => void;
   
   // Connection events
   'player-disconnected': (data: { playerId: string }) => void;

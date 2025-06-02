@@ -17,6 +17,9 @@ interface UseGameSocketProps {
   onGameFinished?: (data: { gameState: GameState; winner: Player }) => void;
   onGameStateSync?: (data: { gameState: GameState; validMoves?: Move[] }) => void;
   onInvalidMove?: (data: { error: string; originalMove: any }) => void;
+  onPlayerForfeited?: (data: { playerId: string; playerName: string; gameState: GameState }) => void;
+  onDisconnectionWarning?: (data: { playerId: string; playerName: string; timeoutSeconds: number }) => void;
+  onReconnectionSuccess?: (data: { playerId: string; playerName: string; gameState: GameState }) => void;
   onError?: (data: { error: ApiError }) => void;
 }
 
@@ -31,6 +34,7 @@ interface UseGameSocketReturn {
   requestGameState: () => void;
   joinRoom: () => void;
   leaveRoom: () => void;
+  forfeitGame: () => void;
   
   // Helper methods
   makePawnMove: (from: Position, to: Position) => void;
@@ -44,6 +48,9 @@ export const useGameSocket = ({
   onGameFinished,
   onGameStateSync,
   onInvalidMove,
+  onPlayerForfeited,
+  onDisconnectionWarning,
+  onReconnectionSuccess,
   onError
 }: UseGameSocketProps): UseGameSocketReturn => {
   const { socket, isConnected } = useSocket();
@@ -67,6 +74,9 @@ export const useGameSocket = ({
     if (onGameFinished) socket.on('game-finished', onGameFinished);
     if (onGameStateSync) socket.on('game-state-sync', onGameStateSync);
     if (onInvalidMove) socket.on('invalid-move', onInvalidMove);
+    if (onPlayerForfeited) socket.on('player-forfeited', onPlayerForfeited);
+    if (onDisconnectionWarning) socket.on('disconnection-warning', onDisconnectionWarning);
+    if (onReconnectionSuccess) socket.on('reconnection-success', onReconnectionSuccess);
     if (onError) socket.on('error', onError);
 
     // Cleanup on unmount or dependency change
@@ -77,9 +87,12 @@ export const useGameSocket = ({
       if (onGameFinished) socket.off('game-finished', onGameFinished);
       if (onGameStateSync) socket.off('game-state-sync', onGameStateSync);
       if (onInvalidMove) socket.off('invalid-move', onInvalidMove);
+      if (onPlayerForfeited) socket.off('player-forfeited', onPlayerForfeited);
+      if (onDisconnectionWarning) socket.off('disconnection-warning', onDisconnectionWarning);
+      if (onReconnectionSuccess) socket.off('reconnection-success', onReconnectionSuccess);
       if (onError) socket.off('error', onError);
     };
-  }, [socket, isConnected, roomId, onGameStarted, onMoveMade, onGameFinished, onGameStateSync, onInvalidMove, onError]);
+  }, [socket, isConnected, roomId, onGameStarted, onMoveMade, onGameFinished, onGameStateSync, onInvalidMove, onPlayerForfeited, onDisconnectionWarning, onReconnectionSuccess, onError]);
 
   // Game action functions
   const startGame = useCallback(() => {
@@ -127,6 +140,15 @@ export const useGameSocket = ({
     socket.emit('leave-room', { roomId });
   }, [socket, roomId]);
 
+  const forfeitGame = useCallback(() => {
+    if (!socket || !roomId) {
+      console.warn('Cannot forfeit game: no socket or roomId');
+      return;
+    }
+    console.log('🏳️ Forfeiting game in room:', roomId);
+    socket.emit('forfeit-game', { roomId });
+  }, [socket, roomId]);
+
   // Convenience methods for specific move types
   const makePawnMove = useCallback((from: Position, to: Position) => {
     if (!user) {
@@ -171,6 +193,7 @@ export const useGameSocket = ({
     requestGameState,
     joinRoom,
     leaveRoom,
+    forfeitGame,
     
     // Helper methods
     makePawnMove,

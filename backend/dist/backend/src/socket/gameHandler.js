@@ -23,6 +23,7 @@ class GameHandlers {
         this.socket.on('start-game', this.handleStartGame.bind(this));
         this.socket.on('make-move', this.handleMakeMove.bind(this));
         this.socket.on('request-game-state', this.handleRequestGameState.bind(this));
+        this.socket.on('forfeit-game', this.handleForfeitGame.bind(this));
         console.log(`🎮 Game handlers setup for user ${this.socket.user.username}`);
     }
     /**
@@ -194,6 +195,59 @@ class GameHandlers {
         catch (error) {
             console.error('❌ Error sending game state:', error);
             this.emitError('GAME_STATE_FAILED', 'Failed to get game state');
+        }
+    }
+    /**
+     * **NEW**: Handles player forfeit request
+     */
+    async handleForfeitGame(data) {
+        try {
+            console.log(`🏳️ Forfeit requested by ${this.socket.user.username} in room ${data.roomId}`);
+            // Verify user is member of the room
+            const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
+            if (!isMember) {
+                this.emitError('ACCESS_DENIED', 'You are not a member of this room');
+                return;
+            }
+            // Get current game state
+            const gameState = await GameStateService_1.gameStateService.getGameState(data.roomId);
+            if (!gameState) {
+                this.emitError('GAME_NOT_FOUND', 'No active game found for this room');
+                return;
+            }
+            // Verify player is in the game
+            const player = gameState.players.find(p => p.id === this.socket.user.id);
+            if (!player) {
+                this.emitError('PLAYER_NOT_IN_GAME', 'You are not a player in this game');
+                return;
+            }
+            // Process the forfeit
+            const updatedGameState = await GameStateService_1.gameStateService.forfeitPlayer(data.roomId, this.socket.user.id);
+            if (!updatedGameState) {
+                this.emitError('FORFEIT_FAILED', 'Failed to process forfeit');
+                return;
+            }
+            // Broadcast forfeit to all players in room
+            this.io.to(data.roomId).emit('player-forfeited', {
+                playerId: this.socket.user.id,
+                playerName: this.socket.user.username,
+                gameState: updatedGameState
+            });
+            // If game is finished, handle completion
+            if (updatedGameState.status === 'finished') {
+                const winner = updatedGameState.players.find(p => p.id === updatedGameState.winner);
+                // Broadcast game finished
+                this.io.to(data.roomId).emit('game-finished', {
+                    gameState: updatedGameState,
+                    winner: winner || updatedGameState.players.find(p => p.isConnected)
+                });
+                console.log(`🏆 Game finished due to forfeit in room ${data.roomId}`);
+            }
+            console.log(`✅ Forfeit processed successfully for ${this.socket.user.username}`);
+        }
+        catch (error) {
+            console.error('❌ Error processing forfeit:', error);
+            this.emitError('FORFEIT_PROCESSING_FAILED', 'Failed to process forfeit');
         }
     }
     // ==========================================

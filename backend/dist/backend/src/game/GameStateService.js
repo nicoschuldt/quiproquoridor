@@ -11,6 +11,12 @@ const GameEngineManager_1 = require("./GameEngineManager");
  * a clean interface for game state management.
  */
 class GameStateService {
+    constructor() {
+        /**
+         * **NEW**: Manages disconnection timeouts
+         */
+        this.disconnectionTimeouts = new Map();
+    }
     /**
      * Creates and persists a new game state to the database
      */
@@ -128,7 +134,6 @@ class GameStateService {
                 finishedAt: gameState.status === 'finished' ? new Date() : null,
             })
                 .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(db_1.games.roomId, roomId), (0, drizzle_orm_1.eq)(db_1.games.status, 'playing')));
-            // **ENHANCED**: Complete game cleanup if finished
             if (gameState.status === 'finished' && gameState.winner) {
                 await this.completeGame(roomId, gameState);
             }
@@ -139,14 +144,14 @@ class GameStateService {
         }
     }
     /**
-     * **NEW**: Handles complete game finishing including room cleanup
+     * Handles complete game finishing including room cleanup
      */
     async completeGame(roomId, gameState) {
         try {
             console.log(`🏁 Completing game for room ${roomId}, winner: ${gameState.winner}`);
             // Update player statistics
             await this.updatePlayerStats(roomId, gameState);
-            // **CRITICAL**: Update room status to 'finished' and schedule cleanup
+            // Update room status to 'finished' and schedule cleanup
             await db_1.db
                 .update(db_1.rooms)
                 .set({
@@ -168,7 +173,7 @@ class GameStateService {
         }
     }
     /**
-     * **NEW**: Cleans up a finished room and removes players
+     * Cleans up a finished room and removes players
      */
     async cleanupFinishedRoom(roomId) {
         try {
@@ -195,8 +200,7 @@ class GameStateService {
             const count = await db_1.db
                 .select()
                 .from(db_1.games)
-                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(db_1.games.roomId, roomId), (0, drizzle_orm_1.eq)(db_1.games.status, 'playing') // Only return truly active games
-            ))
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(db_1.games.roomId, roomId), (0, drizzle_orm_1.eq)(db_1.games.status, 'playing')))
                 .limit(1);
             return count.length > 0;
         }
@@ -206,7 +210,7 @@ class GameStateService {
         }
     }
     /**
-     * **NEW**: Gets finished game results for display
+     * Gets finished game results for display
      */
     async getFinishedGame(roomId) {
         try {
@@ -305,6 +309,96 @@ class GameStateService {
         catch (error) {
             console.error('❌ Error cleaning up abandoned games:', error);
         }
+    }
+    /**
+     * **NEW**: Handles player forfeit
+     */
+    async forfeitPlayer(roomId, playerId) {
+        try {
+            console.log(`🏳️ Player ${playerId} forfeiting game in room ${roomId}`);
+            const gameState = await this.getGameState(roomId);
+            if (!gameState) {
+                throw new Error('No active game found');
+            }
+            // Check if player is in the game
+            const forfeiter = gameState.players.find(p => p.id === playerId);
+            if (!forfeiter) {
+                throw new Error('Player not found in game');
+            }
+            // Mark game as finished and determine winner(s)
+            const remainingPlayers = gameState.players.filter(p => p.id !== playerId && p.isConnected);
+            if (remainingPlayers.length === 1) {
+                // Single winner
+                const winner = remainingPlayers[0];
+                gameState.status = 'finished';
+                gameState.winner = winner.id;
+                gameState.finishedAt = new Date();
+            }
+            else if (remainingPlayers.length > 1) {
+                // Multiple players remaining - continue with forfeited player removed
+                gameState.players = gameState.players.map(p => p.id === playerId ? { ...p, isConnected: false } : p);
+            }
+            else {
+                // All players forfeited/disconnected - end game with no winner
+                gameState.status = 'finished';
+                gameState.finishedAt = new Date();
+            }
+            // Save the updated game state
+            await this.saveGameState(roomId, gameState);
+            console.log(`✅ Player forfeit processed for ${playerId}`);
+            return gameState;
+        }
+        catch (error) {
+            console.error('❌ Error processing forfeit:', error);
+            return null;
+        }
+    }
+    /**
+     * **NEW**: Starts disconnection timeout for a player
+     */
+    startDisconnectionTimeout(roomId, playerId, timeoutSeconds = 60) {
+        const key = `${roomId}:${playerId}`;
+        // Clear existing timeout if any
+        if (this.disconnectionTimeouts.has(key)) {
+            clearTimeout(this.disconnectionTimeouts.get(key));
+        }
+        console.log(`⏱️ Starting ${timeoutSeconds}s disconnection timeout for player ${playerId} in room ${roomId}`);
+        const timeout = setTimeout(async () => {
+            console.log(`⏰ Disconnection timeout expired for player ${playerId}, auto-forfeiting...`);
+            try {
+                const gameState = await this.forfeitPlayer(roomId, playerId);
+                if (gameState) {
+                    // The socket handler will need to emit events for this
+                    // We'll store this information for the socket handler to pick up
+                    this.disconnectionTimeouts.set(`${key}:expired`, setTimeout(() => { }, 0));
+                }
+            }
+            catch (error) {
+                console.error('❌ Error during auto-forfeit:', error);
+            }
+            this.disconnectionTimeouts.delete(key);
+        }, timeoutSeconds * 1000);
+        this.disconnectionTimeouts.set(key, timeout);
+    }
+    /**
+     * **NEW**: Cancels disconnection timeout (player reconnected)
+     */
+    cancelDisconnectionTimeout(roomId, playerId) {
+        const key = `${roomId}:${playerId}`;
+        if (this.disconnectionTimeouts.has(key)) {
+            clearTimeout(this.disconnectionTimeouts.get(key));
+            this.disconnectionTimeouts.delete(key);
+            console.log(`✅ Disconnection timeout cancelled for player ${playerId}`);
+            return true;
+        }
+        return false;
+    }
+    /**
+     * **NEW**: Checks if player has an active disconnection timeout
+     */
+    hasDisconnectionTimeout(roomId, playerId) {
+        const key = `${roomId}:${playerId}`;
+        return this.disconnectionTimeouts.has(key);
     }
 }
 exports.GameStateService = GameStateService;

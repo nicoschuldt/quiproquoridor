@@ -354,6 +354,118 @@ export class GameStateService {
       console.error('❌ Error cleaning up abandoned games:', error);
     }
   }
+
+  /**
+   * **NEW**: Handles player forfeit
+   */
+  async forfeitPlayer(roomId: string, playerId: string): Promise<GameState | null> {
+    try {
+      console.log(`🏳️ Player ${playerId} forfeiting game in room ${roomId}`);
+
+      const gameState = await this.getGameState(roomId);
+      if (!gameState) {
+        throw new Error('No active game found');
+      }
+
+      // Check if player is in the game
+      const forfeiter = gameState.players.find(p => p.id === playerId);
+      if (!forfeiter) {
+        throw new Error('Player not found in game');
+      }
+
+      // Mark game as finished and determine winner(s)
+      const remainingPlayers = gameState.players.filter(p => p.id !== playerId && p.isConnected);
+      
+      if (remainingPlayers.length === 1) {
+        // Single winner
+        const winner = remainingPlayers[0];
+        gameState.status = 'finished';
+        gameState.winner = winner.id;
+        gameState.finishedAt = new Date();
+      } else if (remainingPlayers.length > 1) {
+        // Multiple players remaining - continue with forfeited player removed
+        gameState.players = gameState.players.map(p => 
+          p.id === playerId ? { ...p, isConnected: false } : p
+        );
+      } else {
+        // All players forfeited/disconnected - end game with no winner
+        gameState.status = 'finished';
+        gameState.finishedAt = new Date();
+      }
+
+      // Save the updated game state
+      await this.saveGameState(roomId, gameState);
+
+      console.log(`✅ Player forfeit processed for ${playerId}`);
+      return gameState;
+
+    } catch (error) {
+      console.error('❌ Error processing forfeit:', error);
+      return null;
+    }
+  }
+
+  /**
+   * **NEW**: Manages disconnection timeouts
+   */
+  private disconnectionTimeouts = new Map<string, NodeJS.Timeout>();
+
+  /**
+   * **NEW**: Starts disconnection timeout for a player
+   */
+  startDisconnectionTimeout(roomId: string, playerId: string, timeoutSeconds: number = 60): void {
+    const key = `${roomId}:${playerId}`;
+    
+    // Clear existing timeout if any
+    if (this.disconnectionTimeouts.has(key)) {
+      clearTimeout(this.disconnectionTimeouts.get(key)!);
+    }
+
+    console.log(`⏱️ Starting ${timeoutSeconds}s disconnection timeout for player ${playerId} in room ${roomId}`);
+
+    const timeout = setTimeout(async () => {
+      console.log(`⏰ Disconnection timeout expired for player ${playerId}, auto-forfeiting...`);
+      
+      try {
+        const gameState = await this.forfeitPlayer(roomId, playerId);
+        if (gameState) {
+          // The socket handler will need to emit events for this
+          // We'll store this information for the socket handler to pick up
+          this.disconnectionTimeouts.set(`${key}:expired`, setTimeout(() => {}, 0));
+        }
+      } catch (error) {
+        console.error('❌ Error during auto-forfeit:', error);
+      }
+      
+      this.disconnectionTimeouts.delete(key);
+    }, timeoutSeconds * 1000);
+
+    this.disconnectionTimeouts.set(key, timeout);
+  }
+
+  /**
+   * **NEW**: Cancels disconnection timeout (player reconnected)
+   */
+  cancelDisconnectionTimeout(roomId: string, playerId: string): boolean {
+    const key = `${roomId}:${playerId}`;
+    
+    if (this.disconnectionTimeouts.has(key)) {
+      clearTimeout(this.disconnectionTimeouts.get(key)!);
+      this.disconnectionTimeouts.delete(key);
+      console.log(`✅ Disconnection timeout cancelled for player ${playerId}`);
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * **NEW**: Checks if player has an active disconnection timeout
+   */
+  hasDisconnectionTimeout(roomId: string, playerId: string): boolean {
+    const key = `${roomId}:${playerId}`;
+    return this.disconnectionTimeouts.has(key);
+  }
 }
 
 // Singleton instance

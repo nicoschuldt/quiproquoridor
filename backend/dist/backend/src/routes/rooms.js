@@ -39,7 +39,7 @@ router.post('/', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     let code;
     let attempts = 0;
     do {
-        code = (0, nanoid_1.nanoid)(6).toUpperCase();
+        code = (0, nanoid_1.customAlphabet)('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6)();
         attempts++;
         if (attempts > 10) {
             throw new errorHandler_1.AppError(500, 'CODE_GENERATION_FAILED', 'Could not generate unique room code');

@@ -4,7 +4,7 @@ import passport from 'passport';
 import { z } from 'zod';
 import { db, rooms, roomMembers, users } from '../db';
 import { eq, and, inArray } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
+import { customAlphabet } from 'nanoid';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 
 const router = Router();
@@ -39,7 +39,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
   let code: string;
   let attempts = 0;
   do {
-    code = nanoid(6).toUpperCase();
+    code = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6)();
     attempts++;
     if (attempts > 10) {
       throw new AppError(500, 'CODE_GENERATION_FAILED', 'Could not generate unique room code');

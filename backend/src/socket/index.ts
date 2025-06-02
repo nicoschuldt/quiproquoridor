@@ -119,8 +119,22 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         if (existingGame) {
           console.log(`🎮 Player ${user.username} joining existing game in room ${roomId}`);
           
+          // **NEW**: Cancel disconnection timeout if player is reconnecting
+          const hadTimeout = gameStateService.cancelDisconnectionTimeout(roomId, user.id);
+          
           // Update player connection status in game
           await gameStateService.updatePlayerConnection(roomId, user.id, true);
+          
+          if (hadTimeout) {
+            // Player reconnected within timeout - notify others
+            socket.to(roomId).emit('reconnection-success', {
+              playerId: user.id,
+              playerName: user.username,
+              gameState: await gameStateService.getGameState(roomId) as any
+            });
+            
+            console.log(`🔗 Player ${user.username} reconnected to game in room ${roomId}`);
+          }
           
           // Send game state to reconnecting player via game handler
           authenticatedSocket.emit('request-game-state', { roomId });
@@ -312,11 +326,20 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
                 .where(eq(rooms.id, roomId));
             }
           } else if (userRoom.roomStatus === 'playing') {
-            // **NEW**: For playing games, just update connection status
+            // **NEW**: For playing games, start disconnection timeout
             await gameStateService.updatePlayerConnection(roomId, user.id, false);
             
-            // Notify other players of disconnection
-            socket.to(roomId).emit('player-disconnected', { playerId: user.id });
+            // Start disconnection timeout (60 seconds)
+            gameStateService.startDisconnectionTimeout(roomId, user.id, 60);
+            
+            // Notify other players of disconnection with timeout warning
+            socket.to(roomId).emit('disconnection-warning', { 
+              playerId: user.id,
+              playerName: user.username,
+              timeoutSeconds: 60
+            });
+            
+            console.log(`⏱️ Started 60s disconnection timeout for ${user.username} in room ${roomId}`);
           } else if (userRoom.roomStatus === 'finished') {
             // **NEW**: For finished games, remove user immediately
             await db
