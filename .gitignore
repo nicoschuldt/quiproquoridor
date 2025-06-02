@@ -4,7 +4,9 @@ node_modules/
 .pnp.js
 
 # Testing
-/coverage
+**/coverage
+**/.jest
+**/.nyc_output
 
 # Production
 /build
@@ -65,6 +67,10 @@ temp/
 .next
 out/
 storybook-static/
+
+# Rules and configurations
+.windsurf/rules/
+.windsurf/
 
 # Misc
 .eslintcache
