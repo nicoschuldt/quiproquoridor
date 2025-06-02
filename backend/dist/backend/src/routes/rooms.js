@@ -216,7 +216,7 @@ router.get('/user/current', (0, errorHandler_1.asyncHandler)(async (req, res) =>
         .from(db_1.roomMembers)
         .innerJoin(db_1.rooms, (0, drizzle_orm_1.eq)(db_1.roomMembers.roomId, db_1.rooms.id))
         .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(db_1.roomMembers.userId, user.id), 
-    // Only get rooms that are not finished - include both lobby and playing
+    // **CRITICAL FIX**: Only get rooms that are truly active (exclude finished)
     (0, drizzle_orm_1.inArray)(db_1.rooms.status, ['lobby', 'playing'])))
         .limit(1);
     if (roomMembership.length === 0) {

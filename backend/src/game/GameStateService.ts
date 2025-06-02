@@ -151,14 +151,71 @@ export class GameStateService {
           eq(games.status, 'playing')
         ));
 
-      // Update player statistics if game is finished
       if (gameState.status === 'finished' && gameState.winner) {
-        await this.updatePlayerStats(roomId, gameState);
+        await this.completeGame(roomId, gameState);
       }
 
     } catch (error) {
       console.error('❌ Error saving game state:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Handles complete game finishing including room cleanup
+   */
+  async completeGame(roomId: string, gameState: GameState): Promise<void> {
+    try {
+      console.log(`🏁 Completing game for room ${roomId}, winner: ${gameState.winner}`);
+
+      // Update player statistics
+      await this.updatePlayerStats(roomId, gameState);
+
+      // Update room status to 'finished' and schedule cleanup
+      await db
+        .update(rooms)
+        .set({ 
+          status: 'finished',
+          // Set a cleanup time for 30 minutes from now
+          updatedAt: new Date()
+        })
+        .where(eq(rooms.id, roomId));
+
+      // **OPTIONAL**: Schedule room cleanup after a delay (e.g., 30 minutes)
+      // This allows players to see final results before room is cleaned up
+      setTimeout(async () => {
+        await this.cleanupFinishedRoom(roomId);
+      }, 30 * 60 * 1000); // 30 minutes
+
+      console.log(`✅ Game completion processed for room ${roomId}`);
+
+    } catch (error) {
+      console.error('❌ Error completing game:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cleans up a finished room and removes players
+   */
+  async cleanupFinishedRoom(roomId: string): Promise<void> {
+    try {
+      console.log(`🧹 Cleaning up finished room ${roomId}`);
+
+      // Remove all room members
+      await db
+        .delete(roomMembers)
+        .where(eq(roomMembers.roomId, roomId));
+
+      // Mark room as cleaned up (keep for history) or delete it
+      await db
+        .delete(rooms)
+        .where(eq(rooms.id, roomId));
+
+      console.log(`✅ Room ${roomId} cleaned up successfully`);
+
+    } catch (error) {
+      console.error('❌ Error cleaning up finished room:', error);
     }
   }
 
@@ -180,6 +237,39 @@ export class GameStateService {
     } catch (error) {
       console.error('❌ Error checking for active game:', error);
       return false;
+    }
+  }
+
+  /**
+   * Gets finished game results for display
+   */
+  async getFinishedGame(roomId: string): Promise<GameState | null> {
+    try {
+      const gameRecord = await db
+        .select()
+        .from(games)
+        .where(and(
+          eq(games.roomId, roomId),
+          eq(games.status, 'finished')
+        ))
+        .limit(1);
+
+      if (gameRecord.length === 0) {
+        return null;
+      }
+
+      const gameState = gameRecord[0].gameState as GameState;
+      
+      // Ensure dates are properly converted
+      gameState.createdAt = new Date(gameState.createdAt);
+      if (gameState.startedAt) gameState.startedAt = new Date(gameState.startedAt);
+      if (gameState.finishedAt) gameState.finishedAt = new Date(gameState.finishedAt);
+      
+      return gameState;
+
+    } catch (error) {
+      console.error('❌ Error retrieving finished game:', error);
+      return null;
     }
   }
 

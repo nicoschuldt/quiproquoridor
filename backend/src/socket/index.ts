@@ -1,78 +1,62 @@
+// backend/src/socket/index.ts (Fixed)
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { db, users, rooms, roomMembers } from '../db';
 import { eq, and } from 'drizzle-orm';
-import { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
-import { createGameHandler } from './gameHandler';
+import { GameHandlers } from './gameHandler';
+import type { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
 import { gameStateService } from '../game/GameStateService';
 
-interface SocketUser {
-  id: string;
-  username: string;
-}
-
-interface AuthenticatedSocket {
-  id: string;
-  user: SocketUser;
-  emit: Function;
-  join: Function;
-  leave: Function;
-  disconnect: Function;
-  on: Function;
-  to: Function;
-}
-
 export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {
-  // **NEW**: Initialize game handler
-  const gameHandler = createGameHandler(io);
-
-  // Socket authentication middleware
+  // Authentication middleware
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
       if (!token) {
-        return next(new Error('Authentication token required'));
+        return next(new Error('Authentication failed: No token provided'));
       }
 
-      const decoded = jwt.verify(token, config.jwtSecret) as { userId: string; username: string };
+      // Verify JWT
+      const decoded = jwt.verify(token, config.jwtSecret) as any;
       
-      // Get fresh user data from database
-      const user = await db
+      // Get user from database
+      const userResult = await db
         .select()
         .from(users)
         .where(eq(users.id, decoded.userId))
         .limit(1);
 
-      if (user.length === 0) {
-        return next(new Error('User not found'));
+      if (userResult.length === 0) {
+        return next(new Error('Authentication failed: User not found'));
       }
 
+      const user = userResult[0];
       (socket as any).user = {
-        id: user[0].id,
-        username: user[0].username,
+        id: user.id,
+        username: user.username,
       };
 
       next();
     } catch (error) {
-      console.error('Socket authentication error:', error);
-      next(new Error('Invalid authentication token'));
+      next(new Error('Authentication failed: Invalid token'));
     }
   });
 
   io.on('connection', (socket) => {
-    const authenticatedSocket = socket as any as AuthenticatedSocket;
+    const authenticatedSocket = socket as any;
     const user = authenticatedSocket.user;
     
     console.log(`🔌 User ${user.username} connected (${socket.id})`);
 
-    // **CRITICAL FIX**: Track user's socket rooms for cleanup
+    // Track user's current socket room for cleanup
     let userCurrentRoomId: string | null = null;
 
-    // **NEW**: Setup game event handlers
-    gameHandler.setupHandlers(authenticatedSocket);
+    // Setup game handlers
+    const gameHandlers = new GameHandlers(io, authenticatedSocket);
+    gameHandlers.setupEventListeners();
 
-    // Handle room events
+    // Handle room events with full logic restoration
     authenticatedSocket.on('join-room', async (data: { roomId: string }) => {
       try {
         const { roomId } = data;
@@ -83,12 +67,11 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           console.log(`👤 ${user.username} leaving previous socket room ${userCurrentRoomId}`);
           await authenticatedSocket.leave(userCurrentRoomId);
           socket.to(userCurrentRoomId).emit('player-left', {
-            playerId: user.id,
-            room: {} as any
+            playerId: user.id
           });
         }
         
-        // Verify user is member of room in database
+        // **CRITICAL FIX**: Verify user is member of room in database
         const membership = await db
           .select()
           .from(roomMembers)
@@ -131,12 +114,15 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
         const room = roomResult[0];
 
-        // **NEW**: Check if there's already an active game
+        // **ENHANCED**: Check if there's already an active game
         const existingGame = await gameStateService.hasActiveGame(roomId);
         if (existingGame) {
           console.log(`🎮 Player ${user.username} joining existing game in room ${roomId}`);
           
-          // Send game state to reconnecting player
+          // Update player connection status in game
+          await gameStateService.updatePlayerConnection(roomId, user.id, true);
+          
+          // Send game state to reconnecting player via game handler
           authenticatedSocket.emit('request-game-state', { roomId });
           return;
         }
@@ -179,9 +165,11 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
         // Notify others in the room that this player joined
         socket.to(roomId).emit('player-joined', {
-          player: players.find(p => p.id === user.id)!,
-          room: roomData
+          player: players.find(p => p.id === user.id)!
         });
+
+        // Send updated room data to the joining player
+        authenticatedSocket.emit('room-updated', { room: roomData });
 
         // **ENHANCED**: Check if room is now full and should auto-start
         if (players.length === room.maxPlayers && room.status === 'lobby') {
@@ -193,13 +181,33 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
             .set({ status: 'playing' })
             .where(eq(rooms.id, roomId));
 
-          // **NEW**: Create and start the game using game handler
-          await gameHandler.createAndStartGame(roomId);
-        } else {
-          // Just emit room-full if we reached capacity but didn't start
-          if (players.length === room.maxPlayers) {
-            io.to(roomId).emit('room-full', { room: roomData });
+          // **NEW**: Create and start the game using game service
+          try {
+            const gameState = await gameStateService.createGame(roomId);
+            
+            // Broadcast game start to all players in room
+            io.to(roomId).emit('game-started', { gameState });
+            
+            console.log(`✅ Game auto-started for room ${roomId} with ${gameState.players.length} players`);
+          } catch (error) {
+            console.error('❌ Error auto-starting game:', error);
+            
+            // Revert room status
+            await db
+              .update(rooms)
+              .set({ status: 'lobby' })
+              .where(eq(rooms.id, roomId));
+              
+            io.to(roomId).emit('error', {
+              error: {
+                code: 'GAME_START_FAILED',
+                message: 'Failed to start game automatically'
+              }
+            });
           }
+        } else {
+          // Broadcast updated room data to all players in the room
+          io.to(roomId).emit('room-updated', { room: roomData });
         }
         
       } catch (error) {
@@ -220,14 +228,17 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         
         // Leave the socket room
         await authenticatedSocket.leave(roomId);
+        userCurrentRoomId = null;
+        
+        // Update player connection status in game if exists
+        await gameStateService.updatePlayerConnection(roomId, user.id, false);
         
         // Note: We don't remove from database here - that should be done via API call
         // This is just for socket room management
         
-        // Notify others in the room that this player left
+        // Broadcast to room that user left
         socket.to(roomId).emit('player-left', {
-          playerId: user.id,
-          room: {} as any // Room data will be updated by the API call
+          playerId: user.id
         });
         
       } catch (error) {
@@ -235,14 +246,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
       }
     });
 
-    // **REMOVED**: Old basic make-move handler (now handled by gameHandler)
-
-    // Handle ping for connection monitoring
-    authenticatedSocket.on('ping', () => {
-      authenticatedSocket.emit('pong');
-    });
-
-    // Handle disconnection
+    // Handle disconnection with comprehensive cleanup
     authenticatedSocket.on('disconnect', async (reason: string) => {
       console.log(`🔌 User ${user.username} disconnected (${reason})`);
       
@@ -274,8 +278,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
             // Notify other players in the room
             socket.to(roomId).emit('player-left', {
-              playerId: user.id,
-              room: {} as any
+              playerId: user.id
             });
 
             // Check remaining members for cleanup
@@ -309,8 +312,30 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
                 .where(eq(rooms.id, roomId));
             }
           } else if (userRoom.roomStatus === 'playing') {
-            // **NEW**: For playing games, handle via game handler
-            await gameHandler.handlePlayerDisconnect(roomId, user.id, user.username);
+            // **NEW**: For playing games, just update connection status
+            await gameStateService.updatePlayerConnection(roomId, user.id, false);
+            
+            // Notify other players of disconnection
+            socket.to(roomId).emit('player-disconnected', { playerId: user.id });
+          } else if (userRoom.roomStatus === 'finished') {
+            // **NEW**: For finished games, remove user immediately
+            await db
+              .delete(roomMembers)
+              .where(and(
+                eq(roomMembers.roomId, roomId),
+                eq(roomMembers.userId, user.id)
+              ));
+            
+            // Check if room is now empty and clean it up
+            const remainingMembers = await db
+              .select()
+              .from(roomMembers)
+              .where(eq(roomMembers.roomId, roomId));
+
+            if (remainingMembers.length === 0) {
+              // Clean up empty finished room immediately
+              await gameStateService.cleanupFinishedRoom(roomId);
+            }
           }
         }
       } catch (error) {
@@ -319,5 +344,5 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     });
   });
 
-  console.log('🔌 Socket.io server initialized with game support');
+  console.log('🔌 Socket.io server initialized with full room management and game integration');
 };

@@ -181,9 +181,10 @@ export interface ClientToServerEvents {
   // Room events
   'join-room': (data: { roomId: string }) => void;
   'leave-room': (data: { roomId: string }) => void;
-  'start-game': (data: { roomId: string }) => void;
+  'player-ready': (data: { roomId: string; ready: boolean }) => void;
   
-  // Game events
+  // Game events (NEW)
+  'start-game': (data: { roomId: string }) => void;
   'make-move': (data: { roomId: string; move: Omit<Move, 'id' | 'timestamp'> }) => void;
   'request-game-state': (data: { roomId: string }) => void;
   
@@ -195,16 +196,16 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   // Room events
   'room-updated': (data: { room: Room }) => void;
-  'player-joined': (data: { player: Player; room: Room }) => void;
-  'player-left': (data: { playerId: string; room: Room }) => void;
-  'room-full': (data: { room: Room }) => void;
-  'game-started': (data: { gameState: GameState }) => void;
+  'player-joined': (data: { player: Player }) => void;
+  'player-left': (data: { playerId: string }) => void;
+  'player-ready-changed': (data: { playerId: string; ready: boolean }) => void;
   
-  // Game events
+  // Game events (NEW)
+  'game-started': (data: { gameState: GameState }) => void;
   'move-made': (data: { move: Move; gameState: GameState }) => void;
-  'game-finished': (data: { winner: string; gameState: GameState }) => void;
-  'invalid-move': (data: { error: string; move: Move }) => void;
-  'game-state-updated': (data: { gameState: GameState }) => void;
+  'game-finished': (data: { gameState: GameState; winner: Player }) => void;
+  'invalid-move': (data: { error: string; originalMove: Omit<Move, 'id' | 'timestamp'> }) => void;
+  'game-state-sync': (data: { gameState: GameState; validMoves?: Move[] }) => void;
   
   // Connection events
   'player-disconnected': (data: { playerId: string }) => void;

@@ -248,7 +248,7 @@ router.get('/user/current', asyncHandler(async (req: Request, res: Response): Pr
     .innerJoin(rooms, eq(roomMembers.roomId, rooms.id))
     .where(and(
       eq(roomMembers.userId, user.id),
-      // Only get rooms that are not finished - include both lobby and playing
+      // **CRITICAL FIX**: Only get rooms that are truly active (exclude finished)
       inArray(rooms.status, ['lobby', 'playing'])
     ))
     .limit(1);

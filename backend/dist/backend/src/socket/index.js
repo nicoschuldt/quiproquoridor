@@ -11,45 +11,45 @@ const drizzle_orm_1 = require("drizzle-orm");
 const gameHandler_1 = require("./gameHandler");
 const GameStateService_1 = require("../game/GameStateService");
 const socketHandler = (io) => {
-    // **NEW**: Initialize game handler
-    const gameHandler = (0, gameHandler_1.createGameHandler)(io);
-    // Socket authentication middleware
+    // Authentication middleware
     io.use(async (socket, next) => {
         try {
             const token = socket.handshake.auth.token;
             if (!token) {
-                return next(new Error('Authentication token required'));
+                return next(new Error('Authentication failed: No token provided'));
             }
+            // Verify JWT
             const decoded = jsonwebtoken_1.default.verify(token, config_1.config.jwtSecret);
-            // Get fresh user data from database
-            const user = await db_1.db
+            // Get user from database
+            const userResult = await db_1.db
                 .select()
                 .from(db_1.users)
                 .where((0, drizzle_orm_1.eq)(db_1.users.id, decoded.userId))
                 .limit(1);
-            if (user.length === 0) {
-                return next(new Error('User not found'));
+            if (userResult.length === 0) {
+                return next(new Error('Authentication failed: User not found'));
             }
+            const user = userResult[0];
             socket.user = {
-                id: user[0].id,
-                username: user[0].username,
+                id: user.id,
+                username: user.username,
             };
             next();
         }
         catch (error) {
-            console.error('Socket authentication error:', error);
-            next(new Error('Invalid authentication token'));
+            next(new Error('Authentication failed: Invalid token'));
         }
     });
     io.on('connection', (socket) => {
         const authenticatedSocket = socket;
         const user = authenticatedSocket.user;
         console.log(`🔌 User ${user.username} connected (${socket.id})`);
-        // **CRITICAL FIX**: Track user's socket rooms for cleanup
+        // Track user's current socket room for cleanup
         let userCurrentRoomId = null;
-        // **NEW**: Setup game event handlers
-        gameHandler.setupHandlers(authenticatedSocket);
-        // Handle room events
+        // Setup game handlers
+        const gameHandlers = new gameHandler_1.GameHandlers(io, authenticatedSocket);
+        gameHandlers.setupEventListeners();
+        // Handle room events with full logic restoration
         authenticatedSocket.on('join-room', async (data) => {
             try {
                 const { roomId } = data;
@@ -59,11 +59,10 @@ const socketHandler = (io) => {
                     console.log(`👤 ${user.username} leaving previous socket room ${userCurrentRoomId}`);
                     await authenticatedSocket.leave(userCurrentRoomId);
                     socket.to(userCurrentRoomId).emit('player-left', {
-                        playerId: user.id,
-                        room: {}
+                        playerId: user.id
                     });
                 }
-                // Verify user is member of room in database
+                // **CRITICAL FIX**: Verify user is member of room in database
                 const membership = await db_1.db
                     .select()
                     .from(db_1.roomMembers)
@@ -97,11 +96,13 @@ const socketHandler = (io) => {
                     return;
                 }
                 const room = roomResult[0];
-                // **NEW**: Check if there's already an active game
+                // **ENHANCED**: Check if there's already an active game
                 const existingGame = await GameStateService_1.gameStateService.hasActiveGame(roomId);
                 if (existingGame) {
                     console.log(`🎮 Player ${user.username} joining existing game in room ${roomId}`);
-                    // Send game state to reconnecting player
+                    // Update player connection status in game
+                    await GameStateService_1.gameStateService.updatePlayerConnection(roomId, user.id, true);
+                    // Send game state to reconnecting player via game handler
                     authenticatedSocket.emit('request-game-state', { roomId });
                     return;
                 }
@@ -140,9 +141,10 @@ const socketHandler = (io) => {
                 };
                 // Notify others in the room that this player joined
                 socket.to(roomId).emit('player-joined', {
-                    player: players.find(p => p.id === user.id),
-                    room: roomData
+                    player: players.find(p => p.id === user.id)
                 });
+                // Send updated room data to the joining player
+                authenticatedSocket.emit('room-updated', { room: roomData });
                 // **ENHANCED**: Check if room is now full and should auto-start
                 if (players.length === room.maxPlayers && room.status === 'lobby') {
                     console.log(`🎮 Room ${roomId} is full, auto-starting game`);
@@ -151,14 +153,31 @@ const socketHandler = (io) => {
                         .update(db_1.rooms)
                         .set({ status: 'playing' })
                         .where((0, drizzle_orm_1.eq)(db_1.rooms.id, roomId));
-                    // **NEW**: Create and start the game using game handler
-                    await gameHandler.createAndStartGame(roomId);
+                    // **NEW**: Create and start the game using game service
+                    try {
+                        const gameState = await GameStateService_1.gameStateService.createGame(roomId);
+                        // Broadcast game start to all players in room
+                        io.to(roomId).emit('game-started', { gameState });
+                        console.log(`✅ Game auto-started for room ${roomId} with ${gameState.players.length} players`);
+                    }
+                    catch (error) {
+                        console.error('❌ Error auto-starting game:', error);
+                        // Revert room status
+                        await db_1.db
+                            .update(db_1.rooms)
+                            .set({ status: 'lobby' })
+                            .where((0, drizzle_orm_1.eq)(db_1.rooms.id, roomId));
+                        io.to(roomId).emit('error', {
+                            error: {
+                                code: 'GAME_START_FAILED',
+                                message: 'Failed to start game automatically'
+                            }
+                        });
+                    }
                 }
                 else {
-                    // Just emit room-full if we reached capacity but didn't start
-                    if (players.length === room.maxPlayers) {
-                        io.to(roomId).emit('room-full', { room: roomData });
-                    }
+                    // Broadcast updated room data to all players in the room
+                    io.to(roomId).emit('room-updated', { room: roomData });
                 }
             }
             catch (error) {
@@ -177,24 +196,21 @@ const socketHandler = (io) => {
                 console.log(`👤 ${user.username} leaving room ${roomId}`);
                 // Leave the socket room
                 await authenticatedSocket.leave(roomId);
+                userCurrentRoomId = null;
+                // Update player connection status in game if exists
+                await GameStateService_1.gameStateService.updatePlayerConnection(roomId, user.id, false);
                 // Note: We don't remove from database here - that should be done via API call
                 // This is just for socket room management
-                // Notify others in the room that this player left
+                // Broadcast to room that user left
                 socket.to(roomId).emit('player-left', {
-                    playerId: user.id,
-                    room: {} // Room data will be updated by the API call
+                    playerId: user.id
                 });
             }
             catch (error) {
                 console.error('Error leaving room:', error);
             }
         });
-        // **REMOVED**: Old basic make-move handler (now handled by gameHandler)
-        // Handle ping for connection monitoring
-        authenticatedSocket.on('ping', () => {
-            authenticatedSocket.emit('pong');
-        });
-        // Handle disconnection
+        // Handle disconnection with comprehensive cleanup
         authenticatedSocket.on('disconnect', async (reason) => {
             console.log(`🔌 User ${user.username} disconnected (${reason})`);
             try {
@@ -219,8 +235,7 @@ const socketHandler = (io) => {
                             .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(db_1.roomMembers.roomId, roomId), (0, drizzle_orm_1.eq)(db_1.roomMembers.userId, user.id)));
                         // Notify other players in the room
                         socket.to(roomId).emit('player-left', {
-                            playerId: user.id,
-                            room: {}
+                            playerId: user.id
                         });
                         // Check remaining members for cleanup
                         const remainingMembers = await db_1.db
@@ -247,8 +262,25 @@ const socketHandler = (io) => {
                         }
                     }
                     else if (userRoom.roomStatus === 'playing') {
-                        // **NEW**: For playing games, handle via game handler
-                        await gameHandler.handlePlayerDisconnect(roomId, user.id, user.username);
+                        // **NEW**: For playing games, just update connection status
+                        await GameStateService_1.gameStateService.updatePlayerConnection(roomId, user.id, false);
+                        // Notify other players of disconnection
+                        socket.to(roomId).emit('player-disconnected', { playerId: user.id });
+                    }
+                    else if (userRoom.roomStatus === 'finished') {
+                        // **NEW**: For finished games, remove user immediately
+                        await db_1.db
+                            .delete(db_1.roomMembers)
+                            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(db_1.roomMembers.roomId, roomId), (0, drizzle_orm_1.eq)(db_1.roomMembers.userId, user.id)));
+                        // Check if room is now empty and clean it up
+                        const remainingMembers = await db_1.db
+                            .select()
+                            .from(db_1.roomMembers)
+                            .where((0, drizzle_orm_1.eq)(db_1.roomMembers.roomId, roomId));
+                        if (remainingMembers.length === 0) {
+                            // Clean up empty finished room immediately
+                            await GameStateService_1.gameStateService.cleanupFinishedRoom(roomId);
+                        }
                     }
                 }
             }
@@ -257,6 +289,6 @@ const socketHandler = (io) => {
             }
         });
     });
-    console.log('🔌 Socket.io server initialized with game support');
+    console.log('🔌 Socket.io server initialized with full room management and game integration');
 };
 exports.socketHandler = socketHandler;

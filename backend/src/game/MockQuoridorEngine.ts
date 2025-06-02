@@ -34,7 +34,6 @@ import type {
         color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
         position: this.getPlayerStartPosition(index, maxPlayers),
         wallsRemaining: maxPlayers === 2 ? 10 : 5,
-        isReady: true,
         isConnected: true,
         joinedAt: new Date(),
       }));

@@ -57,14 +57,14 @@ const RoomLobbyPage: React.FC = () => {
       setPlayers(data.room.players || []);
     };
 
-    const handlePlayerJoined = (data: { player: Player; room: Room }) => {
+    const handlePlayerJoined = (data: { player: Player }) => {
       setPlayers(prev => [...prev.filter(p => p.id !== data.player.id), data.player]);
-      setRoom(data.room);
+      // Room data will be updated via room-updated event
     };
 
-    const handlePlayerLeft = (data: { playerId: string; room: Room }) => {
+    const handlePlayerLeft = (data: { playerId: string }) => {
       setPlayers(prev => prev.filter(p => p.id !== data.playerId));
-      setRoom(data.room);
+      // Room data will be updated via room-updated event
     };
 
     const handlePlayerDisconnected = (data: { playerId: string }) => {
@@ -83,12 +83,6 @@ const RoomLobbyPage: React.FC = () => {
           ? { ...p, isConnected: true } 
           : p
       ));
-    };
-
-    const handleRoomFull = (data: { room: Room }) => {
-      setRoom(data.room);
-      setPlayers(data.room.players || []);
-      // Room is full but game hasn't started yet
     };
 
     const handleGameStarted = (data: { gameState: any }) => {
@@ -114,7 +108,6 @@ const RoomLobbyPage: React.FC = () => {
     socket.on('player-left', handlePlayerLeft);
     socket.on('player-disconnected', handlePlayerDisconnected);
     socket.on('player-reconnected', handlePlayerReconnected);
-    socket.on('room-full', handleRoomFull);
     socket.on('game-started', handleGameStarted);
     socket.on('error', handleError);
 
@@ -125,7 +118,6 @@ const RoomLobbyPage: React.FC = () => {
       socket.off('player-left', handlePlayerLeft);
       socket.off('player-disconnected', handlePlayerDisconnected);
       socket.off('player-reconnected', handlePlayerReconnected);
-      socket.off('room-full', handleRoomFull);
       socket.off('game-started', handleGameStarted);
       socket.off('error', handleError);
       socket.emit('leave-room', { roomId });
