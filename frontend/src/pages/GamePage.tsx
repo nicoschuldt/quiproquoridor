@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import GameBoardTest from '../components/game/GameBoardTest';
 
 const GamePage: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -11,7 +12,7 @@ const GamePage: React.FC = () => {
           <div className="lg:col-span-3 card">
             <h1 className="text-2xl font-bold mb-4">Quoridor Game</h1>
             <div className="aspect-square bg-green-100 border-2 border-green-200 rounded-lg flex items-center justify-center">
-              <p className="text-green-600 font-medium">9x9 Game Board Goes Here</p>
+              <GameBoardTest />
             </div>
           </div>
           
