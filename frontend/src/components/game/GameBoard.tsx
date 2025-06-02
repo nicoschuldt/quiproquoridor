@@ -128,10 +128,10 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
       {player && (
         <div 
           className={`w-10 h-10 rounded-full border-3 border-white shadow-lg flex items-center justify-center ${
-            player.color === 'red' ? 'bg-game-red' :
-            player.color === 'blue' ? 'bg-game-blue' :
-            player.color === 'green' ? 'bg-game-green' :
-            'bg-game-yellow'
+            player.color === 'red' ? 'bg-red-500' :
+            player.color === 'blue' ? 'bg-blue-500' :
+            player.color === 'green' ? 'bg-green-500' :
+            'bg-yellow-500'
           }`}
           title={`${player.username} (${player.wallsRemaining} walls left)`}
         >
