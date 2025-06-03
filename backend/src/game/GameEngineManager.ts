@@ -8,6 +8,7 @@ import type {
     WallOrientation 
   } from '../../../shared/types';
   import { mockQuoridorEngine } from './MockQuoridorEngine';
+  import { quoridorEngine } from './QuoridorEngine';
   
   /**
    * GameEngineManager - Abstraction layer for game engine integration
@@ -17,8 +18,7 @@ import type {
    * The actual advanced game engine will be plugged in here by another engineer.
    */
   export class GameEngineManager implements GameEngine {
-    private engine: GameEngine | null = null;
-    private mockEngine: GameEngine = mockQuoridorEngine;
+    private engine: GameEngine = quoridorEngine;
   
     constructor() {
       console.log('🎮 GameEngineManager initialized with mock engine');
@@ -44,7 +44,7 @@ import type {
      * Gets the currently active engine (mock or real)
      */
     private getActiveEngine(): GameEngine {
-      return this.engine || this.mockEngine;
+      return this.engine
     }
   
     // ==========================================
