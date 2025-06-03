@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gameEngineManager = exports.GameEngineManager = void 0;
-const MockQuoridorEngine_1 = require("./MockQuoridorEngine");
+const QuoridorEngine_1 = require("./QuoridorEngine");
 /**
  * GameEngineManager - Abstraction layer for game engine integration
  *
@@ -11,8 +11,7 @@ const MockQuoridorEngine_1 = require("./MockQuoridorEngine");
  */
 class GameEngineManager {
     constructor() {
-        this.engine = null;
-        this.mockEngine = MockQuoridorEngine_1.mockQuoridorEngine;
+        this.engine = QuoridorEngine_1.quoridorEngine;
         console.log('🎮 GameEngineManager initialized with mock engine');
     }
     /**
@@ -33,7 +32,7 @@ class GameEngineManager {
      * Gets the currently active engine (mock or real)
      */
     getActiveEngine() {
-        return this.engine || this.mockEngine;
+        return this.engine;
     }
     // ==========================================
     // GAME ENGINE INTERFACE IMPLEMENTATION

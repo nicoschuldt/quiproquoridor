@@ -8,22 +8,31 @@ require("dotenv/config");
 const index_1 = require("./index");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const nanoid_1 = require("nanoid");
+const seed_shop_1 = require("./seed-shop");
 async function seed() {
     console.log('🌱 Seeding database...');
     try {
-        // Create test users
+        // Seed shop items first
+        await (0, seed_shop_1.seedShopItems)();
+        // Create test users with initial coins
         const testUsers = [
             {
                 username: 'alice',
                 passwordHash: await bcrypt_1.default.hash('password123', 10),
                 gamesPlayed: 5,
                 gamesWon: 3,
+                coinBalance: 500,
+                selectedBoardTheme: 'default',
+                selectedPawnTheme: 'default',
             },
             {
                 username: 'bob',
                 passwordHash: await bcrypt_1.default.hash('password123', 10),
                 gamesPlayed: 3,
                 gamesWon: 1,
+                coinBalance: 200,
+                selectedBoardTheme: 'default',
+                selectedPawnTheme: 'default',
             },
         ];
         const insertedUsers = await index_1.db.insert(index_1.users).values(testUsers).returning();
@@ -38,16 +47,16 @@ async function seed() {
             hasTimeLimit: false,
         };
         const insertedRooms = await index_1.db.insert(index_1.rooms).values(testRoom).returning();
-        console.log(`Created ${insertedRooms.length} test room with code: ${testRoom.code}`);
-        console.log('Database seeded successfully!');
+        console.log(`✅ Created ${insertedRooms.length} test room with code: ${testRoom.code}`);
+        console.log('✅ Database seeded successfully!');
         console.log('');
         console.log('Test accounts:');
-        console.log('- Username: alice, Password: password123');
-        console.log('- Username: bob, Password: password123');
+        console.log('- Username: alice, Password: password123 (500 coins)');
+        console.log('- Username: bob, Password: password123 (200 coins)');
         console.log(`- Test room code: ${testRoom.code}`);
     }
     catch (error) {
-        console.error('Seeding failed:', error);
+        console.error('❌ Seeding failed:', error);
         process.exit(1);
     }
 }

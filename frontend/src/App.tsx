@@ -14,7 +14,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 const AppContent: React.FC = () => {
   const { isLoading, isReconnecting } = useAuth();
 
-  // **CRITICAL FIX**: Show reconnection screen with clear messaging
   if (isReconnecting) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

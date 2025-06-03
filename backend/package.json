@@ -11,7 +11,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
-    "db:test-shop": "tsx src/db/test-shop.ts",
+    "test:shop": "tsx src/test-shop-api.ts",
     "test": "jest --coverage"
   },
   "keywords": [],

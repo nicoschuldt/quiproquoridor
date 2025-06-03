@@ -14,6 +14,7 @@ const config_1 = require("./config");
 const auth_1 = require("./routes/auth");
 const rooms_1 = require("./routes/rooms");
 const games_1 = require("./routes/games");
+const shop_1 = require("./routes/shop");
 const socket_1 = require("./socket");
 const passport_2 = require("./auth/passport");
 const errorHandler_1 = require("./middleware/errorHandler");
@@ -45,6 +46,7 @@ app.set('io', io);
 app.use('/api/auth', auth_1.authRouter);
 app.use('/api/rooms', rooms_1.roomsRouter);
 app.use('/api/games', games_1.gameRouter);
+app.use('/api/shop', shop_1.shopRouter);
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
