@@ -27,6 +27,7 @@ interface GameBoardProps {
   onWallPlace: (position: Position, orientation: WallOrientation) => void;
   validMoves?: Move[];
   disabled?: boolean;
+  boardTheme?: string; // CSS class for board theme
 }
 
 // Coordinate conversion utilities
@@ -105,7 +106,7 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
     }
   }, [disabled, isValidMove, onClick, position, gridRow, gridCol, player]);
 
-  const baseClasses = "aspect-square border border-gray-300 flex items-center justify-center relative transition-all duration-200 bg-amber-50";
+  const baseClasses = "pawn-square aspect-square flex items-center justify-center relative";
   
   let squareClasses = baseClasses;
   if (isValidMove && !disabled) {
@@ -123,7 +124,7 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
     >
       {/* Valid move indicator */}
       {isValidMove && !player && !disabled && (
-        <div className="w-6 h-6 bg-green-500 rounded-full opacity-70 animate-pulse shadow-lg" />
+        <div className="valid-move-indicator w-6 h-6 rounded-full animate-pulse" />
       )}
       
       {/* Player pawn with dynamic theme */}
@@ -197,12 +198,12 @@ const WallZone: React.FC<WallZoneProps> = ({
     ? { 
         gridRow: gridRow, 
         gridColumn: `${gridCol} / ${gridCol + 3}`,
-        minHeight: '8px'
+        minHeight: '10px'
       }
     : { 
         gridRow: `${gridRow} / ${gridRow + 3}`, 
         gridColumn: gridCol,
-        minWidth: '8px'
+        minWidth: '10px'
       };
 
   return (
@@ -215,16 +216,12 @@ const WallZone: React.FC<WallZoneProps> = ({
     >
       {/* Existing wall */}
       {hasWall && (
-        <div className={`bg-gray-800 rounded-sm ${
-          isHorizontal ? 'h-full w-full' : 'w-full h-full'
-        }`} />
+        <div className="wall h-full w-full" />
       )}
       
       {/* Wall preview on hover - fill the entire zone */}
       {!hasWall && isValidPlacement && !disabled && isHovering && (
-        <div className={`bg-red-500 opacity-70 rounded-sm ${
-          isHorizontal ? 'h-full w-full' : 'w-full h-full'
-        }`} />
+        <div className="wall-preview h-full w-full" />
       )}
     </div>
   );
@@ -236,7 +233,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   onPawnMove,
   onWallPlace,
   validMoves = [],
-  disabled = false
+  disabled = false,
+  boardTheme
 }) => {
   console.log(`🎮 GameBoard render:`, {
     gameState,
@@ -420,10 +418,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* Game board */}
       <div 
-        className="game-board aspect-square bg-white border-2 border-gray-400 relative"
+        className={`game-board aspect-square relative ${boardTheme || ''}`}
         style={{
           display: 'grid',
-          // Alternating pattern: pawn squares (1fr) and wall zones (8px)
           gridTemplateColumns: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
           gridTemplateRows: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
         }}
