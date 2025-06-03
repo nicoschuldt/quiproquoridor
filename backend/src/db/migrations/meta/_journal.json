@@ -15,6 +15,13 @@
       "when": 1748605404451,
       "tag": "0001_foamy_randall",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1748948410839,
+      "tag": "0002_lucky_ultron",
+      "breakpoints": true
     }
   ]
 }

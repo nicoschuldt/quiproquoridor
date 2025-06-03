@@ -386,3 +386,95 @@ export const PLAYER_START_POSITIONS: Record<number, Position[]> = {
     { x: 0, y: 4 }  // Player 4: left center
   ]
 };
+
+// ==========================================
+// SHOP & THEME SYSTEM TYPES
+// ==========================================
+
+export type ThemeType = 'board' | 'pawn';
+export type TransactionType = 'coin_purchase' | 'theme_purchase' | 'game_reward';
+
+export interface ShopItem {
+  id: string; // e.g., 'board_forest', 'pawn_knights'
+  name: string; // e.g., 'Forest Theme', 'Medieval Knights'
+  description?: string; // e.g., 'Mystical forest themed board'
+  type: ThemeType;
+  priceCoins: number;
+  cssClass: string; // e.g., 'theme-board-forest'
+  previewImageUrl?: string; // e.g., '/images/themes/forest-preview.jpg'
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface UserPurchase {
+  id: string;
+  userId: string;
+  shopItemId: string;
+  purchasedAt: Date;
+}
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  type: TransactionType;
+  amount: number; // Positive = gain, negative = spend
+  description?: string; // e.g., 'Purchased Forest Theme'
+  shopItemId?: string; // NULL for coin purchases
+  stripeSessionId?: string; // For coin purchases via Stripe
+  createdAt: Date;
+}
+
+export interface UserThemes {
+  selectedBoardTheme: string; // CSS class name
+  selectedPawnTheme: string; // CSS class name
+}
+
+export interface GameThemes {
+  [playerId: string]: {
+    boardTheme: string; // CSS class for board (only visible to this player)
+    pawnTheme: string; // CSS class for pawn (visible to all)
+  };
+}
+
+// Shop API Request/Response Types
+export interface ShopBrowseResponse {
+  available: ShopItem[]; // Themes user doesn't own
+  owned: ShopItem[]; // Themes user owns
+  selected: UserThemes; // Current active themes
+  coinBalance: number;
+}
+
+export interface PurchaseThemeRequest {
+  shopItemId: string;
+}
+
+export interface PurchaseThemeResponse {
+  success: boolean;
+  newBalance: number;
+  purchasedItem: ShopItem;
+}
+
+export interface SelectThemeRequest {
+  themeType: ThemeType;
+  cssClass: string; // Must be owned by user
+}
+
+export interface UserBalanceResponse {
+  coinBalance: number;
+  totalSpent: number;
+  totalEarned: number;
+}
+
+export interface TransactionHistoryResponse {
+  transactions: Transaction[];
+  totalCount: number;
+}
+
+// Enhanced User Profile with Shop Data
+export interface UserProfileWithShop extends UserProfile {
+  coinBalance: number;
+  selectedBoardTheme: string;
+  selectedPawnTheme: string;
+}
+
+// ==========================================
