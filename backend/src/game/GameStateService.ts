@@ -29,12 +29,13 @@ export class GameStateService {
         throw new Error('Room not found');
       }
 
-      // Get all players in the room with their usernames
+      // Get all players in the room with their usernames and theme data
       const playersData = await db
         .select({
           userId: roomMembers.userId,
           username: users.username,
           joinedAt: roomMembers.joinedAt,
+          selectedPawnTheme: users.selectedPawnTheme,
         })
         .from(roomMembers)
         .innerJoin(users, eq(roomMembers.userId, users.id))
@@ -49,11 +50,12 @@ export class GameStateService {
       const playerIds = playersData.map(p => p.userId);
       const gameState = gameEngineManager.createGame(playerIds, room[0].maxPlayers as 2 | 4);
 
-      // Update players with real usernames
+      // Update players with real usernames and theme data
       gameState.players = gameState.players.map((player, index) => ({
         ...player,
         username: playersData[index].username,
         joinedAt: playersData[index].joinedAt,
+        selectedPawnTheme: playersData[index].selectedPawnTheme || 'theme-pawn-default',
       }));
 
       // Save game to database

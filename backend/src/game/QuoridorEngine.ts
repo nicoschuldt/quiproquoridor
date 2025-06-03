@@ -19,9 +19,9 @@ import {
 /**
  * QuoridorEngine - Moteur de jeu corrigé pour prendre en compte que chaque barrière
  * occupe 2 cases de longueur :
- *   - Un mur “horizontal” enregistré en (x,y) bloque la jonction
+ *   - Un mur "horizontal" enregistré en (x,y) bloque la jonction
  *     entre case (x,y)↔(x,y+1) et entre case (x+1,y)↔(x+1,y+1).
- *   - Un mur “vertical”   enregistré en (x,y) bloque la jonction
+ *   - Un mur "vertical"   enregistré en (x,y) bloque la jonction
  *     entre case (x,y)↔(x+1,y) et entre case (x,y+1)↔(x+1,y+1).
  */
 export class QuoridorEngine implements GameEngine {
@@ -52,6 +52,7 @@ export class QuoridorEngine implements GameEngine {
       wallsRemaining: maxWalls,
       isConnected: true,
       joinedAt: new Date(),
+      selectedPawnTheme: 'theme-pawn-default',
     }));
 
     const gameState: GameState = {
@@ -434,7 +435,7 @@ export class QuoridorEngine implements GameEngine {
    * Retourne toutes les positions atteignables pour un pion depuis `player.position`,
    * en tenant compte :
    *  - des autres pions (pour les sauts),
-   *  - des murs (barrières) enregistrés, qui bloquent “entre” deux cases adjacentes.
+   *  - des murs (barrières) enregistrés, qui bloquent "entre" deux cases adjacentes.
    */
   private getValidPawnMoves(
     gameState: GameState,
@@ -458,7 +459,7 @@ export class QuoridorEngine implements GameEngine {
       // Si un mur bloque la jonction from↔adj → on ne peut pas aller là
       if (this.isWallBlocking(gameState.walls, from, adj)) continue;
 
-      // Vérifier s’il y a un pion adjacent
+      // Vérifier s'il y a un pion adjacent
       const blockingPawn = otherPlayers.find(
         (p) => p.position.x === adj.x && p.position.y === adj.y
       );
@@ -522,7 +523,7 @@ export class QuoridorEngine implements GameEngine {
   }
 
   /**
-   * Vérifie si un mur bloque la transition “entre deux cases adjacentes” from→to.
+   * Vérifie si un mur bloque la transition "entre deux cases adjacentes" from→to.
    *
    * - Mouvement vertical (dy = ±1) :
    *   • Si on descend (to.y = from.y + 1), on bloque si
@@ -589,12 +590,12 @@ export class QuoridorEngine implements GameEngine {
       }
     }
 
-    // Sinon, ce n’est pas un déplacement entre deux cases adjacentes orthogonales
+    // Sinon, ce n'est pas un déplacement entre deux cases adjacentes orthogonales
     return false;
   }
 
   /**
-   * BFS pour vérifier qu’un joueur peut atteindre son objectif,
+   * BFS pour vérifier qu'un joueur peut atteindre son objectif,
    * en tenant compte de la liste complète des murs (tempWalls) passés en argument.
    */
   private hasPathToGoalWithWalls(

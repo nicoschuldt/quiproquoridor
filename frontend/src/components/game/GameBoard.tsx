@@ -1,6 +1,7 @@
 // frontend/src/components/game/GameBoard.tsx
 import React, { useState, useCallback } from 'react';
 import type { Position, Move, Wall, GameState, Player, WallOrientation } from '@/types';
+import { getSafePawnClasses } from '@/utils/themeUtils';
 
 /**
  * GameBoard Component for Quoridor
@@ -95,7 +96,8 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
       gamePosition: position,
       gridPosition: { row: gridRow, col: gridCol },
       isValidMove,
-      player: player?.username || 'empty'
+      player: player?.username || 'empty',
+      theme: player ? getSafePawnClasses(player) : 'none'
     });
     
     if (!disabled && isValidMove) {
@@ -124,19 +126,12 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
         <div className="w-6 h-6 bg-green-500 rounded-full opacity-70 animate-pulse shadow-lg" />
       )}
       
-      {/* Player pawn */}
+      {/* Player pawn with dynamic theme */}
       {player && (
         <div 
-          className={`w-10 h-10 rounded-full border-3 border-white shadow-lg flex items-center justify-center ${
-            player.color === 'red' ? 'bg-red-500' :
-            player.color === 'blue' ? 'bg-blue-500' :
-            player.color === 'green' ? 'bg-green-500' :
-            'bg-yellow-500'
-          }`}
+          className={getSafePawnClasses(player)}
           title={`${player.username} (${player.wallsRemaining} walls left)`}
-        >
-          <div className="w-4 h-4 bg-white rounded-full opacity-80"></div>
-        </div>
+        />
       )}
       
       {/* Debug coordinates (remove in production) */}
@@ -414,10 +409,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
               player.id === currentPlayerId ? 'font-bold' : ''
             }`}>
               <div className={`w-4 h-4 rounded-full ${
-                player.color === 'red' ? 'bg-game-red' :
-                player.color === 'blue' ? 'bg-game-blue' :
-                player.color === 'green' ? 'bg-game-green' :
-                'bg-game-yellow'
+                player.color === 'red' ? 'bg-red-500' :
+                player.color === 'blue' ? 'bg-blue-500' :
+                player.color === 'green' ? 'bg-green-500' :
+                'bg-yellow-500'
               }`} />
               <span>{player.username}: {player.wallsRemaining} walls</span>
             </div>

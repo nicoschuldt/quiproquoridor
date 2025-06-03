@@ -162,6 +162,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
           isConnected: true,
           joinedAt: member.joinedAt,
+          selectedPawnTheme: 'theme-pawn-default', // Default theme for socket events
         }));
 
         const roomData = {

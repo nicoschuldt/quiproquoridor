@@ -36,6 +36,7 @@ import type {
         wallsRemaining: maxPlayers === 2 ? 10 : 5,
         isConnected: true,
         joinedAt: new Date(),
+        selectedPawnTheme: 'theme-pawn-default', // Will be updated with real theme data
       }));
   
       const gameState: GameState = {
