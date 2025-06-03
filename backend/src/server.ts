@@ -5,6 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import passport from 'passport';
 
+import 'dotenv/config';
+
 import { config } from './config';
 import { authRouter } from './routes/auth';
 import { roomsRouter } from './routes/rooms';

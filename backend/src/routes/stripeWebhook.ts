@@ -2,9 +2,12 @@ import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { db, users } from '../db';
 import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+import express from 'express';
+import 'dotenv/config';
 
 const router = Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05-28.basil' });
 
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'];
@@ -27,7 +30,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: R
 
     if (userId && coins > 0) {
       await db.update(users).set({
-        coins: db.raw('coins + ?', [coins]),
+        coins: sql`${users.coins} + ${coins}`,
       }).where(eq(users.id, userId));
     }
   }
