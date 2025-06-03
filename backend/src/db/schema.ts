@@ -12,8 +12,8 @@ export const users = sqliteTable('users', {
   
   // Shop functionality
   coinBalance: int('coin_balance').default(0).notNull(),
-  selectedBoardTheme: text('selected_board_theme').default('default').notNull(),
-  selectedPawnTheme: text('selected_pawn_theme').default('default').notNull(),
+  selectedBoardTheme: text('selected_board_theme').default('theme-board-default').notNull(),
+  selectedPawnTheme: text('selected_pawn_theme').default('theme-pawn-default').notNull(),
   
   createdAt: int('created_at', { mode: 'timestamp' })
     .default(sql`(unixepoch())`)

@@ -6,7 +6,7 @@ import type { Player, PlayerColor } from '@/types';
  * @returns Combined CSS class string for the pawn
  */
 export const getPawnClasses = (player: Player): string => {
-  const theme = player.selectedPawnTheme || 'default';
+  const theme = player.selectedPawnTheme || 'theme-pawn-default';
   const color = `color-${player.color}`;
   return `${theme} ${color}`;
 };
@@ -41,7 +41,7 @@ export const getSafePawnClasses = (player: Player): string => {
  */
 export const isValidPawnTheme = (themeClass: string): boolean => {
   const validThemes = [
-    'default',
+    'theme-pawn-default',
     'theme-pawn-knights',
     'theme-pawn-robots',
     'theme-pawn-animals',
@@ -69,6 +69,7 @@ export const getBoardThemeClass = (selectedBoardTheme?: string): string => {
  */
 export const isValidBoardTheme = (themeClass: string): boolean => {
   const validThemes = [
+    'theme-board-default',
     'theme-board-forest',
     'theme-board-ocean',
     'theme-board-neon',

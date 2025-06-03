@@ -6,7 +6,7 @@
 /* Base Pawn Themes */
 
 /* Default Theme */
-.default {
+.theme-pawn-default {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
@@ -19,7 +19,7 @@
   transition: all 0.2s ease;
 }
 
-.default::after {
+.theme-pawn-default::after {
   content: '';
   width: 1rem;
   height: 1rem;
@@ -190,7 +190,7 @@
 /* Color Modifiers */
 
 /* Red Color */
-.color-red.default,
+.color-red.theme-pawn-default,
 .color-red.theme-pawn-knights,
 .color-red.theme-pawn-robots,
 .color-red.theme-pawn-animals,
@@ -205,7 +205,7 @@
 }
 
 /* Blue Color */
-.color-blue.default,
+.color-blue.theme-pawn-default,
 .color-blue.theme-pawn-knights,
 .color-blue.theme-pawn-robots,
 .color-blue.theme-pawn-animals,
@@ -220,7 +220,7 @@
 }
 
 /* Green Color */
-.color-green.default,
+.color-green.theme-pawn-default,
 .color-green.theme-pawn-knights,
 .color-green.theme-pawn-robots,
 .color-green.theme-pawn-animals,
@@ -235,7 +235,7 @@
 }
 
 /* Yellow Color */
-.color-yellow.default,
+.color-yellow.theme-pawn-default,
 .color-yellow.theme-pawn-knights,
 .color-yellow.theme-pawn-robots,
 .color-yellow.theme-pawn-animals,
@@ -250,7 +250,7 @@
 }
 
 /* Hover effects */
-.default:hover,
+.theme-pawn-default:hover,
 .theme-pawn-knights:hover,
 .theme-pawn-robots:hover,
 .theme-pawn-animals:hover,

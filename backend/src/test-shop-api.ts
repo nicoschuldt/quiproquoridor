@@ -140,7 +140,7 @@ class ShopAPITester {
       // Test selecting default theme (should always work)
       const defaultResponse = await axios.post(`${API_URL}/shop/select-theme`, {
         themeType: 'board',
-        cssClass: 'default'
+        cssClass: 'theme-board-default'
       }, {
         headers: { Authorization: `Bearer ${this.token}` }
       });
