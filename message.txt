@@ -1,0 +1,256 @@
+# Simple Theme System Database Design
+
+## Database Structure Overview
+
+We need 4 main data points:
+1. **User coin balance** - How many coins user has
+2. **Available themes** - What can be purchased  
+3. **Owned themes** - What user has bought
+4. **Selected themes** - What user is currently using
+
+## 1. Users Table (Updated)
+
+Add coin balance and selected themes to existing users table:
+
+```sql
+-- Add columns to existing users table
+ALTER TABLE users ADD COLUMN coin_balance INTEGER DEFAULT 0 NOT NULL;
+ALTER TABLE users ADD COLUMN selected_board_theme TEXT DEFAULT 'default';
+ALTER TABLE users ADD COLUMN selected_pawn_theme TEXT DEFAULT 'default';
+```
+
+**Drizzle Schema:**
+```typescript
+export const users = pgTable('users', {
+  // ... existing fields (id, username, etc.)
+  coinBalance: integer('coin_balance').default(0).notNull(),
+  selectedBoardTheme: text('selected_board_theme').default('default').notNull(),
+  selectedPawnTheme: text('selected_pawn_theme').default('default').notNull(),
+});
+```
+
+**Reasoning:**
+- Simple: Each user has exactly one active board theme and one active pawn theme
+- No complex joins needed to get user's current themes
+- Easy to update when user changes theme selection
+
+## 2. Shop Items Table
+
+Define all purchasable themes:
+
+```sql
+CREATE TABLE shop_items (
+  id TEXT PRIMARY KEY,              -- 'board_forest', 'pawn_knights'
+  name TEXT NOT NULL,               -- 'Forest Board', 'Medieval Knights'
+  description TEXT,                 -- 'Mystical forest themed board'
+  type TEXT NOT NULL,               -- 'board' or 'pawn'
+  price_coins INTEGER NOT NULL,     -- 100
+  css_class TEXT NOT NULL,          -- 'theme-board-forest', 'theme-pawn-knights'
+  preview_image_url TEXT,           -- '/images/themes/forest-preview.jpg'
+  is_active BOOLEAN DEFAULT true,   -- Can disable themes
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Sample Data:**
+```sql
+INSERT INTO shop_items VALUES
+-- Board Themes
+('board_forest', 'Forest Theme', 'Mystical forest board', 'board', 100, 'theme-board-forest', '/images/forest-preview.jpg', true, NOW()),
+('board_ocean', 'Ocean Theme', 'Deep blue ocean board', 'board', 100, 'theme-board-ocean', '/images/ocean-preview.jpg', true, NOW()),
+('board_neon', 'Neon Theme', 'Cyberpunk neon board', 'board', 125, 'theme-board-neon', '/images/neon-preview.jpg', true, NOW()),
+
+-- Pawn Themes  
+('pawn_knights', 'Medieval Knights', 'Castle and knight pieces', 'pawn', 75, 'theme-pawn-knights', '/images/knights-preview.jpg', true, NOW()),
+('pawn_robots', 'Future Robots', 'Sci-fi robot pieces', 'pawn', 75, 'theme-pawn-robots', '/images/robots-preview.jpg', true, NOW()),
+('pawn_animals', 'Animal Kingdom', 'Cute animal pieces', 'pawn', 75, 'theme-pawn-animals', '/images/animals-preview.jpg', true, NOW());
+```
+
+**Reasoning:**
+- `css_class` is the actual CSS class name to apply
+- `type` separates board vs pawn themes clearly
+- Simple flat structure, easy to query
+
+## 3. User Purchases Table
+
+Track what themes users own:
+
+```sql
+CREATE TABLE user_purchases (
+  id TEXT PRIMARY KEY DEFAULT (uuid_generate_v4()),
+  user_id TEXT NOT NULL REFERENCES users(id),
+  shop_item_id TEXT NOT NULL REFERENCES shop_items(id),
+  purchased_at TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(user_id, shop_item_id)  -- Prevent duplicate purchases
+);
+```
+
+**Reasoning:**
+- Simple ownership tracking
+- Unique constraint prevents buying same theme twice
+- Can easily check if user owns a theme
+
+## 4. Transactions Table (For Audit)
+
+Track all coin movements:
+
+```sql
+CREATE TABLE transactions (
+  id TEXT PRIMARY KEY DEFAULT (uuid_generate_v4()),
+  user_id TEXT NOT NULL REFERENCES users(id),
+  type TEXT NOT NULL,              -- 'coin_purchase', 'theme_purchase'
+  amount INTEGER NOT NULL,         -- Coins (positive = gain, negative = spend)
+  description TEXT,                -- 'Purchased Forest Theme'
+  shop_item_id TEXT,              -- NULL for coin purchases
+  stripe_session_id TEXT,         -- For coin purchases
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Reasoning:**
+- Audit trail for all coin movements
+- Simple structure for both coin purchases and theme purchases
+- Can track Stripe sessions for payment verification
+
+## Theme System Logic
+
+### Game Start Flow
+
+When a game starts:
+
+1. **Get each player's selected themes:**
+```sql
+SELECT selected_board_theme, selected_pawn_theme 
+FROM users 
+WHERE id IN ('player1_id', 'player2_id');
+```
+
+2. **Send theme data to frontend:**
+```typescript
+interface GameThemes {
+  [playerId: string]: {
+    boardTheme: string;  // CSS class for board (only visible to this player)
+    pawnTheme: string;   // CSS class for pawn (visible to all)
+  }
+}
+
+// Example:
+{
+  'player1': { boardTheme: 'theme-board-forest', pawnTheme: 'theme-pawn-knights' },
+  'player2': { boardTheme: 'theme-board-ocean', pawnTheme: 'theme-pawn-robots' }
+}
+```
+
+### Frontend Application
+
+**Board Theme (Personal):**
+```jsx
+// Only apply current user's board theme
+<div className={`game-board ${currentUser.boardTheme}`}>
+  {/* Board content */}
+</div>
+```
+
+**Pawn Theme (Per Player):**
+```jsx
+// Apply each player's pawn theme to their pieces
+<div className={`pawn ${player.pawnTheme} color-${player.color}`}>
+  {/* Pawn content */}
+</div>
+```
+
+### CSS Structure
+
+**Modular CSS with Color Variables:**
+```css
+/* Default pawn style */
+.pawn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--pawn-color); /* Color handled separately */
+}
+
+/* Knight theme - just shape/style, color is variable */
+.theme-pawn-knights {
+  border-radius: 25% 25% 50% 50%;
+  background: linear-gradient(135deg, var(--pawn-color) 0%, var(--pawn-color-dark) 100%);
+  border: 2px solid var(--pawn-color-border);
+}
+
+/* Robot theme */
+.theme-pawn-robots {
+  border-radius: 15%;
+  background: metallic linear-gradient(var(--pawn-color), var(--pawn-color-light));
+  box-shadow: inset 0 0 10px var(--pawn-color-dark);
+}
+
+/* Board themes */
+.theme-board-forest {
+  background: linear-gradient(45deg, #2d5016, #4a7c59);
+  background-image: url('/images/wood-texture.png');
+}
+
+.theme-board-ocean {
+  background: linear-gradient(135deg, #006994, #0099cc);
+  background-image: url('/images/water-texture.png');
+}
+```
+
+## Shop Purchase Flow
+
+### 1. Browse Themes
+```sql
+-- Get available themes user doesn't own
+SELECT si.* FROM shop_items si
+LEFT JOIN user_purchases up ON si.id = up.shop_item_id AND up.user_id = 'user_id'
+WHERE si.is_active = true AND up.id IS NULL;
+```
+
+### 2. Purchase Theme
+```sql
+-- Check user has enough coins
+SELECT coin_balance FROM users WHERE id = 'user_id';
+
+-- If sufficient coins, execute transaction:
+BEGIN;
+  UPDATE users SET coin_balance = coin_balance - 100 WHERE id = 'user_id';
+  INSERT INTO user_purchases (user_id, shop_item_id) VALUES ('user_id', 'board_forest');
+  INSERT INTO transactions (user_id, type, amount, description, shop_item_id) 
+    VALUES ('user_id', 'theme_purchase', -100, 'Purchased Forest Theme', 'board_forest');
+COMMIT;
+```
+
+### 3. Select Theme
+```sql
+-- User activates owned theme
+UPDATE users SET selected_board_theme = 'theme-board-forest' WHERE id = 'user_id';
+```
+
+## API Endpoints Needed
+
+```typescript
+// Shop browsing
+GET  /api/shop/themes                    // List available themes
+GET  /api/shop/themes/owned             // User's owned themes
+GET  /api/user/balance                  // Coin balance
+
+// Theme management  
+POST /api/shop/purchase                 // Buy theme
+POST /api/user/themes/select           // Change active theme
+
+// Game integration
+GET  /api/user/themes/active           // Get user's current themes
+```
+
+## Key Benefits of This Design
+
+1. **Simple**: Minimal tables, clear relationships
+2. **Fast**: No complex joins for common operations
+3. **Flexible**: Easy to add new themes or change prices
+4. **Secure**: Server validates all purchases and ownership
+5. **Modular**: CSS classes separate from colors
+6. **Clear**: Board themes are personal, pawn themes are public
+
+This structure supports the exact flow you described while keeping everything as simple as possible.

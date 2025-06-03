@@ -477,4 +477,33 @@ export interface UserProfileWithShop extends UserProfile {
   selectedPawnTheme: string;
 }
 
+
+// ==========================================
+// Stripe Integration Types
+// ==========================================
+
+// --- Stripe coin purchase ---
+export interface PurchaseCoinsRequest {
+  amount: number; // Montant en centimes (ex: 199 pour 1,99€)
+  coins: number;  // Nombre de pièces à créditer
+}
+
+export interface PurchaseCoinsResponse {
+  clientSecret: string;
+}
+
+// --- UserProfile (ajoute coins et thèmes sélectionnés) ---
+export interface UserProfile {
+  id: string;
+  username: string;
+  gamesPlayed: number;
+  gamesWon: number;
+  createdAt: Date;
+  coins: number; // Ajouté
+  selectedBoardTheme: string; // Ajouté
+  selectedPawnTheme: string;  // Ajouté
+}
+
+
+
 // ==========================================

@@ -9,6 +9,9 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash', { length: 255 }).notNull(),
   gamesPlayed: int('games_played').default(0).notNull(),
   gamesWon: int('games_won').default(0).notNull(),
+
+  //Stripe
+  coins: int('coins').default(0).notNull(), // solde de pièces
   
   // Shop functionality
   coinBalance: int('coin_balance').default(0).notNull(),
