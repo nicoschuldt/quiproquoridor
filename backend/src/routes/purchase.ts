@@ -4,14 +4,27 @@ import passport from 'passport';
 import { PurchaseCoinsRequest, PurchaseCoinsResponse } from '../../../shared/types';
 
 const router = Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05-28.basil' });
+
+interface AuthenticatedUser {
+  id: string;
+}
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: AuthenticatedUser;
+  }
+}
 
 router.post(
   '/create-payment-intent',
   passport.authenticate('jwt', { session: false }),
   async (req: Request, res: Response) => {
     const { amount, coins } = req.body as PurchaseCoinsRequest;
-    if (!amount || !coins) return res.status(400).json({ error: 'Invalid request' });
+    // Vérifie que req.user existe et a un id
+    if (!amount || !coins || !req.user?.id) {
+      return res.status(400).json({ error: 'Invalid request or user not authenticated' });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
