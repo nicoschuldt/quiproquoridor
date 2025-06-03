@@ -13,8 +13,11 @@ exports.users = (0, sqlite_core_1.sqliteTable)('users', {
     gamesWon: (0, sqlite_core_1.int)('games_won').default(0).notNull(),
     // Shop functionality
     coinBalance: (0, sqlite_core_1.int)('coin_balance').default(0).notNull(),
-    selectedBoardTheme: (0, sqlite_core_1.text)('selected_board_theme').default('default').notNull(),
-    selectedPawnTheme: (0, sqlite_core_1.text)('selected_pawn_theme').default('default').notNull(),
+    selectedBoardTheme: (0, sqlite_core_1.text)('selected_board_theme').default('theme-board-default').notNull(),
+    selectedPawnTheme: (0, sqlite_core_1.text)('selected_pawn_theme').default('theme-pawn-default').notNull(),
+    // AI functionality
+    isAI: (0, sqlite_core_1.int)('is_ai', { mode: 'boolean' }).default(false).notNull(),
+    aiDifficulty: (0, sqlite_core_1.text)('ai_difficulty', { enum: ['easy', 'medium', 'hard'] }),
     createdAt: (0, sqlite_core_1.int)('created_at', { mode: 'timestamp' })
         .default((0, drizzle_orm_1.sql) `(unixepoch())`)
         .notNull(),

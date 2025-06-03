@@ -1,6 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { db, games, gamePlayers, rooms, roomMembers, users } from '../db';
 import { gameEngineManager } from './GameEngineManager';
+import { aiManager } from '../ai/AIManager';
 import type { GameState, Player } from '../../../shared/types';
 
 /**
@@ -36,6 +37,8 @@ export class GameStateService {
           username: users.username,
           joinedAt: roomMembers.joinedAt,
           selectedPawnTheme: users.selectedPawnTheme,
+          isAI: users.isAI,
+          aiDifficulty: users.aiDifficulty,
         })
         .from(roomMembers)
         .innerJoin(users, eq(roomMembers.userId, users.id))
@@ -56,7 +59,17 @@ export class GameStateService {
         username: playersData[index].username,
         joinedAt: playersData[index].joinedAt,
         selectedPawnTheme: playersData[index].selectedPawnTheme || 'theme-pawn-default',
+        isAI: playersData[index].isAI || false,
+        aiDifficulty: playersData[index].aiDifficulty || undefined,
       }));
+
+      // Set up AI instances for AI players
+      for (const playerData of playersData) {
+        if (playerData.isAI && playerData.aiDifficulty) {
+          aiManager.createAI(playerData.userId, playerData.aiDifficulty);
+          console.log(`🤖 AI instance created for player ${playerData.userId} (${playerData.aiDifficulty})`);
+        }
+      }
 
       // Save game to database
       const [gameRecord] = await db
@@ -157,10 +170,101 @@ export class GameStateService {
         await this.completeGame(roomId, gameState);
       }
 
+      // **NEW AI INTEGRATION**: Process AI turns after saving state
+      await this.processAITurns(roomId, gameState);
+
     } catch (error) {
       console.error('❌ Error saving game state:', error);
       throw error;
     }
+  }
+
+  /**
+   * **NEW**: Processes AI turns automatically after human moves
+   */
+  private async processAITurns(roomId: string, gameState: GameState): Promise<void> {
+    // Don't process AI turns if game is finished
+    if (gameState.status !== 'playing') {
+      return;
+    }
+
+    let currentState = gameState;
+    let processedAIMove = false;
+
+    // Keep processing AI turns until it's a human player's turn or game ends
+    while (currentState.status === 'playing') {
+      const currentPlayer = gameEngineManager.getCurrentPlayer(currentState);
+      
+      // If current player is not AI, stop processing
+      if (!currentPlayer.isAI) {
+        break;
+      }
+
+      try {
+        console.log(`🤖 Processing AI turn for player ${currentPlayer.id} (${currentPlayer.username})`);
+        
+        // Generate AI move
+        const aiMove = await aiManager.generateMove(currentState, currentPlayer.id);
+        
+        // Validate the AI move
+        if (!gameEngineManager.validateMove(currentState, aiMove)) {
+          console.error(`❌ AI generated invalid move for player ${currentPlayer.id}`);
+          break;
+        }
+
+        // Apply the AI move
+        currentState = gameEngineManager.applyMove(currentState, aiMove);
+        processedAIMove = true;
+
+        console.log(`✅ AI move applied for player ${currentPlayer.id}`);
+
+        // Save the updated state (this will trigger socket emissions)
+        await db
+          .update(games)
+          .set({
+            gameState: currentState as any,
+            status: currentState.status,
+            winnerId: currentState.winner || null,
+            finishedAt: currentState.status === 'finished' ? new Date() : null,
+          })
+          .where(and(
+            eq(games.roomId, roomId),
+            eq(games.status, 'playing')
+          ));
+
+        // If game finished, handle completion
+        if (currentState.status === 'finished' && currentState.winner) {
+          await this.completeGame(roomId, currentState);
+          break;
+        }
+
+      } catch (error) {
+        console.error(`❌ Error processing AI turn for player ${currentPlayer.id}:`, error);
+        break;
+      }
+    }
+
+    // Emit socket events if we processed any AI moves
+    if (processedAIMove) {
+      // Store the updated game state for socket handler to pick up
+      // This is a simple way to communicate with socket handler without tight coupling
+      this.aiMoveProcessed.set(roomId, currentState);
+    }
+  }
+
+  // Map to communicate AI moves to socket handler
+  private aiMoveProcessed = new Map<string, GameState>();
+
+  /**
+   * **NEW**: Checks if an AI move was processed and returns the updated state
+   */
+  getProcessedAIMove(roomId: string): GameState | null {
+    const state = this.aiMoveProcessed.get(roomId);
+    if (state) {
+      this.aiMoveProcessed.delete(roomId); // Clean up after retrieval
+      return state;
+    }
+    return null;
   }
 
   /**

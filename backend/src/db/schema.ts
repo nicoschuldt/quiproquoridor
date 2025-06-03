@@ -15,6 +15,10 @@ export const users = sqliteTable('users', {
   selectedBoardTheme: text('selected_board_theme').default('theme-board-default').notNull(),
   selectedPawnTheme: text('selected_pawn_theme').default('theme-pawn-default').notNull(),
   
+  // AI functionality
+  isAI: int('is_ai', { mode: 'boolean' }).default(false).notNull(),
+  aiDifficulty: text('ai_difficulty', { enum: ['easy', 'medium', 'hard'] }),
+  
   createdAt: int('created_at', { mode: 'timestamp' })
     .default(sql`(unixepoch())`)
     .notNull(),

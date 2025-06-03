@@ -7,9 +7,9 @@ const types_1 = require("../../../shared/types");
 /**
  * QuoridorEngine - Moteur de jeu corrigé pour prendre en compte que chaque barrière
  * occupe 2 cases de longueur :
- *   - Un mur “horizontal” enregistré en (x,y) bloque la jonction
+ *   - Un mur "horizontal" enregistré en (x,y) bloque la jonction
  *     entre case (x,y)↔(x,y+1) et entre case (x+1,y)↔(x+1,y+1).
- *   - Un mur “vertical”   enregistré en (x,y) bloque la jonction
+ *   - Un mur "vertical"   enregistré en (x,y) bloque la jonction
  *     entre case (x,y)↔(x+1,y) et entre case (x,y+1)↔(x+1,y+1).
  */
 class QuoridorEngine {
@@ -36,6 +36,9 @@ class QuoridorEngine {
             wallsRemaining: maxWalls,
             isConnected: true,
             joinedAt: new Date(),
+            selectedPawnTheme: 'theme-pawn-default',
+            isAI: false,
+            aiDifficulty: undefined,
         }));
         const gameState = {
             id: (0, uuid_1.v4)(),
@@ -323,7 +326,7 @@ class QuoridorEngine {
      * Retourne toutes les positions atteignables pour un pion depuis `player.position`,
      * en tenant compte :
      *  - des autres pions (pour les sauts),
-     *  - des murs (barrières) enregistrés, qui bloquent “entre” deux cases adjacentes.
+     *  - des murs (barrières) enregistrés, qui bloquent "entre" deux cases adjacentes.
      */
     getValidPawnMoves(gameState, player) {
         const from = player.position;
@@ -343,7 +346,7 @@ class QuoridorEngine {
             // Si un mur bloque la jonction from↔adj → on ne peut pas aller là
             if (this.isWallBlocking(gameState.walls, from, adj))
                 continue;
-            // Vérifier s’il y a un pion adjacent
+            // Vérifier s'il y a un pion adjacent
             const blockingPawn = otherPlayers.find((p) => p.position.x === adj.x && p.position.y === adj.y);
             if (!blockingPawn) {
                 // Case libre, déplacement simple
@@ -395,7 +398,7 @@ class QuoridorEngine {
         return unique;
     }
     /**
-     * Vérifie si un mur bloque la transition “entre deux cases adjacentes” from→to.
+     * Vérifie si un mur bloque la transition "entre deux cases adjacentes" from→to.
      *
      * - Mouvement vertical (dy = ±1) :
      *   • Si on descend (to.y = from.y + 1), on bloque si
@@ -446,11 +449,11 @@ class QuoridorEngine {
                     (from.y === w.position.y || from.y === w.position.y + 1));
             }
         }
-        // Sinon, ce n’est pas un déplacement entre deux cases adjacentes orthogonales
+        // Sinon, ce n'est pas un déplacement entre deux cases adjacentes orthogonales
         return false;
     }
     /**
-     * BFS pour vérifier qu’un joueur peut atteindre son objectif,
+     * BFS pour vérifier qu'un joueur peut atteindre son objectif,
      * en tenant compte de la liste complète des murs (tempWalls) passés en argument.
      */
     hasPathToGoalWithWalls(player, allPlayers, walls, maxPlayers) {

@@ -143,8 +143,7 @@ router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
 router.post('/select-theme', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
     const { themeType, cssClass } = selectThemeSchema.parse(req.body);
-    // Special case: Allow selecting 'default' theme without ownership check
-    if (cssClass === 'default') {
+    if (cssClass === 'theme-board-default' || cssClass === 'theme-pawn-default') {
         const updateField = themeType === 'board' ? 'selectedBoardTheme' : 'selectedPawnTheme';
         await db_1.db
             .update(db_1.users)

@@ -1,11 +1,3 @@
-/* Board Theme System with Modern 3D Design
- * Usage: Apply theme class to game-board container
- * Base design: Modern, subtle 3D effects, clean shadows
- */
-
-/* ==========================================
-   BASE BOARD DESIGN - Modern & Clean
-   ========================================== */
 
 .game-board {
   background: linear-gradient(145deg, #f8fafc, #e2e8f0);
@@ -91,11 +83,6 @@
   border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
-/* ==========================================
-   THEME VARIATIONS
-   ========================================== */
-
-/* Forest Theme - Natural wood & earth tones */
 .theme-board-forest {
   background: linear-gradient(145deg, #f0fdf4, #dcfce7);
   border-color: rgba(34, 197, 94, 0.3);
@@ -216,10 +203,6 @@
 .theme-board-desert .wall-preview {
   background: linear-gradient(145deg, #f97316, #ea580c);
 }
-
-/* ==========================================
-   RESPONSIVE & INTERACTIONS
-   ========================================== */
 
 @media (max-width: 768px) {
   .game-board {

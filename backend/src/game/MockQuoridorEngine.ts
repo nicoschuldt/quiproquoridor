@@ -37,6 +37,8 @@ import type {
         isConnected: true,
         joinedAt: new Date(),
         selectedPawnTheme: 'theme-pawn-default', // Will be updated with real theme data
+        isAI: false, // Will be updated with real AI data
+        aiDifficulty: undefined, // Will be updated with real AI data
       }));
   
       const gameState: GameState = {

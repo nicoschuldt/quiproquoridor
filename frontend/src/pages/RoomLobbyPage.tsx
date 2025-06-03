@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
 import { roomApi } from '../services/api';
-import type { Room, Player, RoomData } from '@/types';
+import type { Room, Player, RoomData, AIDifficulty } from '@/types';
 
 const RoomLobbyPage: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -22,6 +22,10 @@ const RoomLobbyPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  
+  // AI player state
+  const [addingAI, setAddingAI] = useState(false);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<AIDifficulty>('easy');
 
   // Load initial room data
   useEffect(() => {
@@ -154,6 +158,24 @@ const RoomLobbyPage: React.FC = () => {
     }
   };
 
+  const handleAddAIPlayer = async () => {
+    if (!room || !roomId) return;
+    
+    setAddingAI(true);
+    setError(null);
+    
+    try {
+      await roomApi.addAIPlayer(roomId, selectedDifficulty);
+      // Success! The room will be updated via socket events
+      console.log(`✅ AI player (${selectedDifficulty}) added successfully`);
+    } catch (err: any) {
+      console.error('Failed to add AI player:', err);
+      setError(err.message || 'Failed to add AI player');
+    } finally {
+      setAddingAI(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -275,9 +297,15 @@ const RoomLobbyPage: React.FC = () => {
                               {player.username}
                               {isCurrentUser && ' (You)'}
                               {player.id === room.hostId && ' 👑'}
+                              {player.isAI && ' 🤖'}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {player.isConnected ? (
+                              {player.isAI ? (
+                                <span className="text-blue-600 flex items-center">
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                                  AI ({player.aiDifficulty || 'easy'})
+                                </span>
+                              ) : player.isConnected ? (
                                 <span className="text-green-600 flex items-center">
                                   <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                                   Online
@@ -304,6 +332,35 @@ const RoomLobbyPage: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* AI Player Controls (Host Only) */}
+            {isHost && !roomIsFull && room.status === 'lobby' && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="text-sm font-medium text-blue-900 mb-3">Add AI Opponent</h3>
+                <div className="flex items-center space-x-3">
+                  <select
+                    value={selectedDifficulty}
+                    onChange={(e) => setSelectedDifficulty(e.target.value as AIDifficulty)}
+                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={addingAI}
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                  <button
+                    onClick={handleAddAIPlayer}
+                    disabled={addingAI}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {addingAI ? '🤖 Adding...' : '🤖 Add AI'}
+                  </button>
+                </div>
+                <p className="text-xs text-blue-700 mt-2">
+                  AI players will respond automatically during the game
+                </p>
+              </div>
+            )}
 
             {/* Status Message */}
             <div className="mt-6">

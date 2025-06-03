@@ -148,6 +148,8 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
             username: users.username,
             isHost: roomMembers.isHost,
             joinedAt: roomMembers.joinedAt,
+            isAI: users.isAI,
+            aiDifficulty: users.aiDifficulty,
           })
           .from(roomMembers)
           .innerJoin(users, eq(roomMembers.userId, users.id))
@@ -163,6 +165,8 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           isConnected: true,
           joinedAt: member.joinedAt,
           selectedPawnTheme: 'theme-pawn-default', // Default theme for socket events
+          isAI: member.isAI || false,
+          aiDifficulty: member.aiDifficulty || undefined,
         }));
 
         const roomData = {

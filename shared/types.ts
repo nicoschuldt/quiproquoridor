@@ -35,7 +35,11 @@ export interface Player {
   wallsRemaining: number;
   isConnected: boolean; // For handling disconnections
   joinedAt: Date;
-  selectedPawnTheme: string; // CSS class for pawn theme, e.g., 'theme-pawn-knights'
+  selectedPawnTheme: string;
+  
+  // AI fields
+  isAI: boolean;
+  aiDifficulty?: AIDifficulty;
 }
 
 export interface Move {
@@ -137,6 +141,10 @@ export interface UserProfile {
   gamesPlayed: number;
   gamesWon: number;
   createdAt: Date;
+  
+  // AI fields
+  isAI: boolean;
+  aiDifficulty?: AIDifficulty;
 }
 
 // Room Operations
@@ -244,6 +252,27 @@ export interface GameEngine {
   getPlayerById(gameState: GameState, playerId: string): Player | null;
   getPlayerStartPosition(playerIndex: number, maxPlayers: 2 | 4): Position;
   getPlayerGoalRow(playerIndex: number, maxPlayers: 2 | 4): number;
+}
+
+// ==========================================
+// AI ENGINE INTERFACE
+// ==========================================
+
+export interface AIEngine {
+  /**
+   * Generates a move for an AI player
+   */
+  generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>>;
+  
+  /**
+   * Gets the AI's difficulty level
+   */
+  getDifficulty(): AIDifficulty;
+  
+  /**
+   * Gets a display name for this AI
+   */
+  getName(): string;
 }
 
 // ==========================================
@@ -419,8 +448,8 @@ export interface Transaction {
   userId: string;
   type: TransactionType;
   amount: number; // Positive = gain, negative = spend
-  description?: string; // e.g., 'Purchased Forest Theme'
-  shopItemId?: string; // NULL for coin purchases
+  description?: string;
+  shopItemId?: string;
   stripeSessionId?: string; // For coin purchases via Stripe
   createdAt: Date;
 }

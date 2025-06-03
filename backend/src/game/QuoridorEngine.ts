@@ -53,6 +53,8 @@ export class QuoridorEngine implements GameEngine {
       isConnected: true,
       joinedAt: new Date(),
       selectedPawnTheme: 'theme-pawn-default',
+      isAI: false,
+      aiDifficulty: undefined,
     }));
 
     const gameState: GameState = {

@@ -104,7 +104,7 @@ class GameHandlers {
                 return;
             }
             // Apply move to create new game state
-            const newGameState = GameEngineManager_1.gameEngineManager.applyMove(gameState, data.move);
+            let newGameState = GameEngineManager_1.gameEngineManager.applyMove(gameState, data.move);
             // Create full move object for broadcasting
             const fullMove = {
                 id: crypto.randomUUID(),
@@ -118,6 +118,23 @@ class GameHandlers {
                 move: fullMove,
                 gameState: newGameState
             });
+            // **NEW AI INTEGRATION**: Check if AI moves were processed and emit them
+            const aiProcessedState = GameStateService_1.gameStateService.getProcessedAIMove(data.roomId);
+            if (aiProcessedState) {
+                console.log(`🤖 AI moves detected, broadcasting updated state for room ${data.roomId}`);
+                // Emit the AI-updated game state to all players
+                this.io.to(data.roomId).emit('move-made', {
+                    move: {
+                        id: crypto.randomUUID(),
+                        timestamp: new Date(),
+                        type: 'pawn', // Placeholder - actual move data would need to be stored
+                        playerId: 'ai-system' // Placeholder
+                    },
+                    gameState: aiProcessedState
+                });
+                // Update the newGameState reference for subsequent checks
+                newGameState = aiProcessedState;
+            }
             // Check if game is finished
             if (GameEngineManager_1.gameEngineManager.isGameFinished(newGameState)) {
                 const winner = GameEngineManager_1.gameEngineManager.getWinner(newGameState);

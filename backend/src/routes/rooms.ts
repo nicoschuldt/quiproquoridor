@@ -6,6 +6,7 @@ import { db, rooms, roomMembers, users } from '../db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
+import type { AIDifficulty } from '../../../shared/types';
 
 const router = Router();
 
@@ -22,6 +23,10 @@ const createRoomSchema = z.object({
 
 const joinRoomSchema = z.object({
   code: z.string().length(6),
+});
+
+const addAIPlayerSchema = z.object({
+  difficulty: z.enum(['easy', 'medium', 'hard']),
 });
 
 // Create room
@@ -197,6 +202,8 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
       username: users.username,
       isHost: roomMembers.isHost,
       joinedAt: roomMembers.joinedAt,
+      isAI: users.isAI,
+      aiDifficulty: users.aiDifficulty,
     })
     .from(roomMembers)
     .innerJoin(users, eq(roomMembers.userId, users.id))
@@ -211,6 +218,9 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
     wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
     isConnected: true,
     joinedAt: member.joinedAt,
+    selectedPawnTheme: 'theme-pawn-default', // Default theme for now
+    isAI: member.isAI || false,
+    aiDifficulty: member.aiDifficulty || undefined,
   }));
 
   res.json({
@@ -336,6 +346,76 @@ router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response)
   res.json({
     success: true,
     message: 'Left room successfully',
+  });
+}));
+
+// Add AI player to room (host only)
+router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const user = req.user as any;
+  const { roomId } = req.params;
+  const { difficulty } = addAIPlayerSchema.parse(req.body);
+
+  // Get room and verify user is host
+  const roomResult = await db
+    .select()
+    .from(rooms)
+    .where(eq(rooms.id, roomId))
+    .limit(1);
+
+  if (roomResult.length === 0) {
+    throw new AppError(404, 'ROOM_NOT_FOUND', 'Room not found');
+  }
+
+  const room = roomResult[0];
+
+  if (room.hostId !== user.id) {
+    throw new AppError(403, 'PERMISSION_DENIED', 'Only the host can add AI players');
+  }
+
+  if (room.status !== 'lobby') {
+    throw new AppError(400, 'INVALID_ROOM_STATE', 'Cannot add AI players after game has started');
+  }
+
+  // Check room capacity
+  const currentMembers = await db
+    .select()
+    .from(roomMembers)
+    .where(eq(roomMembers.roomId, roomId));
+
+  if (currentMembers.length >= room.maxPlayers) {
+    throw new AppError(400, 'ROOM_FULL', 'Room is full');
+  }
+
+  // Create AI user record
+  const aiUsername = `AI (${difficulty}) ${Date.now()}`;
+  const aiUser = await db
+    .insert(users)
+    .values({
+      username: aiUsername,
+      passwordHash: 'ai-no-password', // AI doesn't need real auth
+      isAI: true,
+      aiDifficulty: difficulty,
+    })
+    .returning();
+
+  // Add AI to room
+  await db.insert(roomMembers).values({
+    roomId: roomId,
+    userId: aiUser[0].id,
+    isHost: false,
+  });
+
+  res.json({
+    success: true,
+    data: {
+      aiPlayer: {
+        id: aiUser[0].id,
+        username: aiUsername,
+        isAI: true,
+        aiDifficulty: difficulty,
+      }
+    },
+    message: 'AI player added successfully',
   });
 }));
 

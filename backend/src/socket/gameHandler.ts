@@ -139,7 +139,7 @@ export class GameHandlers {
       }
 
       // Apply move to create new game state
-      const newGameState = gameEngineManager.applyMove(gameState, data.move);
+      let newGameState = gameEngineManager.applyMove(gameState, data.move);
 
       // Create full move object for broadcasting
       const fullMove: Move = {
@@ -157,11 +157,30 @@ export class GameHandlers {
         gameState: newGameState
       });
 
+      // **NEW AI INTEGRATION**: Check if AI moves were processed and emit them
+      const aiProcessedState = gameStateService.getProcessedAIMove(data.roomId);
+      if (aiProcessedState) {
+        console.log(`🤖 AI moves detected, broadcasting updated state for room ${data.roomId}`);
+        
+        // Emit the AI-updated game state to all players
+        this.io.to(data.roomId).emit('move-made', {
+          move: {
+            id: crypto.randomUUID(),
+            timestamp: new Date(),
+            type: 'pawn', // TODO: Placeholder - actual move data would need to be stored
+            playerId: 'ai-player'
+          },
+          gameState: aiProcessedState
+        });
+
+        // Update the newGameState reference for subsequent checks
+        newGameState = aiProcessedState;
+      }
+
       // Check if game is finished
       if (gameEngineManager.isGameFinished(newGameState)) {
         const winner = gameEngineManager.getWinner(newGameState);
         if (winner) {
-          // **ENHANCED**: Send game finished event with full completion info
           this.io.to(data.roomId).emit('game-finished', {
             gameState: newGameState,
             winner: newGameState.players.find(p => p.id === winner)!

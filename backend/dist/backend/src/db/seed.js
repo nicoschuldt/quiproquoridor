@@ -22,8 +22,8 @@ async function seed() {
                 gamesPlayed: 5,
                 gamesWon: 3,
                 coinBalance: 500,
-                selectedBoardTheme: 'default',
-                selectedPawnTheme: 'default',
+                selectedBoardTheme: 'theme-board-default',
+                selectedPawnTheme: 'theme-pawn-default',
             },
             {
                 username: 'bob',
@@ -31,8 +31,8 @@ async function seed() {
                 gamesPlayed: 3,
                 gamesWon: 1,
                 coinBalance: 200,
-                selectedBoardTheme: 'default',
-                selectedPawnTheme: 'default',
+                selectedBoardTheme: 'theme-board-default',
+                selectedPawnTheme: 'theme-pawn-default',
             },
         ];
         const insertedUsers = await index_1.db.insert(index_1.users).values(testUsers).returning();

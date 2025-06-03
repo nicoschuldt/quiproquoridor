@@ -124,6 +124,8 @@ const socketHandler = (io) => {
                     username: db_1.users.username,
                     isHost: db_1.roomMembers.isHost,
                     joinedAt: db_1.roomMembers.joinedAt,
+                    isAI: db_1.users.isAI,
+                    aiDifficulty: db_1.users.aiDifficulty,
                 })
                     .from(db_1.roomMembers)
                     .innerJoin(db_1.users, (0, drizzle_orm_1.eq)(db_1.roomMembers.userId, db_1.users.id))
@@ -137,6 +139,9 @@ const socketHandler = (io) => {
                     wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
                     isConnected: true,
                     joinedAt: member.joinedAt,
+                    selectedPawnTheme: 'theme-pawn-default', // Default theme for socket events
+                    isAI: member.isAI || false,
+                    aiDifficulty: member.aiDifficulty || undefined,
                 }));
                 const roomData = {
                     id: room.id,

@@ -100,15 +100,37 @@ router.post('/login', (0, errorHandler_1.asyncHandler)(async (req, res) => {
 }));
 // Get current user profile
 router.get('/me', passport_1.default.authenticate('jwt', { session: false }), (0, errorHandler_1.asyncHandler)(async (req, res) => {
-    const user = req.user; // Will be populated by passport
+    const user = req.user;
+    // Get full user data including shop information
+    const fullUserData = await db_1.db
+        .select({
+        id: db_1.users.id,
+        username: db_1.users.username,
+        gamesPlayed: db_1.users.gamesPlayed,
+        gamesWon: db_1.users.gamesWon,
+        createdAt: db_1.users.createdAt,
+        coinBalance: db_1.users.coinBalance,
+        selectedBoardTheme: db_1.users.selectedBoardTheme,
+        selectedPawnTheme: db_1.users.selectedPawnTheme,
+    })
+        .from(db_1.users)
+        .where((0, drizzle_orm_1.eq)(db_1.users.id, user.id))
+        .limit(1);
+    if (fullUserData.length === 0) {
+        throw new errorHandler_1.AppError(404, 'USER_NOT_FOUND', 'User not found');
+    }
+    const userData = fullUserData[0];
     res.json({
         success: true,
         data: {
-            id: user.id,
-            username: user.username,
-            gamesPlayed: user.gamesPlayed,
-            gamesWon: user.gamesWon,
-            createdAt: user.createdAt,
+            id: userData.id,
+            username: userData.username,
+            gamesPlayed: userData.gamesPlayed,
+            gamesWon: userData.gamesWon,
+            createdAt: userData.createdAt,
+            coinBalance: userData.coinBalance,
+            selectedBoardTheme: userData.selectedBoardTheme,
+            selectedPawnTheme: userData.selectedPawnTheme,
         },
     });
 }));

@@ -86,6 +86,10 @@ export const roomApi = {
   leaveRoom: async (roomId: string): Promise<{ message: string }> => {
     return await api.delete(`/rooms/${roomId}/leave`);
   },
+
+  addAIPlayer: async (roomId: string, difficulty: 'easy' | 'medium' | 'hard'): Promise<{ aiPlayer: any; message: string }> => {
+    return await api.post(`/rooms/${roomId}/ai`, { difficulty });
+  },
 };
 
 export const gameApi = {
