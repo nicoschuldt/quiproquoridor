@@ -9,6 +9,7 @@ import { config } from './config';
 import { authRouter } from './routes/auth';
 import { roomsRouter } from './routes/rooms';
 import { gameRouter } from './routes/games';
+import { shopRouter } from './routes/shop';
 import { socketHandler } from './socket';
 import { setupPassport } from './auth/passport';
 import { errorHandler } from './middleware/errorHandler';
@@ -48,6 +49,7 @@ app.use('/api/rooms', roomsRouter);
 app.use('/api/games', gameRouter);
 app.use('/api/purchase', purchaseRouter);
 app.use('/api/stripe', stripeWebhookRouter);
+app.use('/api/shop', shopRouter);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -19,7 +19,7 @@ async function seed() {
         passwordHash: await bcrypt.hash('password123', 10),
         gamesPlayed: 5,
         gamesWon: 3,
-        coinBalance: 500, // Give alice some coins to test shop
+        coinBalance: 500,
         selectedBoardTheme: 'default',
         selectedPawnTheme: 'default',
       },
@@ -28,7 +28,7 @@ async function seed() {
         passwordHash: await bcrypt.hash('password123', 10),
         gamesPlayed: 3,
         gamesWon: 1,
-        coinBalance: 200, // Give bob fewer coins
+        coinBalance: 200,
         selectedBoardTheme: 'default',
         selectedPawnTheme: 'default',
       },

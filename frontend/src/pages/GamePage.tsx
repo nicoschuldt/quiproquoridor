@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameSocket } from '../hooks/useGameSocket';
 import GameBoard from '../components/game/GameBoard';
+import { getBoardThemeClass } from '../utils/themeUtils';
 import type { GameState, Move, Player, ApiError } from '@/types';
 
 interface GamePageState {
@@ -418,6 +419,7 @@ const GamePage: React.FC = () => {
                 onWallPlace={gameSocket.placeWall}
                 validMoves={state.validMoves}
                 disabled={!isCurrentTurn || gameSocket.connectionStatus !== 'connected'}
+                boardTheme={getBoardThemeClass(user.selectedBoardTheme)}
               />
             </div>
             

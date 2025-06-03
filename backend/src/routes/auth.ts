@@ -120,16 +120,41 @@ router.post('/login', asyncHandler(async (req: Request, res: Response): Promise<
 
 // Get current user profile
 router.get('/me', passport.authenticate('jwt', { session: false }), asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user as any; // Will be populated by passport
+  const user = req.user as any;
+
+  // Get full user data including shop information
+  const fullUserData = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      gamesPlayed: users.gamesPlayed,
+      gamesWon: users.gamesWon,
+      createdAt: users.createdAt,
+      coinBalance: users.coinBalance,
+      selectedBoardTheme: users.selectedBoardTheme,
+      selectedPawnTheme: users.selectedPawnTheme,
+    })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+
+  if (fullUserData.length === 0) {
+    throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  const userData = fullUserData[0];
 
   res.json({
     success: true,
     data: {
-      id: user.id,
-      username: user.username,
-      gamesPlayed: user.gamesPlayed,
-      gamesWon: user.gamesWon,
-      createdAt: user.createdAt,
+      id: userData.id,
+      username: userData.username,
+      gamesPlayed: userData.gamesPlayed,
+      gamesWon: userData.gamesWon,
+      createdAt: userData.createdAt,
+      coinBalance: userData.coinBalance,
+      selectedBoardTheme: userData.selectedBoardTheme,
+      selectedPawnTheme: userData.selectedPawnTheme,
     },
   });
 }));

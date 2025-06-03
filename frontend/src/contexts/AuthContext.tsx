@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { UserProfile, UserRoomStatus } from '@/types';
+import type { UserProfileWithShop, UserRoomStatus } from '@/types';
 import { authApi, roomApi } from '../services/api';
 
 interface AuthContextType {
-  user: UserProfile | null;
+  user: UserProfileWithShop | null;
   token: string | null;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
@@ -23,7 +23,7 @@ export const useAuth = (): AuthContextType => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfileWithShop | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -99,15 +99,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string) => {
     const response = await authApi.login(username, password);
     setToken(response.token);
-    setUser(response.user);
     localStorage.setItem('token', response.token);
+    // Fetch full profile with shop data
+    const fullProfile = await authApi.getProfile();
+    setUser(fullProfile);
   };
 
   const register = async (username: string, password: string) => {
     const response = await authApi.register(username, password);
     setToken(response.token);
-    setUser(response.user);
     localStorage.setItem('token', response.token);
+    // Fetch full profile with shop data
+    const fullProfile = await authApi.getProfile();
+    setUser(fullProfile);
   };
 
   const logout = () => {

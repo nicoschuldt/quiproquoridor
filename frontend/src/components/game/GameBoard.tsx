@@ -1,6 +1,7 @@
 // frontend/src/components/game/GameBoard.tsx
 import React, { useState, useCallback } from 'react';
 import type { Position, Move, Wall, GameState, Player, WallOrientation } from '@/types';
+import { getSafePawnClasses } from '@/utils/themeUtils';
 
 /**
  * GameBoard Component for Quoridor
@@ -26,6 +27,7 @@ interface GameBoardProps {
   onWallPlace: (position: Position, orientation: WallOrientation) => void;
   validMoves?: Move[];
   disabled?: boolean;
+  boardTheme?: string; // CSS class for board theme
 }
 
 // Coordinate conversion utilities
@@ -95,7 +97,8 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
       gamePosition: position,
       gridPosition: { row: gridRow, col: gridCol },
       isValidMove,
-      player: player?.username || 'empty'
+      player: player?.username || 'empty',
+      theme: player ? getSafePawnClasses(player) : 'none'
     });
     
     if (!disabled && isValidMove) {
@@ -103,7 +106,7 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
     }
   }, [disabled, isValidMove, onClick, position, gridRow, gridCol, player]);
 
-  const baseClasses = "aspect-square border border-gray-300 flex items-center justify-center relative transition-all duration-200 bg-amber-50";
+  const baseClasses = "pawn-square aspect-square flex items-center justify-center relative";
   
   let squareClasses = baseClasses;
   if (isValidMove && !disabled) {
@@ -121,28 +124,16 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
     >
       {/* Valid move indicator */}
       {isValidMove && !player && !disabled && (
-        <div className="w-6 h-6 bg-green-500 rounded-full opacity-70 animate-pulse shadow-lg" />
+        <div className="valid-move-indicator w-6 h-6 rounded-full animate-pulse" />
       )}
       
-      {/* Player pawn */}
+      {/* Player pawn with dynamic theme */}
       {player && (
         <div 
-          className={`w-10 h-10 rounded-full border-3 border-white shadow-lg flex items-center justify-center ${
-            player.color === 'red' ? 'bg-red-500' :
-            player.color === 'blue' ? 'bg-blue-500' :
-            player.color === 'green' ? 'bg-green-500' :
-            'bg-yellow-500'
-          }`}
+          className={getSafePawnClasses(player)}
           title={`${player.username} (${player.wallsRemaining} walls left)`}
-        >
-          <div className="w-4 h-4 bg-white rounded-full opacity-80"></div>
-        </div>
+        />
       )}
-      
-      {/* Debug coordinates (remove in production) */}
-      <div className="absolute top-1 left-1 text-xs text-gray-500 pointer-events-none bg-white bg-opacity-70 px-1 rounded">
-        {position.x},{position.y}
-      </div>
     </div>
   );
 };
@@ -184,12 +175,22 @@ const WallZone: React.FC<WallZoneProps> = ({
     }
   }, [disabled, isValidPlacement, hasWall, onClick, gamePosition, orientation, gridRow, gridCol]);
 
+  const handleMouseEnter = useCallback(() => {
+    if (!disabled && isValidPlacement && !hasWall) {
+      setIsHovering(true);
+    }
+  }, [disabled, isValidPlacement, hasWall]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovering(false);
+  }, []);
+
   const isHorizontal = orientation === 'horizontal';
-  const baseClasses = "transition-all duration-200 flex items-center justify-center";
+  const baseClasses = "transition-all duration-100 flex items-center justify-center";
   
   let wallClasses = baseClasses;
   if (isValidPlacement && !hasWall && !disabled) {
-    wallClasses += " cursor-pointer hover:bg-red-200";
+    wallClasses += " cursor-pointer";
   }
 
   // Wall should span 3 grid cells (across 2 pawn squares)
@@ -197,12 +198,12 @@ const WallZone: React.FC<WallZoneProps> = ({
     ? { 
         gridRow: gridRow, 
         gridColumn: `${gridCol} / ${gridCol + 3}`,
-        minHeight: '8px'
+        minHeight: '10px'
       }
     : { 
         gridRow: `${gridRow} / ${gridRow + 3}`, 
         gridColumn: gridCol,
-        minWidth: '8px'
+        minWidth: '10px'
       };
 
   return (
@@ -210,28 +211,17 @@ const WallZone: React.FC<WallZoneProps> = ({
       className={wallClasses}
       style={wallStyle}
       onClick={handleClick}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Existing wall */}
       {hasWall && (
-        <div className={`bg-gray-800 rounded-sm ${
-          isHorizontal ? 'h-4 w-full' : 'w-4 h-full'
-        }`} />
+        <div className="wall h-full w-full" />
       )}
       
-      {/* Wall preview on hover */}
+      {/* Wall preview on hover - fill the entire zone */}
       {!hasWall && isValidPlacement && !disabled && isHovering && (
-        <div className={`bg-red-500 opacity-80 rounded-sm ${
-          isHorizontal ? 'h-4 w-full' : 'w-4 h-full'
-        }`} />
-      )}
-      
-      {/* Valid placement indicator */}
-      {!hasWall && isValidPlacement && !disabled && !isHovering && (
-        <div className={`bg-red-300 opacity-50 rounded-sm ${
-          isHorizontal ? 'h-3 w-full' : 'w-3 h-full'
-        }`} />
+        <div className="wall-preview h-full w-full" />
       )}
     </div>
   );
@@ -243,7 +233,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   onPawnMove,
   onWallPlace,
   validMoves = [],
-  disabled = false
+  disabled = false,
+  boardTheme
 }) => {
   console.log(`🎮 GameBoard render:`, {
     gameState,
@@ -414,10 +405,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
               player.id === currentPlayerId ? 'font-bold' : ''
             }`}>
               <div className={`w-4 h-4 rounded-full ${
-                player.color === 'red' ? 'bg-game-red' :
-                player.color === 'blue' ? 'bg-game-blue' :
-                player.color === 'green' ? 'bg-game-green' :
-                'bg-game-yellow'
+                player.color === 'red' ? 'bg-red-500' :
+                player.color === 'blue' ? 'bg-blue-500' :
+                player.color === 'green' ? 'bg-green-500' :
+                'bg-yellow-500'
               }`} />
               <span>{player.username}: {player.wallsRemaining} walls</span>
             </div>
@@ -427,12 +418,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* Game board */}
       <div 
-        className="game-board aspect-square bg-white border-2 border-gray-400 relative"
+        className={`game-board aspect-square relative ${boardTheme || ''}`}
         style={{
           display: 'grid',
-          // Alternating pattern: pawn squares (1fr) and wall zones (8px)
-          gridTemplateColumns: '1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr',
-          gridTemplateRows: '1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr',
+          gridTemplateColumns: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
+          gridTemplateRows: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
         }}
       >
         {renderGridCells()}

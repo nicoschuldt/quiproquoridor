@@ -35,6 +35,7 @@ export interface Player {
   wallsRemaining: number;
   isConnected: boolean; // For handling disconnections
   joinedAt: Date;
+  selectedPawnTheme: string; // CSS class for pawn theme, e.g., 'theme-pawn-knights'
 }
 
 export interface Move {

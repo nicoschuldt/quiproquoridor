@@ -1,0 +1,235 @@
+/* Board Theme System with Modern 3D Design
+ * Usage: Apply theme class to game-board container
+ * Base design: Modern, subtle 3D effects, clean shadows
+ */
+
+/* ==========================================
+   BASE BOARD DESIGN - Modern & Clean
+   ========================================== */
+
+.game-board {
+  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-board::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Pawn Squares - Modern elevated look */
+.game-board .pawn-square {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  border-radius: 6px;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-board .pawn-square:hover {
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+/* Walls - Sophisticated depth */
+.game-board .wall {
+  background: linear-gradient(145deg, #374151, #1f2937);
+  border-radius: 3px;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.game-board .wall::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  right: 1px;
+  bottom: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
+  border-radius: 2px;
+}
+
+/* Wall Preview - Elegant hint */
+.game-board .wall-preview {
+  background: linear-gradient(145deg, #ef4444, #dc2626);
+  border-radius: 3px;
+  box-shadow: 
+    0 2px 4px rgba(239, 68, 68, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+}
+
+/* Valid Move Indicators - Clean glow */
+.game-board .valid-move-indicator {
+  background: radial-gradient(circle, #10b981, #059669);
+  box-shadow: 
+    0 2px 8px rgba(16, 185, 129, 0.4),
+    0 0 16px rgba(16, 185, 129, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+/* ==========================================
+   THEME VARIATIONS
+   ========================================== */
+
+/* Forest Theme - Natural wood & earth tones */
+.theme-board-forest {
+  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.theme-board-forest .pawn-square {
+  background: linear-gradient(145deg, #fefffe, #f0fdf4);
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.theme-board-forest .pawn-square:hover {
+  background: linear-gradient(145deg, #f0fdf4, #ecfdf5);
+  box-shadow: 
+    0 4px 8px rgba(34, 197, 94, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.theme-board-forest .wall {
+  background: linear-gradient(145deg, #92400e, #78350f);
+}
+
+.theme-board-forest .wall-preview {
+  background: linear-gradient(145deg, #d97706, #b45309);
+}
+
+/* Ocean Theme - Deep blue waters */
+.theme-board-ocean {
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.theme-board-ocean .pawn-square {
+  background: linear-gradient(145deg, #ffffff, #f0f9ff);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.theme-board-ocean .pawn-square:hover {
+  background: linear-gradient(145deg, #f0f9ff, #e0f2fe);
+  box-shadow: 
+    0 4px 8px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.theme-board-ocean .wall {
+  background: linear-gradient(145deg, #1e40af, #1e3a8a);
+}
+
+.theme-board-ocean .wall-preview {
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+}
+
+/* Neon Theme - Futuristic cyber */
+.theme-board-neon {
+  background: linear-gradient(145deg, #1e1b4b, #312e81);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(168, 85, 247, 0.1);
+}
+
+.theme-board-neon .pawn-square {
+  background: linear-gradient(145deg, #1e1b4b, #0f0d3b);
+  border-color: rgba(196, 181, 253, 0.6);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(196, 181, 253, 0.2),
+    0 0 8px rgba(168, 85, 247, 0.1);
+}
+
+.theme-board-neon .pawn-square:hover {
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(196, 181, 253, 0.3),
+    0 0 12px rgba(168, 85, 247, 0.2);
+}
+
+.theme-board-neon .wall {
+  background: linear-gradient(145deg, #ec4899, #db2777);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 8px rgba(236, 72, 153, 0.3);
+}
+
+.theme-board-neon .wall-preview {
+  background: linear-gradient(145deg, #06b6d4, #0891b2);
+  box-shadow: 
+    0 2px 4px rgba(6, 182, 212, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 12px rgba(6, 182, 212, 0.4);
+}
+
+/* Desert Theme - Warm sand & terracotta */
+.theme-board-desert {
+  background: linear-gradient(145deg, #fff7ed, #fed7aa);
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+.theme-board-desert .pawn-square {
+  background: linear-gradient(145deg, #fffbeb, #fef3c7);
+  border-color: rgba(252, 176, 64, 0.4);
+}
+
+.theme-board-desert .pawn-square:hover {
+  background: linear-gradient(145deg, #fef3c7, #fde68a);
+  box-shadow: 
+    0 4px 8px rgba(251, 146, 60, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.theme-board-desert .wall {
+  background: linear-gradient(145deg, #b91c1c, #991b1b);
+}
+
+.theme-board-desert .wall-preview {
+  background: linear-gradient(145deg, #f97316, #ea580c);
+}
+
+/* ==========================================
+   RESPONSIVE & INTERACTIONS
+   ========================================== */
+
+@media (max-width: 768px) {
+  .game-board {
+    border-radius: 8px;
+    box-shadow: 
+      0 10px 20px rgba(0, 0, 0, 0.1),
+      0 4px 8px rgba(0, 0, 0, 0.06);
+  }
+  
+  .game-board .pawn-square {
+    border-radius: 4px;
+  }
+} 

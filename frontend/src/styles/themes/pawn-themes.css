@@ -1,0 +1,260 @@
+/* Pawn Theme System
+ * Usage: "theme-pawn-knights color-red"
+ * Base theme defines shape/style, color modifier applies player color
+ */
+
+/* Base Pawn Themes */
+
+/* Default Theme */
+.default {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.default::after {
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+}
+
+/* Knights Theme - Medieval knight helmets */
+.theme-pawn-knights {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Knight visor */
+.theme-pawn-knights::before {
+  content: '';
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 25%;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Knight plume */
+.theme-pawn-knights::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+}
+
+/* Robots Theme - Futuristic robot heads */
+.theme-pawn-robots {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 20%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Robot eyes */
+.theme-pawn-robots::before {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 15%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+  box-shadow: 
+    inset 2px 0 0 rgba(0, 255, 255, 0.6),
+    inset -2px 0 0 rgba(0, 255, 255, 0.6);
+}
+
+/* Robot antenna */
+.theme-pawn-robots::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50% 50% 0 0;
+}
+
+/* Animals Theme - Animal faces */
+.theme-pawn-animals {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 60% 60% 50% 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Animal ears */
+.theme-pawn-animals::before {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: 20%;
+  width: 8px;
+  height: 12px;
+  background: inherit;
+  border-radius: 50% 50% 0 0;
+  border: inherit;
+  border-bottom: none;
+  box-shadow: 
+    20px 0 0 inherit,
+    20px 0 0 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Animal nose */
+.theme-pawn-animals::after {
+  content: '';
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50% 50% 0 0;
+}
+
+/* Gems Theme - Crystal/gem shapes */
+.theme-pawn-gems {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(135deg, transparent 20%, rgba(255, 255, 255, 0.3) 40%, transparent 60%);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 2px 8px rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+  clip-path: polygon(50% 0%, 80% 20%, 100% 50%, 80% 80%, 50% 100%, 20% 80%, 0% 50%, 20% 20%);
+}
+
+/* Gem inner glow */
+.theme-pawn-gems::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* Color Modifiers */
+
+/* Red Color */
+.color-red.default,
+.color-red.theme-pawn-knights,
+.color-red.theme-pawn-robots,
+.color-red.theme-pawn-animals,
+.color-red.theme-pawn-gems {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.color-red.theme-pawn-knights::after,
+.color-red.theme-pawn-robots::after,
+.color-red.theme-pawn-animals::before {
+  background: linear-gradient(135deg, #fca5a5, #dc2626);
+}
+
+/* Blue Color */
+.color-blue.default,
+.color-blue.theme-pawn-knights,
+.color-blue.theme-pawn-robots,
+.color-blue.theme-pawn-animals,
+.color-blue.theme-pawn-gems {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.color-blue.theme-pawn-knights::after,
+.color-blue.theme-pawn-robots::after,
+.color-blue.theme-pawn-animals::before {
+  background: linear-gradient(135deg, #93c5fd, #2563eb);
+}
+
+/* Green Color */
+.color-green.default,
+.color-green.theme-pawn-knights,
+.color-green.theme-pawn-robots,
+.color-green.theme-pawn-animals,
+.color-green.theme-pawn-gems {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.color-green.theme-pawn-knights::after,
+.color-green.theme-pawn-robots::after,
+.color-green.theme-pawn-animals::before {
+  background: linear-gradient(135deg, #86efac, #16a34a);
+}
+
+/* Yellow Color */
+.color-yellow.default,
+.color-yellow.theme-pawn-knights,
+.color-yellow.theme-pawn-robots,
+.color-yellow.theme-pawn-animals,
+.color-yellow.theme-pawn-gems {
+  background: linear-gradient(135deg, #ca8a04, #a16207);
+}
+
+.color-yellow.theme-pawn-knights::after,
+.color-yellow.theme-pawn-robots::after,
+.color-yellow.theme-pawn-animals::before {
+  background: linear-gradient(135deg, #fde047, #ca8a04);
+}
+
+/* Hover effects */
+.default:hover,
+.theme-pawn-knights:hover,
+.theme-pawn-robots:hover,
+.theme-pawn-animals:hover,
+.theme-pawn-gems:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+} 

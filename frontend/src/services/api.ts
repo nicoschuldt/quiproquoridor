@@ -5,10 +5,15 @@ import type {
   CreateRoomRequest, 
   JoinRoomRequest, 
   RoomData,
-  UserProfile,
+  UserProfileWithShop,
   GameStateData,
   MakeMoveRequest,
-  UserRoomStatus
+  UserRoomStatus,
+  ShopBrowseResponse,
+  PurchaseThemeRequest,
+  PurchaseThemeResponse,
+  SelectThemeRequest,
+  ThemeType
 } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -23,7 +28,7 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -32,7 +37,7 @@ api.interceptors.request.use((config) => {
 // Handle API responses - extract data from our standard format
 api.interceptors.response.use(
   (response) => {
-    const apiResponse: ApiResponse = response.data;
+    const apiResponse = response.data as ApiResponse;
     if (!apiResponse.success) {
       throw apiResponse.error || { code: 'API_ERROR', message: 'API request failed' };
     }
@@ -56,7 +61,7 @@ export const authApi = {
     return await api.post('/auth/register', { username, password });
   },
 
-  getProfile: async (): Promise<UserProfile> => {
+  getProfile: async (): Promise<UserProfileWithShop> => {
     return await api.get('/auth/me');
   },
 };
@@ -90,5 +95,34 @@ export const gameApi = {
 
   makeMove: async (roomId: string, moveRequest: MakeMoveRequest): Promise<GameStateData> => {
     return await api.post(`/games/${roomId}/move`, moveRequest);
+  },
+};
+
+export const shopApi = {
+  /**
+   * Get all shop data for the current user
+   * Returns available themes, owned themes, selected themes, and coin balance
+   */
+  getShopData: async (): Promise<ShopBrowseResponse> => {
+    return await api.get('/shop/data');
+  },
+
+  /**
+   * Purchase a theme using coins
+   * @param shopItemId - The ID of the theme to purchase
+   */
+  purchaseTheme: async (shopItemId: string): Promise<PurchaseThemeResponse> => {
+    const request: PurchaseThemeRequest = { shopItemId };
+    return await api.post('/shop/purchase', request);
+  },
+
+  /**
+   * Select a theme as the active theme for the user
+   * @param themeType - Either 'board' or 'pawn'
+   * @param cssClass - The CSS class of the theme to select
+   */
+  selectTheme: async (themeType: ThemeType, cssClass: string): Promise<{ message: string }> => {
+    const request: SelectThemeRequest = { themeType, cssClass };
+    return await api.post('/shop/select-theme', request);
   },
 };
