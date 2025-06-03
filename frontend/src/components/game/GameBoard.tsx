@@ -133,11 +133,6 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
           title={`${player.username} (${player.wallsRemaining} walls left)`}
         />
       )}
-      
-      {/* Debug coordinates (remove in production) */}
-      <div className="absolute top-1 left-1 text-xs text-gray-500 pointer-events-none bg-white bg-opacity-70 px-1 rounded">
-        {position.x},{position.y}
-      </div>
     </div>
   );
 };
@@ -179,12 +174,22 @@ const WallZone: React.FC<WallZoneProps> = ({
     }
   }, [disabled, isValidPlacement, hasWall, onClick, gamePosition, orientation, gridRow, gridCol]);
 
+  const handleMouseEnter = useCallback(() => {
+    if (!disabled && isValidPlacement && !hasWall) {
+      setIsHovering(true);
+    }
+  }, [disabled, isValidPlacement, hasWall]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovering(false);
+  }, []);
+
   const isHorizontal = orientation === 'horizontal';
-  const baseClasses = "transition-all duration-200 flex items-center justify-center";
+  const baseClasses = "transition-all duration-100 flex items-center justify-center";
   
   let wallClasses = baseClasses;
   if (isValidPlacement && !hasWall && !disabled) {
-    wallClasses += " cursor-pointer hover:bg-red-200";
+    wallClasses += " cursor-pointer";
   }
 
   // Wall should span 3 grid cells (across 2 pawn squares)
@@ -205,27 +210,20 @@ const WallZone: React.FC<WallZoneProps> = ({
       className={wallClasses}
       style={wallStyle}
       onClick={handleClick}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Existing wall */}
       {hasWall && (
         <div className={`bg-gray-800 rounded-sm ${
-          isHorizontal ? 'h-4 w-full' : 'w-4 h-full'
+          isHorizontal ? 'h-full w-full' : 'w-full h-full'
         }`} />
       )}
       
-      {/* Wall preview on hover */}
+      {/* Wall preview on hover - fill the entire zone */}
       {!hasWall && isValidPlacement && !disabled && isHovering && (
-        <div className={`bg-red-500 opacity-80 rounded-sm ${
-          isHorizontal ? 'h-4 w-full' : 'w-4 h-full'
-        }`} />
-      )}
-      
-      {/* Valid placement indicator */}
-      {!hasWall && isValidPlacement && !disabled && !isHovering && (
-        <div className={`bg-red-300 opacity-50 rounded-sm ${
-          isHorizontal ? 'h-3 w-full' : 'w-3 h-full'
+        <div className={`bg-red-500 opacity-70 rounded-sm ${
+          isHorizontal ? 'h-full w-full' : 'w-full h-full'
         }`} />
       )}
     </div>
@@ -426,8 +424,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         style={{
           display: 'grid',
           // Alternating pattern: pawn squares (1fr) and wall zones (8px)
-          gridTemplateColumns: '1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr',
-          gridTemplateRows: '1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr 8px 1fr',
+          gridTemplateColumns: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
+          gridTemplateRows: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
         }}
       >
         {renderGridCells()}
