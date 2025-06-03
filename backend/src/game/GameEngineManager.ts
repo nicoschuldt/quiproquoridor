@@ -9,6 +9,7 @@ import type {
   } from '../../../shared/types';
   import { mockQuoridorEngine } from './MockQuoridorEngine';
   import { quoridorEngine } from './QuoridorEngine';
+  import { MonteCarloAI } from './MonteCarloAI';
   
   /**
    * GameEngineManager - Abstraction layer for game engine integration
@@ -19,7 +20,8 @@ import type {
    */
   export class GameEngineManager implements GameEngine {
     private engine: GameEngine = quoridorEngine;
-  
+    private monteCarloAI = new MonteCarloAI(100);
+
     constructor() {
       console.log('🎮 GameEngineManager initialized with mock engine');
     }

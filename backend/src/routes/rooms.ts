@@ -18,6 +18,7 @@ const createRoomSchema = z.object({
   isPrivate: z.boolean().optional(),
   hasTimeLimit: z.boolean().optional(),
   timeLimitSeconds: z.number().optional(),
+  withAI: z.boolean().optional(),
 });
 
 const joinRoomSchema = z.object({
@@ -64,6 +65,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
       isPrivate: roomData.isPrivate || false,
       hasTimeLimit: roomData.hasTimeLimit || false,
       timeLimitSeconds: roomData.timeLimitSeconds,
+      withAI: roomData.withAI || false,
     })
     .returning();
 

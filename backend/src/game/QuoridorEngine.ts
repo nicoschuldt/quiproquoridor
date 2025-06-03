@@ -53,6 +53,7 @@ export class QuoridorEngine implements GameEngine {
       isConnected: true,
       joinedAt: new Date(),
       selectedPawnTheme: 'theme-pawn-default',
+      isAI: true,
     }));
 
     const gameState: GameState = {
@@ -635,16 +636,6 @@ export class QuoridorEngine implements GameEngine {
         };
         if (!this.isPositionValid(next)) continue;
         if (this.isWallBlocking(walls, current, next)) continue;
-        if (
-          allPlayers.some(
-            (p) =>
-              p.id !== player.id &&
-              p.position.x === next.x &&
-              p.position.y === next.y
-          )
-        ) {
-          continue;
-        }
         queue.push(next);
       }
     }

@@ -18,7 +18,7 @@ const RoomLobbyPage: React.FC = () => {
   }, [user]);
   
   const [room, setRoom] = useState<Room | null>(null);
-  const [isHost, setIsHost] = useState(false);
+  const [isHost, setIsHost] = useState(false); // Used to enable/disable start game button
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -85,7 +85,7 @@ const RoomLobbyPage: React.FC = () => {
       ));
     };
 
-    const handleGameStarted = (data: { gameState: any }) => {
+    const handleGameStarted = (_data: { gameState: any }) => {
       // Navigate to game page when game starts
       navigate(`/game/${roomId}`);
     };
@@ -251,6 +251,11 @@ const RoomLobbyPage: React.FC = () => {
             </h2>
             
             <div className="space-y-3">
+              {room.withAI && room.maxPlayers === 2 && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4">
+                  🤖 This game includes an AI opponent (Monte Carlo AI)
+                </div>
+              )}
               {Array.from({ length: room.maxPlayers }, (_, index) => {
                 const player = players[index];
                 const isCurrentUser = user && player?.id === user.id;
@@ -275,9 +280,15 @@ const RoomLobbyPage: React.FC = () => {
                               {player.username}
                               {isCurrentUser && ' (You)'}
                               {player.id === room.hostId && ' 👑'}
+                              {player.isAI && ' 🤖'}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {player.isConnected ? (
+                              {player.isAI ? (
+                                <span className="text-blue-600 flex items-center">
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                                  AI Player
+                                </span>
+                              ) : player.isConnected ? (
                                 <span className="text-green-600 flex items-center">
                                   <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                                   Online
@@ -313,7 +324,22 @@ const RoomLobbyPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="w-full py-3 px-4 bg-gray-100 text-gray-600 rounded-lg text-center">
-                  Waiting for {room.maxPlayers - players.length} more player{room.maxPlayers - players.length !== 1 ? 's' : ''}...
+                  <div className="mb-2">
+                    Waiting for {room.maxPlayers - players.length} more player{room.maxPlayers - players.length !== 1 ? 's' : ''}...
+                  </div>
+                  
+                  {isHost && !room.withAI && (
+                    <button 
+                      onClick={() => {
+                        if (socket && roomId) {
+                          socket.emit('add-ai-player', { roomId });
+                        }
+                      }}
+                      className="mt-2 btn-primary-sm bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center mx-auto"
+                    >
+                      <span className="mr-1">🤖</span> Add an AI player
+                    </button>
+                  )}
                 </div>
               )}
             </div>

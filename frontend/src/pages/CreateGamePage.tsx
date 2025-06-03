@@ -10,6 +10,7 @@ const CreateGamePage: React.FC = () => {
     isPrivate: false,
     hasTimeLimit: false,
     timeLimitSeconds: 300, // 5 minutes default
+    withAI: false, // Toujours false par défaut, l'IA sera ajoutée après création si nécessaire
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +119,8 @@ const CreateGamePage: React.FC = () => {
                 />
               </button>
             </div>
+
+            {/* AI Opponent option removed - Now available only after room creation */}
 
             {/* Time Limit */}
             <div>

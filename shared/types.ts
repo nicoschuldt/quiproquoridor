@@ -36,6 +36,7 @@ export interface Player {
   isConnected: boolean; // For handling disconnections
   joinedAt: Date;
   selectedPawnTheme: string; // CSS class for pawn theme, e.g., 'theme-pawn-knights'
+  isAI: boolean;
 }
 
 export interface Move {
@@ -88,6 +89,7 @@ export interface Room {
   isPrivate: boolean;
   hasTimeLimit: boolean;
   timeLimitSeconds?: number;
+  withAI?: boolean; // Whether the game includes an AI opponent
 }
 
 export interface RoomMember {
@@ -145,6 +147,7 @@ export interface CreateRoomRequest {
   isPrivate?: boolean;
   hasTimeLimit?: boolean;
   timeLimitSeconds?: number;
+  withAI?: boolean;
 }
 
 export interface JoinRoomRequest {
@@ -189,6 +192,7 @@ export interface ClientToServerEvents {
   'make-move': (data: { roomId: string; move: Omit<Move, 'id' | 'timestamp'> }) => void;
   'request-game-state': (data: { roomId: string }) => void;
   'forfeit-game': (data: { roomId: string }) => void;
+  'add-ai-player': (data: { roomId: string }) => void;
   
   // Connection events
   'ping': () => void;

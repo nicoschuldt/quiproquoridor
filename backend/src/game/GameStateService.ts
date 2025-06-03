@@ -46,8 +46,99 @@ export class GameStateService {
         throw new Error('No players found in room');
       }
 
-      // Create game state using game engine
-      const playerIds = playersData.map(p => p.userId);
+      // Check if room has AI option enabled
+      const withAI = room[0].withAI;
+      
+      // If AI is enabled, add AI player as long as we don't exceed maxPlayers
+      let playerIds = playersData.map(p => p.userId);
+      let aiPlayerId: string | null = null;
+      
+      if (withAI && playerIds.length < room[0].maxPlayers) {
+        try {
+          // Générer un ID unique pour l'IA
+          aiPlayerId = `ai-${crypto.randomUUID()}`;
+          console.log(`🤖 Génération d'un ID pour l'IA: ${aiPlayerId}`);
+          
+          // Générer un nom unique en ajoutant un timestamp pour éviter les collisions
+          const timestamp = Date.now();
+          const uniqueAiUsername = `Monte Carlo AI ${timestamp}`;
+          
+          try {
+            // Utiliser directement les requêtes SQL brutes via le tag sql
+            // Ainsi nous n'avons pas besoin de se soucier du format camelCase vs snake_case
+            const now = Math.floor(Date.now() / 1000);
+            
+            // Utilisation de l'API standard pour insérer des données dans Drizzle
+            // IMPORTANT: Utiliser camelCase pour les noms de propriétés comme attendu par l'API Drizzle
+            await db.insert(users).values({
+              id: aiPlayerId,
+              username: uniqueAiUsername,
+              passwordHash: 'ai-user-no-password', // camelCase comme dans le schéma Drizzle
+              gamesPlayed: 0,
+              gamesWon: 0,
+              coinBalance: 0,
+              selectedBoardTheme: 'default',
+              selectedPawnTheme: 'default',
+              createdAt: new Date(now * 1000), // Utiliser un objet Date pour les timestamps
+              updatedAt: new Date(now * 1000)
+            });
+            
+            console.log(`🤖 Utilisateur IA créé avec succès: ${uniqueAiUsername}`);
+          } catch (unknownError) {
+            // Gestion sécurisée des erreurs de type unknown
+            const errorMessage = unknownError instanceof Error 
+              ? unknownError.message 
+              : 'Unknown database error';
+              
+            console.error('Erreur lors de l\'insertion de l\'utilisateur AI:', errorMessage);
+            
+            // Si l'erreur est due à un nom d'utilisateur dupliqué, essayons avec un autre nom
+            if (errorMessage.includes('UNIQUE constraint failed')) {
+              console.log('Tentative avec un autre nom d\'utilisateur...');
+              const newTimestamp = Date.now() + Math.floor(Math.random() * 1000);
+              const alternativeUsername = `Monte Carlo AI ${newTimestamp}`;
+              const retryNow = Math.floor(Date.now() / 1000);
+              
+              try {
+                // Deuxième tentative avec un nom d'utilisateur différent
+                // Utiliser la même approche cohérente pour les deux tentatives
+                await db.insert(users).values({
+                  id: aiPlayerId,
+                  username: alternativeUsername,
+                  passwordHash: 'ai-user-no-password', // camelCase comme dans le schéma Drizzle
+                  gamesPlayed: 0,
+                  gamesWon: 0,
+                  coinBalance: 0,
+                  selectedBoardTheme: 'default',
+                  selectedPawnTheme: 'default',
+                  createdAt: new Date(retryNow * 1000), // Utiliser un objet Date pour les timestamps
+                  updatedAt: new Date(retryNow * 1000)
+                });
+                
+                console.log(`🤖 Utilisateur IA créé avec succès (deuxième tentative): ${alternativeUsername}`);
+              } catch (secondError) {
+                const secondErrorMessage = secondError instanceof Error 
+                  ? secondError.message 
+                  : 'Unknown database error on retry';
+                console.error('Deuxième échec de création de l\'utilisateur AI:', secondErrorMessage);
+                throw new Error(`Failed to create AI user after two attempts`);
+              }
+            } else {
+              // Si ce n'est pas un problème de duplication, propager l'erreur
+              throw new Error(`Failed to create AI user: ${errorMessage}`);
+            }
+          }
+          
+          // Ajouter l'ID de l'IA aux joueurs
+          playerIds.push(aiPlayerId);
+          console.log(`🤖 Ajout de l'IA avec ID ${aiPlayerId} à la partie`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error('❌ Erreur lors de la création de l\'utilisateur IA:', errorMessage);
+          throw new Error(`Failed to create AI user: ${errorMessage}`);
+        }
+      }
+      
       const gameState = gameEngineManager.createGame(playerIds, room[0].maxPlayers as 2 | 4);
 
       // Update players with real usernames and theme data
@@ -57,6 +148,31 @@ export class GameStateService {
         joinedAt: playersData[index].joinedAt,
         selectedPawnTheme: playersData[index].selectedPawnTheme || 'theme-pawn-default',
       }));
+      // Update players with real usernames and AI flag
+      gameState.players = gameState.players.map((player, index) => {
+        // Check if this is a human player (has corresponding playerData)
+        const playerData = playersData.find(p => p.userId === player.id);
+        
+        if (playerData) {
+          // Human player
+          return {
+            ...player,
+            username: playerData.username,
+            joinedAt: playerData.joinedAt,
+            isAI: false,
+            selectedPawnTheme: playersData[index].selectedPawnTheme || 'theme-pawn-default',
+          };
+        } else {
+          // AI player
+          return {
+            ...player,
+            username: 'Monte Carlo AI',
+            joinedAt: new Date(),
+            isAI: true,
+            selectedPawnTheme: playersData[index].selectedPawnTheme || 'theme-pawn-default', 
+          };
+        }
+      });
 
       // Save game to database
       const [gameRecord] = await db
@@ -69,7 +185,7 @@ export class GameStateService {
         })
         .returning();
 
-      // Save game players
+      // Save game players - including AI player if present
       const gamePlayerRecords = gameState.players.map((player, index) => ({
         gameId: gameRecord.id,
         userId: player.id,

@@ -1,7 +1,9 @@
 // backend/src/socket/gameHandlers.ts
+import crypto from 'crypto';
 import { Server, Socket } from 'socket.io';
 import { gameEngineManager } from '../game/GameEngineManager';
 import { gameStateService } from '../game/GameStateService';
+import { aiService } from '../game/AIService';
 import { db, rooms, roomMembers } from '../db';
 import { eq, and } from 'drizzle-orm';
 import type { 
@@ -25,7 +27,7 @@ interface GameHandlerEvents {
 
 /**
  * GameHandlers - Handles all game-related socket events
- * 
+ *
  * Integrates the game engine with real-time multiplayer functionality.
  * Provides robust error handling and type safety throughout.
  */
@@ -43,7 +45,7 @@ export class GameHandlers {
     this.socket.on('make-move', this.handleMakeMove.bind(this));
     this.socket.on('request-game-state', this.handleRequestGameState.bind(this));
     this.socket.on('forfeit-game', this.handleForfeitGame.bind(this));
-    
+
     console.log(`🎮 Game handlers setup for user ${this.socket.user.username}`);
   }
 
@@ -70,7 +72,11 @@ export class GameHandlers {
 
       // Check if room has enough players
       const members = await this.getRoomMembers(data.roomId);
-      if (members.length < 2) {
+
+      // Allow 1 player if AI option is enabled
+      const hasEnoughPlayers = room.withAI ? members.length >= 1 : members.length >= 2;
+
+      if (!hasEnoughPlayers) {
         this.emitError('INSUFFICIENT_PLAYERS', 'Need at least 2 players to start');
         return;
       }
@@ -82,20 +88,31 @@ export class GameHandlers {
         return;
       }
 
-      // Create game state
-      const gameState = await gameStateService.createGame(data.roomId);
+      /**
+       * 1) Création du nouvel état de jeu (board vierge)
+       */
+      const initialGameState = await gameStateService.createGame(data.roomId);
 
-      // Update room status to playing
+      // 2) On met à jour le statut de la salle en "playing"
       await db
         .update(rooms)
         .set({ status: 'playing' })
         .where(eq(rooms.id, data.roomId));
 
-      // Broadcast game start to all players in room
-      this.io.to(data.roomId).emit('game-started', { gameState });
-      
-      console.log(`✅ Game started successfully in room ${data.roomId}`);
+      /**
+       * 3) On émet "game-started" avec le board vierge
+       */
+      this.io.to(data.roomId).emit('game-started', {
+        gameState: initialGameState
+      });
 
+      console.log(`✅ Game started (empty board) in room ${data.roomId}`);
+
+      /**
+       * 4) On déclenche le tour de l'IA si c'est vraiment son tour (ex. IA joue en 1er)
+       */
+      await this.checkAndProcessAITurn(data.roomId);
+      return;
     } catch (error) {
       console.error('❌ Error starting game:', error);
       this.emitError('GAME_START_FAILED', 'Failed to start game');
@@ -159,33 +176,33 @@ export class GameHandlers {
 
       // Check if game is finished
       if (gameEngineManager.isGameFinished(newGameState)) {
-        const winner = gameEngineManager.getWinner(newGameState);
-        if (winner) {
-          // **ENHANCED**: Send game finished event with full completion info
+        const winnerId = gameEngineManager.getWinner(newGameState);
+        if (winnerId) {
+          // Send game finished event with full info
           this.io.to(data.roomId).emit('game-finished', {
             gameState: newGameState,
-            winner: newGameState.players.find(p => p.id === winner)!
+            winner: newGameState.players.find(p => p.id === winnerId)!
           });
-          
-          console.log(`🏆 Game finished in room ${data.roomId}, winner: ${winner}`);
 
-          // **NEW**: Schedule room cleanup notification
-          // After 5 seconds, notify players they can return to lobby
+          console.log(`🏆 Game finished in room ${data.roomId}, winner: ${winnerId}`);
+
+          // Schedule room cleanup notification after a short delay
           setTimeout(() => {
             this.io.to(data.roomId).emit('room-updated', {
               room: {
                 id: data.roomId,
                 status: 'finished' as any,
-                // Signal that players should return to lobby
                 isGameFinished: true
               } as any
             });
-          }, 5000); // 5 seconds delay to show results
+          }, 5000);
         }
+      } else {
+        // Next turn might be AI
+        await this.checkAndProcessAITurn(data.roomId);
       }
 
       console.log(`✅ Move processed successfully for ${this.socket.user.username}`);
-
     } catch (error) {
       console.error('❌ Error processing move:', error);
       this.emitError('MOVE_PROCESSING_FAILED', 'Failed to process move');
@@ -206,13 +223,12 @@ export class GameHandlers {
         return;
       }
 
-      // **ENHANCED**: Check for active game first
+      // Check for active game
       const gameState = await gameStateService.getGameState(data.roomId);
       if (gameState) {
-        // Active game found - send current state
         const validMoves = gameEngineManager.getValidMoves(gameState, this.socket.user.id);
 
-        this.socket.emit('game-state-sync', { 
+        this.socket.emit('game-state-sync', {
           gameState,
           validMoves: validMoves.map(move => ({
             ...move,
@@ -225,24 +241,23 @@ export class GameHandlers {
         return;
       }
 
-      // **NEW**: Check for finished game
+      // Check for finished game
       const finishedGame = await gameStateService.getFinishedGame(data.roomId);
       if (finishedGame) {
-        // Finished game found - send results
-        const winner = finishedGame.players.find(p => p.id === finishedGame.winner);
-        
+        const winnerId = finishedGame.winner!;
+        const winner = finishedGame.players.find(p => p.id === winnerId)!;
+
         this.socket.emit('game-finished', {
           gameState: finishedGame,
-          winner: winner!
+          winner
         });
 
         console.log(`🏆 Finished game results sent to ${this.socket.user.username}`);
         return;
       }
 
-      // No game found at all
+      // No game at all
       this.emitError('GAME_NOT_FOUND', 'No active game found for this room');
-
     } catch (error) {
       console.error('❌ Error sending game state:', error);
       this.emitError('GAME_STATE_FAILED', 'Failed to get game state');
@@ -250,7 +265,7 @@ export class GameHandlers {
   }
 
   /**
-   * **NEW**: Handles player forfeit request
+   * Handles player forfeit request
    */
   private async handleForfeitGame(data: { roomId: string }): Promise<void> {
     try {
@@ -291,24 +306,137 @@ export class GameHandlers {
         gameState: updatedGameState
       });
 
-      // If game is finished, handle completion
+      // If game is finished as a result of forfeit, broadcast finish
       if (updatedGameState.status === 'finished') {
-        const winner = updatedGameState.players.find(p => p.id === updatedGameState.winner);
-        
-        // Broadcast game finished
+        const winnerId = updatedGameState.winner!;
+        const winner = updatedGameState.players.find(p => p.id === winnerId) ||
+                       updatedGameState.players.find(p => p.isConnected)!;
+
         this.io.to(data.roomId).emit('game-finished', {
           gameState: updatedGameState,
-          winner: winner || updatedGameState.players.find(p => p.isConnected)!
+          winner
         });
 
         console.log(`🏆 Game finished due to forfeit in room ${data.roomId}`);
       }
 
       console.log(`✅ Forfeit processed successfully for ${this.socket.user.username}`);
-
     } catch (error) {
       console.error('❌ Error processing forfeit:', error);
       this.emitError('FORFEIT_PROCESSING_FAILED', 'Failed to process forfeit');
+    }
+  }
+
+  /**
+   * Checks if current player is AI and processes AI turn if needed
+   * Now always re-fetches the latest game state from DB to ensure correct turn order.
+   */
+  private async checkAndProcessAITurn(roomId: string): Promise<void> {
+    try {
+      // Re-fetch current game state from DB
+      const gameState = await gameStateService.getGameState(roomId);
+      if (!gameState) return;
+
+      const currentPlayer = gameEngineManager.getCurrentPlayer(gameState);
+
+      // Skip if not AI's turn
+      if (!currentPlayer || !currentPlayer.isAI) {
+        return;
+      }
+
+      console.log(`🤖 AI player ${currentPlayer.username} (${currentPlayer.id}) turn detected in room ${roomId}`);
+
+      // Add a small delay to simulate AI thinking
+      setTimeout(async () => {
+        try {
+          // Re-fetch current game state from DB INSIDE the timeout
+          const freshGameState = await gameStateService.getGameState(roomId);
+          if (!freshGameState) {
+            console.log('🤖 AI turn: Game state no longer available after delay, aborting AI move.');
+            return;
+          }
+
+          // Re-check if it's still this AI's turn
+          const currentTurnPlayer = gameEngineManager.getCurrentPlayer(freshGameState);
+          if (!currentTurnPlayer || !currentTurnPlayer.isAI || currentTurnPlayer.id !== currentPlayer.id) {
+            console.log(`🤖 AI turn: Turn changed during thinking delay. Expected ${currentPlayer.id}, but it's ${currentTurnPlayer?.id}. Re-evaluating.`);
+            // The turn might have passed to another player (or another AI).
+            // Call checkAndProcessAITurn again to handle the new current player.
+            await this.checkAndProcessAITurn(roomId);
+            return;
+          }
+
+          console.log(`🤖 AI player ${currentTurnPlayer.username} (${currentTurnPlayer.id}) is making a move in room ${roomId} after delay.`);
+
+          // Get AI move based on the fresh state
+          const aiMove = await aiService.makeAIMove(roomId, freshGameState, currentTurnPlayer.id);
+
+          // Apply AI move using the fresh game state
+          const newGameStateAfterAIMove = gameEngineManager.applyMove(freshGameState, aiMove);
+
+          // Create full move object
+          const fullMove: Move = {
+            id: crypto.randomUUID(),
+            timestamp: new Date(),
+            ...aiMove
+          };
+
+          // Save updated game state
+          await gameStateService.saveGameState(roomId, newGameStateAfterAIMove);
+
+          // Broadcast the AI move to all players
+          this.io.to(roomId).emit('move-made', {
+            move: fullMove,
+            gameState: newGameStateAfterAIMove
+          });
+
+          console.log(`🤖 AI move made in room ${roomId}:`, aiMove);
+
+          // Check if game is finished after AI move
+          if (gameEngineManager.isGameFinished(newGameStateAfterAIMove)) {
+            const winnerId = gameEngineManager.getWinner(newGameStateAfterAIMove);
+            if (winnerId) {
+              this.io.to(roomId).emit('game-finished', {
+                gameState: newGameStateAfterAIMove,
+                winner: newGameStateAfterAIMove.players.find(p => p.id === winnerId)!
+              });
+
+              console.log(`🏆 Game finished in room ${roomId}, winner: ${winnerId}`);
+
+              setTimeout(() => {
+                this.io.to(roomId).emit('room-updated', {
+                  room: {
+                    id: roomId,
+                    status: 'finished' as any,
+                    isGameFinished: true
+                  } as any
+                });
+              }, 5000);
+            }
+          } else {
+            // Recursively check if next player is also an AI
+            await this.checkAndProcessAITurn(roomId);
+          }
+        } catch (error) {
+          console.error('❌ Error during AI turn:', error);
+          // If AI fails, skip its turn to avoid lockup
+          const freshStateOnError = await gameStateService.getGameState(roomId);
+          if (!freshStateOnError) return;
+
+          const nextPlayerIdx = (freshStateOnError.currentPlayerIndex + 1) % freshStateOnError.players.length;
+          const updatedStateAfterError: GameState = {
+            ...freshStateOnError,
+            currentPlayerIndex: nextPlayerIdx
+          };
+          await gameStateService.saveGameState(roomId, updatedStateAfterError);
+          this.io.to(roomId).emit('game-state-sync', { gameState: updatedStateAfterError });
+
+          // Check if next player is AI
+          await this.checkAndProcessAITurn(roomId);
+        }
+      }, 1000); // 1 second delay for AI thinking
+    } catch (error) {
+      console.error('❌ Error checking AI turn:', error);
     }
   }
 
@@ -358,9 +486,9 @@ export class GameHandlers {
   }
 
   private emitInvalidMove(code: string, message: string, originalMove: Omit<Move, 'id' | 'timestamp'>): void {
-    this.socket.emit('invalid-move', { 
+    this.socket.emit('invalid-move', {
       error: message,
-      originalMove 
+      originalMove
     });
     console.log(`⚠️ Invalid move from ${this.socket.user.username}: ${code} - ${message}`);
   }

@@ -35,6 +35,7 @@ export const rooms = sqliteTable('rooms', {
   isPrivate: int('is_private', { mode: 'boolean' }).default(false).notNull(),
   hasTimeLimit: int('has_time_limit', { mode: 'boolean' }).default(false).notNull(),
   timeLimitSeconds: int('time_limit_seconds'),
+  withAI: int('with_ai', { mode: 'boolean' }).default(false).notNull(),
   createdAt: int('created_at', { mode: 'timestamp' })
     .default(sql`(unixepoch())`)
     .notNull(),

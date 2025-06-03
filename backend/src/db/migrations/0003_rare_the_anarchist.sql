@@ -1,0 +1,1 @@
+ALTER TABLE `rooms` ADD `with_ai` integer DEFAULT false NOT NULL;
