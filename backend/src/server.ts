@@ -10,6 +10,7 @@ import { authRouter } from './routes/auth';
 import { roomsRouter } from './routes/rooms';
 import { gameRouter } from './routes/games';
 import { shopRouter } from './routes/shop';
+import { paymentsRouter } from './routes/payments';
 import { socketHandler } from './socket';
 import { setupPassport } from './auth/passport';
 import { errorHandler } from './middleware/errorHandler';
@@ -31,6 +32,11 @@ app.use(cors({
   origin: config.corsOrigin,
   credentials: true
 }));
+
+// Raw body parsing for Stripe webhooks (MUST be before express.json())
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
+// General JSON parsing for all other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -46,6 +52,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/games', gameRouter);
 app.use('/api/shop', shopRouter);
+app.use('/api/payments', paymentsRouter);
 
 // Health check
 app.get('/health', (req, res) => {

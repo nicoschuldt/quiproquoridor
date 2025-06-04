@@ -17,6 +17,16 @@ const HomePage: React.FC = () => {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
+                  <div className="flex items-center space-x-1 bg-yellow-100 px-3 py-1 rounded-full">
+                    <span className="text-lg">🪙</span>
+                    <span className="font-semibold text-yellow-800">{user.coinBalance || 0}</span>
+                  </div>
+                  <Link 
+                    to="/buy-coins"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Buy Coins
+                  </Link>
                   <span className="text-gray-700">Welcome, {user.username}!</span>
                   <button onClick={logout} className="btn-secondary">
                     Logout

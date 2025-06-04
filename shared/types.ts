@@ -508,3 +508,34 @@ export interface UserProfileWithShop extends UserProfile {
 }
 
 // ==========================================
+// STRIPE PAYMENT TYPES
+// ==========================================
+
+export interface CoinPackage {
+  id: string;
+  name: string;
+  coins: number;
+  priceUSD: number;
+  stripePriceId: string;
+  popularBadge?: boolean;
+  bonusCoins?: number; // Extra coins for better value
+}
+
+export interface CreateCheckoutRequest {
+  packageId: 'starter' | 'popular' | 'pro';
+}
+
+export interface CreateCheckoutResponse {
+  checkoutUrl: string;
+  sessionId: string;
+}
+
+export interface StripeWebhookEvent {
+  id: string;
+  type: string;
+  data: {
+    object: any;
+  };
+}
+
+// ==========================================

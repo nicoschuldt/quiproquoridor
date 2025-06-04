@@ -9,6 +9,7 @@ import CreateGamePage from './pages/CreateGamePage';
 import JoinGamePage from './pages/JoinGamePage';
 import RoomLobbyPage from './pages/RoomLobbyPage';
 import GamePage from './pages/GamePage';
+import CoinPurchasePage from './pages/CoinPurchasePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppContent: React.FC = () => {
@@ -75,6 +76,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <GamePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/buy-coins" 
+            element={
+              <ProtectedRoute>
+                <CoinPurchasePage />
               </ProtectedRoute>
             } 
           />

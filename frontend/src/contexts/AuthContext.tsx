@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
   isLoading: boolean;
   isReconnecting: boolean;
 }
@@ -120,6 +121,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
   };
 
+  const refreshProfile = async () => {
+    try {
+      const profile = await authApi.getProfile();
+      setUser(profile);
+    } catch (error) {
+      console.error('Failed to refresh profile:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -127,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       logout,
+      refreshProfile,
       isLoading,
       isReconnecting
     }}>

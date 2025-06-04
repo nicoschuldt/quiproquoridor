@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@libsql/client": "^0.15.7",
+    "@types/stripe": "^8.0.416",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -33,6 +34,7 @@
     "passport-local": "^1.0.0",
     "postgres": "^3.4.3",
     "socket.io": "^4.7.4",
+    "stripe": "^18.2.1",
     "uuid": "^11.1.0",
     "zod": "^3.22.4"
   },
