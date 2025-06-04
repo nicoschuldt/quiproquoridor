@@ -1,0 +1,251 @@
+import type { AIEngine, GameState, Move, AIDifficulty, Player, Position, Wall } from '../../../shared/types';
+import { gameEngineManager } from '../game/GameEngineManager';
+
+// Helper for deep copying GameState (basic implementation)
+function deepCopy<T>(obj: T): T {
+  // Note: JSON.parse(JSON.stringify(obj)) doesn't handle Dates well if they are not strings.
+  // Ensure GameState and its components are serializable or use a more robust deep copy.
+  return JSON.parse(JSON.stringify(obj));
+}
+
+interface PathNodeInfo {
+  position: Position;
+  distance: number;
+}
+
+const OPPONENT_CLOSE_THRESHOLD = 3; // If opponent is this many moves or less from winning, try to block.
+const MAX_PATH_DISTANCE = Infinity; // Used for path calculations
+
+export class GreedyAI implements AIEngine {
+  private difficulty: AIDifficulty;
+  private thinkingTimeMs: number;
+  private readonly BOARD_SIZE = 9; // Quoridor board size (0-8 for 9x9)
+
+  constructor(difficulty: AIDifficulty = 'medium') {
+    this.difficulty = difficulty;
+    // Increased thinking time slightly to account for more complex decision making
+    this.thinkingTimeMs = 100; 
+  }
+
+  async generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {
+    console.log(`🤖 ${this.getName()} thinking for player ${playerId}...`);
+    await this.delay(this.thinkingTimeMs);
+
+    const currentPlayer = gameState.players.find(p => p.id === playerId);
+    if (!currentPlayer) {
+      throw new Error(`Player ${playerId} not found in gameState`);
+    }
+    const currentPlayerIndex = gameState.players.findIndex(p => p.id === playerId);
+    if (currentPlayerIndex === -1) {
+        throw new Error(`Player index for ${playerId} not found`);
+    }
+
+    // Identify opponent (assuming 2-player game for simplicity first)
+    const opponent = gameState.players.find(p => p.id !== playerId);
+
+    if (opponent && currentPlayer.wallsRemaining > 0) {
+      const opponentIndex = gameState.players.findIndex(p => p.id === opponent.id);
+      if (opponentIndex !== -1) {
+        const opponentGoalY = gameEngineManager.getPlayerGoalRow(opponentIndex, gameState.maxPlayers);
+        const opponentPathLength = this.computeShortestPath(opponent.position, opponentGoalY, gameState, opponent.id);
+        
+        console.log(`🤖 Opponent ${opponent.id} is ${opponentPathLength} moves away from goal.`);
+
+        if (opponentPathLength <= OPPONENT_CLOSE_THRESHOLD) {
+          console.log(`🤖 Opponent is close! Attempting to block.`);
+          const blockingWallMove = this.chooseBlockingWallMove(currentPlayer, opponent, gameState, opponentGoalY, opponentPathLength);
+          if (blockingWallMove) {
+            console.log(`🤖 ${this.getName()} chose blocking wall: ${JSON.stringify(blockingWallMove.wallPosition)} ${blockingWallMove.wallOrientation}`);
+            return blockingWallMove;
+          }
+          console.log(`🤖 Could not find an effective blocking wall.`);
+        }
+      }
+    }
+
+    // If not blocking, or failed to block, choose a greedy pawn move
+    const pawnMove = this.chooseGreedyPawnMove(currentPlayer, gameState, currentPlayerIndex);
+    if (pawnMove) {
+      console.log(`🤖 ${this.getName()} chose greedy pawn move to Y:${pawnMove.toPosition?.y}, X:${pawnMove.toPosition?.x}`);
+      return pawnMove;
+    }
+
+    // Fallback to a random move if no specific strategy applies
+    console.warn(`🤖 ${this.getName()} could not find a strategic move. Making a random move.`);
+    return this.getRandomMove(gameState, playerId);
+  }
+
+  private chooseGreedyPawnMove(
+    player: Player,
+    gameState: GameState,
+    playerIndex: number
+  ): Omit<Move, 'id' | 'timestamp'> | null {
+    const validPawnMoves = gameEngineManager.getValidMoves(gameState, player.id)
+      .filter(move => move.type === 'pawn' && move.toPosition);
+
+    if (validPawnMoves.length === 0) {
+      return null;
+    }
+
+    let bestMove: Omit<Move, 'id' | 'timestamp'> | null = null;
+    let minDistance = MAX_PATH_DISTANCE;
+    const targetY = gameEngineManager.getPlayerGoalRow(playerIndex, gameState.maxPlayers);
+
+    for (const pawnMove of validPawnMoves) {
+      if (!pawnMove.toPosition) continue;
+
+      const simulatedGameState = deepCopy(gameState);
+      const playerInSimulatedState = simulatedGameState.players.find(p => p.id === player.id)!;
+      playerInSimulatedState.position = pawnMove.toPosition;
+
+      const distance = this.computeShortestPath(pawnMove.toPosition, targetY, simulatedGameState, player.id);
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestMove = pawnMove;
+      }
+    }
+    return bestMove;
+  }
+
+  private chooseBlockingWallMove(
+    currentPlayer: Player,
+    opponent: Player,
+    gameState: GameState,
+    opponentGoalY: number,
+    opponentCurrentPath: number
+  ): Omit<Move, 'id' | 'timestamp'> | null {
+    if (currentPlayer.wallsRemaining === 0) return null;
+
+    const validWallMoves = gameEngineManager.getValidMoves(gameState, currentPlayer.id)
+        .filter(move => move.type === 'wall' && move.wallPosition && move.wallOrientation);
+
+    if (validWallMoves.length === 0) return null;
+
+    let bestBlockEffect = 0; // Prioritize walls that hinder opponent the most
+    let bestWallMove: Omit<Move, 'id' | 'timestamp'> | null = null;
+
+    for (const wallMove of validWallMoves) {
+      const simulatedState = deepCopy(gameState);
+      
+      // Apply the wall to the simulated state
+      const newWall: Wall = {
+          id: `sim_wall_${Date.now()}`,
+          playerId: currentPlayer.id,
+          position: wallMove.wallPosition!,
+          orientation: wallMove.wallOrientation!
+      };
+      simulatedState.walls.push(newWall);
+      const playerInSimulatedState = simulatedState.players.find(p => p.id === currentPlayer.id)!;
+      playerInSimulatedState.wallsRemaining--;
+
+      // CRUCIAL: Validate if this wall placement is legal (doesn't trap anyone completely)
+      // Assuming getValidMoves already handles this. If not, add: 
+      // if (!gameEngineManager.hasValidPathToGoal(simulatedState, currentPlayer.id) || 
+      //     !gameEngineManager.hasValidPathToGoal(simulatedState, opponent.id)) {
+      //   console.log(`Wall placement ${newWall.position.x},${newWall.position.y} ${newWall.orientation} would trap a player.`);
+      //   continue;
+      // }
+      // For now, we trust getValidMoves from gameEngineManager
+
+      const newOpponentPath = this.computeShortestPath(opponent.position, opponentGoalY, simulatedState, opponent.id);
+
+      if (newOpponentPath === MAX_PATH_DISTANCE && opponentCurrentPath !== MAX_PATH_DISTANCE) {
+        // This wall completely blocks the opponent, and they weren't blocked before. Ideal.
+        console.log(`Found optimal blocking wall for opponent ${opponent.id}: ${JSON.stringify(wallMove.wallPosition)} ${wallMove.wallOrientation}`);
+        return wallMove; 
+      }
+
+      const blockEffect = newOpponentPath - opponentCurrentPath;
+
+      if (blockEffect > bestBlockEffect) {
+        bestBlockEffect = blockEffect;
+        bestWallMove = wallMove;
+      }
+    }
+    
+    if (bestBlockEffect > 0) {
+        console.log(`Best blocking wall for ${opponent.id} increases path by ${bestBlockEffect}: ${JSON.stringify(bestWallMove?.wallPosition)} ${bestWallMove?.wallOrientation}`);
+    }
+    return bestWallMove; 
+  }
+
+  private computeShortestPath(
+    startPosition: Position,
+    goalY: number,
+    gameState: GameState,
+    playerId: string
+  ): number {
+    const queue: PathNodeInfo[] = [{ position: startPosition, distance: 0 }];
+    const visited: Set<string> = new Set([`${startPosition.y},${startPosition.x}`]);
+    const DIRS: Array<[number, number]> = [
+      [-1, 0], [1, 0], [0, -1], [0, 1],
+      [-2, 0], [2, 0], [0, -2], [0, 2],
+      [-1, -1], [-1, 1], [1, -1], [1, 1]
+    ];
+
+    let playerForPathfinding = gameState.players.find(p => p.id === playerId);
+    if (!playerForPathfinding) return MAX_PATH_DISTANCE; // Should not happen
+
+    // Temporarily set the player's position in the copied gameState for accurate isValidPawnMove checks
+    // This is because isValidPawnMove might rely on the player's current position within the passed gameState.
+    const originalPlayerPosition = deepCopy(playerForPathfinding.position);
+
+    while (queue.length > 0) {
+      const { position: currentPos, distance } = queue.shift()!;
+
+      if (currentPos.y === goalY) {
+        playerForPathfinding.position = originalPlayerPosition; // Restore original position
+        return distance;
+      }
+      
+      // Simulate player being at currentPos for pathfinding validity checks
+      playerForPathfinding.position = currentPos; 
+
+      for (const [dY, dX] of DIRS) {
+        const nextY = currentPos.y + dY;
+        const nextX = currentPos.x + dX;
+        const nextPos: Position = { y: nextY, x: nextX };
+
+        if (nextY >= 0 && nextY < this.BOARD_SIZE && nextX >= 0 && nextX < this.BOARD_SIZE) {
+          const visitedKey = `${nextY},${nextX}`;
+          if (!visited.has(visitedKey)) {
+            // isValidPawnMove uses the gameState where playerForPathfinding is now at currentPos
+            if (gameEngineManager.isValidPawnMove(gameState, currentPos, nextPos, playerId)) {
+              visited.add(visitedKey);
+              queue.push({ position: nextPos, distance: distance + 1 });
+            }
+          }
+        }
+      }
+    }
+    playerForPathfinding.position = originalPlayerPosition; // Restore original position
+    return MAX_PATH_DISTANCE;
+  }
+
+  private async getRandomMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {
+    const validMoves = gameEngineManager.getValidMoves(gameState, playerId);
+    if (validMoves.length === 0) {
+      throw new Error(`No valid moves available for AI player ${playerId} as fallback.`);
+    }
+    const randomIndex = Math.floor(Math.random() * validMoves.length);
+    const randomMove = validMoves[randomIndex];
+    console.log(`🤖 ${this.getName()} making random move: ${randomMove.type} to ${randomMove.toPosition ? `Y:${randomMove.toPosition.y},X:${randomMove.toPosition.x}` : `wall at Y:${randomMove.wallPosition?.y},X:${randomMove.wallPosition?.x} ${randomMove.wallOrientation}` }`);
+    return randomMove;
+  }
+
+  getDifficulty(): AIDifficulty {
+    return this.difficulty;
+  }
+
+  getName(): string {
+    return `GreedyAI (${this.difficulty} - Defensive)`;
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+export function createGreedyAI(difficulty: AIDifficulty): GreedyAI {
+  return new GreedyAI(difficulty);
+}
