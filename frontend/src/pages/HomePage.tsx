@@ -27,6 +27,12 @@ const HomePage: React.FC = () => {
                   >
                     Buy Coins
                   </Link>
+                  <Link 
+                    to="/profile"
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Profile
+                  </Link>
                   <span className="text-gray-700">Welcome, {user.username}!</span>
                   <button onClick={logout} className="btn-secondary">
                     Logout

@@ -539,3 +539,36 @@ export interface StripeWebhookEvent {
 }
 
 // ==========================================
+// Profile API Types
+// ==========================================
+
+export interface GameHistoryEntry {
+  gameId: string;
+  playerIndex: number;
+  color: PlayerColor;
+  isWinner: boolean;
+  wallsUsed: number;
+  gameStatus: GameStatus;
+  gameStartedAt: Date | null;
+  gameFinishedAt: Date | null;
+}
+
+export interface TransactionHistoryEntry {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  description: string | null;
+  shopItemId: string | null;
+  stripeSessionId: string | null;
+  createdAt: Date;
+}
+
+export interface UserStatsResponse {
+  gamesPlayed: number;
+  gamesWon: number;
+  winRate: number;
+  totalCoinsEarned: number;
+  totalCoinsSpent: number;
+}
+
+// ==========================================

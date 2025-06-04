@@ -67,6 +67,14 @@ export const authApi = {
   getProfile: async (): Promise<UserProfileWithShop> => {
     return await api.get('/auth/me') as any;
   },
+
+  getGameHistory: async () => {
+    return await api.get('/auth/game-history') as any;
+  },
+
+  getTransactionHistory: async () => {
+    return await api.get('/auth/transaction-history') as any;
+  },
 };
 
 export const roomApi = {

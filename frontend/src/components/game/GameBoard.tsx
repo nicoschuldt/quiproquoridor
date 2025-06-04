@@ -396,9 +396,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
     <div className="w-full max-w-2xl mx-auto p-4">
       {/* Game info */}
       <div className="mb-4 text-center">
-        <h3 className="text-lg font-semibold mb-2">
-          Current Turn: {currentPlayer?.username || 'Unknown'}
-        </h3>
         <div className="flex justify-center space-x-4 text-sm">
           {gameState.players.map(player => (
             <div key={player.id} className={`flex items-center space-x-1 ${

@@ -4,8 +4,8 @@ import passport from 'passport';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { db, users } from '../db';
-import { eq } from 'drizzle-orm';
+import { db, users, gamePlayers, games, transactions } from '../db';
+import { eq, desc } from 'drizzle-orm';
 import { config } from '../config';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 
@@ -158,5 +158,64 @@ router.get('/me', passport.authenticate('jwt', { session: false }), asyncHandler
     },
   });
 }));
+
+// Get user's game history
+router.get('/game-history',
+  passport.authenticate('jwt', { session: false }),
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const user = req.user as any;
+
+    // Get games where user participated with basic info
+    const gameHistory = await db
+      .select({
+        gameId: gamePlayers.gameId,
+        playerIndex: gamePlayers.playerIndex,
+        color: gamePlayers.color,
+        isWinner: gamePlayers.isWinner,
+        wallsUsed: gamePlayers.wallsUsed,
+        gameStatus: games.status,
+        gameStartedAt: games.startedAt,
+        gameFinishedAt: games.finishedAt,
+      })
+      .from(gamePlayers)
+      .innerJoin(games, eq(games.id, gamePlayers.gameId))
+      .where(eq(gamePlayers.userId, user.id))
+      .orderBy(desc(games.createdAt))
+      .limit(50); // Limit to last 50 games
+
+    res.json({
+      success: true,
+      data: gameHistory,
+    });
+  })
+);
+
+// Get user's transaction history  
+router.get('/transaction-history',
+  passport.authenticate('jwt', { session: false }),
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const user = req.user as any;
+
+    const transactionHistory = await db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        description: transactions.description,
+        shopItemId: transactions.shopItemId,
+        stripeSessionId: transactions.stripeSessionId,
+        createdAt: transactions.createdAt,
+      })
+      .from(transactions)
+      .where(eq(transactions.userId, user.id))
+      .orderBy(desc(transactions.createdAt))
+      .limit(100); // Limit to last 100 transactions
+
+    res.json({
+      success: true,
+      data: transactionHistory,
+    });
+  })
+);
 
 export { router as authRouter };

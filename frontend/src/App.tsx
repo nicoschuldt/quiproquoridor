@@ -10,6 +10,7 @@ import JoinGamePage from './pages/JoinGamePage';
 import RoomLobbyPage from './pages/RoomLobbyPage';
 import GamePage from './pages/GamePage';
 import CoinPurchasePage from './pages/CoinPurchasePage';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppContent: React.FC = () => {
@@ -84,6 +85,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <CoinPurchasePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             } 
           />

@@ -287,7 +287,7 @@ export class GameStateService {
         })
         .where(eq(rooms.id, roomId));
 
-      // **OPTIONAL**: Schedule room cleanup after a delay (e.g., 30 minutes)
+      // room cleanup after a delay
       // This allows players to see final results before room is cleaned up
       setTimeout(async () => {
         await this.cleanupFinishedRoom(roomId);
@@ -418,21 +418,40 @@ export class GameStateService {
    */
   private async updatePlayerStats(roomId: string, gameState: GameState): Promise<void> {
     try {
+      const gameRecord = await db
+        .select({ id: games.id })
+        .from(games)
+        .where(and(
+          eq(games.roomId, roomId),
+          eq(games.status, 'finished')
+        ))
+        .limit(1);
+
+      if (gameRecord.length === 0) {
+        console.error('❌ No finished game record found for room:', roomId);
+        return;
+      }
+
+      const gameId = gameRecord[0].id;
+      console.log(`🏁 Updating player stats for game ${gameId}, winner: ${gameState.winner}`);
+
       for (const player of gameState.players) {
         const isWinner = player.id === gameState.winner;
         const wallsUsed = player.wallsRemaining;
 
-        // Update game_players table
+        console.log(`📊 Updating stats for player ${player.username} (${player.id}): winner=${isWinner}, wallsUsed=${wallsUsed}`);
+
+        // Update game_players table with correct game ID
         await db
           .update(gamePlayers)
           .set({
             wallsUsed,
             isWinner,
-            finalPosition: player.position as any, // JSON field
+            finalPosition: player.position as any,
           })
           .where(and(
             eq(gamePlayers.userId, player.id),
-            eq(gamePlayers.gameId, roomId) // This should be gameId, but using roomId for now
+            eq(gamePlayers.gameId, gameId)
           ));
 
         // Update user statistics
@@ -444,6 +463,8 @@ export class GameStateService {
           })
           .where(eq(users.id, player.id));
       }
+      
+      console.log(`✅ Player stats updated successfully for game ${gameId}`);
     } catch (error) {
       console.error('❌ Error updating player stats:', error);
     }
@@ -461,9 +482,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * **NEW**: Handles player forfeit
-   */
   async forfeitPlayer(roomId: string, playerId: string): Promise<GameState | null> {
     try {
       console.log(`🏳️ Player ${playerId} forfeiting game in room ${roomId}`);
@@ -511,14 +529,9 @@ export class GameStateService {
     }
   }
 
-  /**
-   * **NEW**: Manages disconnection timeouts
-   */
+  
   private disconnectionTimeouts = new Map<string, NodeJS.Timeout>();
 
-  /**
-   * **NEW**: Starts disconnection timeout for a player
-   */
   startDisconnectionTimeout(roomId: string, playerId: string, timeoutSeconds: number = 60): void {
     const key = `${roomId}:${playerId}`;
     
@@ -549,9 +562,6 @@ export class GameStateService {
     this.disconnectionTimeouts.set(key, timeout);
   }
 
-  /**
-   * **NEW**: Cancels disconnection timeout (player reconnected)
-   */
   cancelDisconnectionTimeout(roomId: string, playerId: string): boolean {
     const key = `${roomId}:${playerId}`;
     
@@ -565,9 +575,6 @@ export class GameStateService {
     return false;
   }
 
-  /**
-   * **NEW**: Checks if player has an active disconnection timeout
-   */
   hasDisconnectionTimeout(roomId: string, playerId: string): boolean {
     const key = `${roomId}:${playerId}`;
     return this.disconnectionTimeouts.has(key);
