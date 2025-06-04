@@ -249,7 +249,7 @@ export class QuoridorEngine implements GameEngine {
     if (!this.isWallPositionValid(wallPos, orientation)) {
       return false;
     }
-
+  
     // 2) Empêchement des chevauchements / extensions interdites
     for (const existing of gameState.walls) {
       // même orientation et même coordonnée → chevauchement direct
@@ -281,47 +281,49 @@ export class QuoridorEngine implements GameEngine {
         return false;
       }
     }
-
-    // 3) Empêchement des croisements horizontal/vertical
+  
+    // 3) FIXED: Empêchement des croisements horizontal/vertical (X-crossings only)
+    // Only prevent walls that occupy the exact same position with different orientations
+    // Allow T-shapes where walls meet at corners
     if (orientation === 'horizontal') {
-      // Un mur horizontal en (x,y) croise un mur vertical en (x,y) ou en (x+1,y)
-      // → on interdit si un mur vertical est en (x, y) ou (x+1, y)
+      // Un mur horizontal en (x,y) croise un mur vertical seulement s'il existe 
+      // un mur vertical à la position exacte (x,y) - cela crée un X
       const wx = wallPos.x;
       const wy = wallPos.y;
       if (
         gameState.walls.some(
           (w) =>
             w.orientation === 'vertical' &&
-            ((w.position.x === wx && w.position.y === wy) ||
-             (w.position.x === wx + 1 && w.position.y === wy))
+            w.position.x === wx && 
+            w.position.y === wy
         )
       ) {
         return false;
       }
     } else {
       // orientation="vertical"
-      // Un mur vertical en (x,y) croise un mur horizontal en (x,y) ou en (x,y+1)
-      // → on interdit si un mur horizontal est en (x, y) ou (x, y+1)
+      // Un mur vertical en (x,y) croise un mur horizontal seulement s'il existe
+      // un mur horizontal à la position exacte (x,y) - cela crée un X
       const wx = wallPos.x;
       const wy = wallPos.y;
       if (
         gameState.walls.some(
           (w) =>
             w.orientation === 'horizontal' &&
-            ((w.position.x === wx && w.position.y === wy) ||
-             (w.position.x === wx && w.position.y === wy + 1))
+            w.position.x === wx && 
+            w.position.y === wy
         )
       ) {
         return false;
       }
     }
-
+  
     // 4) Vérifier que le joueur courant a encore des murs
     const currentPlayer = this.getCurrentPlayer(gameState);
     if (currentPlayer.wallsRemaining <= 0) {
       return false;
     }
-
+  
     // 5) Empêchement de bloquer totalement un chemin
     const tempWalls: Wall[] = [
       ...gameState.walls,
@@ -345,7 +347,7 @@ export class QuoridorEngine implements GameEngine {
         return false;
       }
     }
-
+  
     return true;
   }
 
