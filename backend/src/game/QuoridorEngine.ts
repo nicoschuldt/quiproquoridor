@@ -611,21 +611,21 @@ export class QuoridorEngine implements GameEngine {
     const start = player.position;
     const visited = new Set<string>();
     const queue: Position[] = [start];
-
+  
     const playerIndex = allPlayers.findIndex((p) => p.id === player.id);
     if (playerIndex < 0) return false;
-
+  
     while (queue.length > 0) {
       const current = queue.shift()!;
       const key = `${current.x},${current.y}`;
       if (visited.has(key)) continue;
       visited.add(key);
-
-      // Si on est arrivé sur la ligne/colonne de but, on a trouvé un chemin
+  
+      // If we've reached the goal, we found a path
       if (this.isAtGoal(current, playerIndex, maxPlayers)) {
         return true;
       }
-
+  
       const deltas = [
         { dx: 0, dy: -1 },
         { dx: 1, dy: 0 },
@@ -639,16 +639,6 @@ export class QuoridorEngine implements GameEngine {
         };
         if (!this.isPositionValid(next)) continue;
         if (this.isWallBlocking(walls, current, next)) continue;
-        if (
-          allPlayers.some(
-            (p) =>
-              p.id !== player.id &&
-              p.position.x === next.x &&
-              p.position.y === next.y
-          )
-        ) {
-          continue;
-        }
         queue.push(next);
       }
     }
