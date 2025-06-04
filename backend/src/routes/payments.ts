@@ -20,26 +20,26 @@ const COIN_PACKAGES: CoinPackage[] = [
   {
     id: 'starter',
     name: 'Starter Pack',
-    coins: 100,
-    priceUSD: 0.99,
+    coins: 500,
+    priceEUR: 2.99,
     stripePriceId: config.stripe.priceIds.starter,
   },
   {
     id: 'popular',
     name: 'Popular Pack',
-    coins: 500,
-    priceUSD: 4.99,
+    coins: 1800,
+    priceEUR: 9.99,
     stripePriceId: config.stripe.priceIds.popular,
     popularBadge: true,
-    bonusCoins: 50, // 550 total coins
+    bonusCoins: 200, // 550 total coins
   },
   {
     id: 'pro',
     name: 'Pro Pack',
-    coins: 1200,
-    priceUSD: 9.99,
+    coins: 4000,
+    priceEUR: 19.99,
     stripePriceId: config.stripe.priceIds.pro,
-    bonusCoins: 200, // 1400 total coins
+    bonusCoins: 600, // 1400 total coins
   },
 ];
 

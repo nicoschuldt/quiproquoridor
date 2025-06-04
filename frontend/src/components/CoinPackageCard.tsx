@@ -60,13 +60,13 @@ const CoinPackageCard: React.FC<CoinPackageCardProps> = ({
         {/* Price */}
         <div className="text-center mb-4">
           <span className="text-2xl font-bold text-gray-900">
-            ${pkg.priceUSD.toFixed(2)}
+            {pkg.priceEUR.toFixed(2)} €
           </span>
         </div>
 
         {/* Value proposition */}
         <div className="text-center text-sm text-gray-500 mb-4">
-          ${(pkg.priceUSD / totalCoins).toFixed(3)} per coin
+          {(pkg.priceEUR / totalCoins).toFixed(3)} € per coin
         </div>
 
         {/* Purchase Button */}

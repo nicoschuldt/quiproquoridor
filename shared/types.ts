@@ -515,7 +515,7 @@ export interface CoinPackage {
   id: string;
   name: string;
   coins: number;
-  priceUSD: number;
+  priceEUR: number;
   stripePriceId: string;
   popularBadge?: boolean;
   bonusCoins?: number; // Extra coins for better value
