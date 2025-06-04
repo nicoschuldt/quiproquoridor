@@ -258,21 +258,21 @@ const GamePage: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* **NEW**: End Game Modal */}
       {state.endGameModal?.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="card max-w-md w-full mx-4 text-center">
             <div className="mb-6">
               {state.endGameModal.winner ? (
                 <div>
                   <div className="text-6xl mb-4">
                     {state.endGameModal.winner.id === user?.id ? '🏆' : '🎯'}
                   </div>
-                  <h2 className="text-2xl font-bold mb-2">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
                     {state.endGameModal.winner.id === user?.id ? 'Victory!' : 'Game Over'}
                   </h2>
-                  <p className="text-lg text-gray-700">{state.endGameModal.message}</p>
+                  <p className="text-lg text-gray-600">{state.endGameModal.message}</p>
                   {state.endGameModal.reason === 'forfeit' && (
                     <p className="text-sm text-gray-500 mt-2">Game ended by forfeit</p>
                   )}
@@ -280,15 +280,15 @@ const GamePage: React.FC = () => {
               ) : (
                 <div>
                   <div className="text-6xl mb-4">🤝</div>
-                  <h2 className="text-2xl font-bold mb-2">Game Ended</h2>
-                  <p className="text-lg text-gray-700">{state.endGameModal.message}</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Game Ended</h2>
+                  <p className="text-lg text-gray-600">{state.endGameModal.message}</p>
                 </div>
               )}
             </div>
             
             <button 
               onClick={handleEndGameModalClose}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium w-full"
+              className="btn btn-primary w-full"
             >
               Return to Lobby
             </button>
@@ -297,30 +297,41 @@ const GamePage: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-gray-900">Quoridor Game</h1>
-              <p className="text-sm text-gray-600">Room: {roomId}</p>
+              <div className="hidden sm:block">
+                <span className="text-sm text-gray-500">Room: </span>
+                <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{roomId}</span>
+              </div>
             </div>
+            
             <div className="flex items-center space-x-4">
               {/* Connection Status */}
-              <div className={`text-sm px-2 py-1 rounded ${
+              <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                 gameSocket.connectionStatus === 'connected' ? 'bg-green-100 text-green-800' :
                 gameSocket.connectionStatus === 'disconnected' ? 'bg-red-100 text-red-800' :
                 'bg-yellow-100 text-yellow-800'
               }`}>
-                {gameSocket.connectionStatus === 'connected' && '🟢 Connected'}
-                {gameSocket.connectionStatus === 'disconnected' && '🔴 Disconnected'}
-                {gameSocket.connectionStatus === 'connecting' && '🟡 Connecting...'}
+                <div className={`w-2 h-2 rounded-full ${
+                  gameSocket.connectionStatus === 'connected' ? 'bg-green-500' :
+                  gameSocket.connectionStatus === 'disconnected' ? 'bg-red-500' :
+                  'bg-yellow-500'
+                }`} />
+                <span>
+                  {gameSocket.connectionStatus === 'connected' && 'Connected'}
+                  {gameSocket.connectionStatus === 'disconnected' && 'Disconnected'}
+                  {gameSocket.connectionStatus === 'connecting' && 'Connecting...'}
+                </span>
               </div>
               
               {/* **NEW**: Forfeit button - only show during active game */}
               {state.isGameStarted && state.gameState?.status === 'playing' && (
                 <button 
                   onClick={handleForfeit}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
+                  className="btn btn-danger"
                 >
                   Forfeit
                 </button>
@@ -328,35 +339,49 @@ const GamePage: React.FC = () => {
               
               <button 
                 onClick={() => navigate('/')}
-                className="btn-secondary"
+                className="btn btn-secondary"
               >
                 Leave Game
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* **NEW**: Notifications */}
       {state.notifications.length > 0 && (
-        <div className="fixed top-20 right-4 z-50 space-y-2">
+        <div className="fixed top-20 right-4 z-40 space-y-3">
           {state.notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`px-4 py-3 rounded-lg shadow-lg max-w-sm animate-slide-in-right ${
-                notification.type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
-                notification.type === 'warning' ? 'bg-yellow-100 border border-yellow-400 text-yellow-700' :
-                'bg-blue-100 border border-blue-400 text-blue-700'
+              className={`card-floating max-w-sm animate-slide-in-right ${
+                notification.type === 'success' ? 'border-green-200 bg-green-50' :
+                notification.type === 'warning' ? 'border-yellow-200 bg-yellow-50' :
+                'border-blue-200 bg-blue-50'
               }`}
+              style={{ padding: '1rem' }}
             >
               <div className="flex justify-between items-start">
-                <span className="text-sm font-medium">{notification.message}</span>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    notification.type === 'success' ? 'bg-green-500' :
+                    notification.type === 'warning' ? 'bg-yellow-500' :
+                    'bg-blue-500'
+                  }`} />
+                  <span className={`text-sm font-medium ${
+                    notification.type === 'success' ? 'text-green-800' :
+                    notification.type === 'warning' ? 'text-yellow-800' :
+                    'text-blue-800'
+                  }`}>
+                    {notification.message}
+                  </span>
+                </div>
                 <button 
                   onClick={() => setState(prev => ({
                     ...prev,
                     notifications: prev.notifications.filter(n => n.id !== notification.id)
                   }))}
-                  className="ml-2 text-gray-500 hover:text-gray-700"
+                  className="ml-2 text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -367,15 +392,18 @@ const GamePage: React.FC = () => {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Error Display */}
         {state.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="card border-red-200 bg-red-50 text-red-700 mb-6" style={{ padding: '1rem' }}>
             <div className="flex justify-between items-center">
-              <span>{state.error}</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="font-medium">{state.error}</span>
+              </div>
               <button 
                 onClick={() => setState(prev => ({ ...prev, error: null }))}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-400 hover:text-red-600"
               >
                 ✕
               </button>
@@ -385,33 +413,36 @@ const GamePage: React.FC = () => {
         
         {/* Loading State */}
         {state.isLoading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading game...</p>
+              <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading game...</p>
             </div>
           </div>
         )}
         
         {/* Game Not Started */}
         {!state.isLoading && !state.isGameStarted && (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Game Room</h2>
-            <p className="text-gray-600 mb-6">Ready to start the game?</p>
-            <button 
-              onClick={gameSocket.startGame}
-              className="btn-primary"
-              disabled={gameSocket.connectionStatus !== 'connected'}
-            >
-              Start Game
-            </button>
+          <div className="text-center py-16">
+            <div className="card max-w-md mx-auto">
+              <div className="text-6xl mb-4">🎮</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Game Room Ready</h2>
+              <p className="text-gray-600 mb-6">All players are connected and ready to start!</p>
+              <button 
+                onClick={gameSocket.startGame}
+                className="btn btn-primary btn-lg w-full"
+                disabled={gameSocket.connectionStatus !== 'connected'}
+              >
+                Start Game
+              </button>
+            </div>
           </div>
         )}
         
         {/* Active Game */}
         {!state.isLoading && state.isGameStarted && state.gameState && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="xl:col-span-3">
               <GameBoard
                 gameState={state.gameState}
                 currentPlayerId={user.id}
@@ -424,35 +455,57 @@ const GamePage: React.FC = () => {
             </div>
             
             {/* Game Info Sidebar */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="card">
-                <h3 className="font-semibold mb-2">Current Turn</h3>
-                <div className={`p-2 rounded ${isCurrentTurn ? 'bg-green-100' : 'bg-gray-100'}`}>
-                  {isCurrentTurn ? 'Your turn!' : 
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Turn</h3>
+                <div className={`p-3 rounded-xl font-medium text-center ${
+                  isCurrentTurn 
+                    ? 'bg-green-100 text-green-800 border border-green-200' 
+                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                }`}>
+                  {isCurrentTurn ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Your turn!</span>
+                    </div>
+                  ) : (
                     `${state.gameState.players[state.gameState.currentPlayerIndex].username}'s turn`
-                  }
+                  )}
                 </div>
               </div>
 
               <div className="card">
-                <h3 className="font-semibold mb-2">Players</h3>
-                <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Players</h3>
+                <div className="space-y-3">
                   {state.gameState.players.map((player) => (
-                    <div key={player.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-4 h-4 rounded-full bg-game-${player.color}`} />
-                        <span className={`${player.id === user.id ? 'font-bold' : ''} ${
-                          state.disconnectedPlayers.has(player.id) ? 'text-gray-500 line-through' : ''
-                        }`}>
-                          {player.username}
+                    <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-4 h-4 rounded-full ${
+                          player.color === 'red' ? 'bg-red-500' :
+                          player.color === 'blue' ? 'bg-blue-500' :
+                          player.color === 'green' ? 'bg-green-500' :
+                          'bg-yellow-500'
+                        }`} />
+                        <div>
+                          <span className={`font-medium ${
+                            player.id === user.id ? 'text-blue-700' : 'text-gray-900'
+                          } ${state.disconnectedPlayers.has(player.id) ? 'line-through text-gray-400' : ''}`}>
+                            {player.username}
+                            {player.id === user.id && (
+                              <span className="ml-1 text-xs text-blue-600">(You)</span>
+                            )}
+                          </span>
                           {state.disconnectedPlayers.has(player.id) && (
-                            <span className="ml-1 text-xs text-red-500">(disconnected)</span>
+                            <div className="text-xs text-red-500 font-medium">Disconnected</div>
                           )}
-                        </span>
+                        </div>
                       </div>
-                      <span className="text-sm text-gray-600">
-                        {player.wallsRemaining} walls
-                      </span>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {player.wallsRemaining}
+                        </div>
+                        <div className="text-xs text-gray-500">walls</div>
+                      </div>
                     </div>
                   ))}
                 </div>

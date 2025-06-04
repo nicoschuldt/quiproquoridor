@@ -96,71 +96,7 @@ const CreateGamePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Privacy Setting */}
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Private Room
-                </label>
-                <p className="text-sm text-gray-500">Only joinable with room code</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleChange('isPrivate', !formData.isPrivate)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  formData.isPrivate ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    formData.isPrivate ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Time Limit */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Time Limit per Move
-                  </label>
-                  <p className="text-sm text-gray-500">Add pressure to the game</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleChange('hasTimeLimit', !formData.hasTimeLimit)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.hasTimeLimit ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.hasTimeLimit ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {formData.hasTimeLimit && (
-                <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Time Limit (seconds)
-                  </label>
-                  <select
-                    value={formData.timeLimitSeconds}
-                    onChange={(e) => handleChange('timeLimitSeconds', parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value={60}>1 minute</option>
-                    <option value={120}>2 minutes</option>
-                    <option value={300}>5 minutes</option>
-                    <option value={600}>10 minutes</option>
-                  </select>
-                </div>
-              )}
-            </div>
+            
 
             <button
               type="submit"

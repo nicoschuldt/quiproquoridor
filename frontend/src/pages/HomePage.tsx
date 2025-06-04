@@ -2,64 +2,23 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ActiveGameBanner from '../components/ActiveGameBanner';
+import Navigation from '../components/Navigation';
 
 const HomePage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Quoridor</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <div className="flex items-center space-x-1 bg-yellow-100 px-3 py-1 rounded-full">
-                    <span className="text-lg">🪙</span>
-                    <span className="font-semibold text-yellow-800">{user.coinBalance || 0}</span>
-                  </div>
-                  <Link 
-                    to="/buy-coins"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Buy Coins
-                  </Link>
-                  <Link 
-                    to="/profile"
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <span className="text-gray-700">Welcome, {user.username}!</span>
-                  <button onClick={logout} className="btn-secondary">
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="btn-secondary">Login</Link>
-                  <Link to="/register" className="btn-primary">Register</Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         {user && <ActiveGameBanner />}
         
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Strategic Board Game
+            Play Quoridor!
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Challenge your friends in this classic path-blocking game. 
-            Be the first to reach the opposite side while strategically placing walls to block your opponents.
-          </p>
+          
         </div>
 
         {user ? (
