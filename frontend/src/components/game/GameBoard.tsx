@@ -1,7 +1,7 @@
 // frontend/src/components/game/GameBoard.tsx
 import React, { useState, useCallback } from 'react';
 import type { Position, Move, Wall, GameState, Player, WallOrientation } from '@/types';
-import { getSafePawnClasses } from '@/utils/themeUtils';
+import { getSafePawnClasses, getSafePawnImagePath } from '@/utils/themeUtils';
 
 /**
  * GameBoard Component for Quoridor
@@ -40,6 +40,27 @@ const gridToGame = (gridRow: number, gridCol: number): Position => ({
   x: (gridCol - 1) / 2,
   y: (gridRow - 1) / 2
 });
+
+// Calculate clockwise wave delay for smooth animation
+const getClockwiseDelay = (position: Position): number => {
+  const { x, y } = position;
+  // Create a clockwise spiral pattern starting from center
+  const centerX = 4; // Center of 9x9 grid (0-8)
+  const centerY = 4;
+  
+  // Calculate distance from center and angle
+  const dx = x - centerX;
+  const dy = y - centerY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx);
+  
+  // Convert angle to 0-1 range and combine with distance for spiral effect
+  const normalizedAngle = (angle + Math.PI) / (2 * Math.PI);
+  const spiralDelay = (normalizedAngle + distance * 0.3) % 1;
+  
+  // Return delay in seconds (0 to 2 seconds for smooth waves)
+  return spiralDelay * 2;
+};
 
 // Helper to check if grid position is a pawn square (odd numbers)
 const isPawnSquare = (row: number, col: number): boolean => {
@@ -98,7 +119,7 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
       gridPosition: { row: gridRow, col: gridCol },
       isValidMove,
       player: player?.username || 'empty',
-      theme: player ? getSafePawnClasses(player) : 'none'
+      imagePath: player ? getSafePawnImagePath(player) : 'none'
     });
     
     if (!disabled && isValidMove) {
@@ -110,26 +131,34 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
   
   let squareClasses = baseClasses;
   if (isValidMove && !disabled) {
-    squareClasses += " cursor-pointer hover:bg-green-100 hover:border-green-400";
+    squareClasses += " cursor-pointer valid-move";
   }
   if (isCurrentPlayer) {
     squareClasses += " ring-2 ring-yellow-400 ring-inset";
   }
 
+  // Calculate animation delay for clockwise wave effect
+  const animationDelay = isValidMove && !disabled ? getClockwiseDelay(position) : 0;
+  
+  const squareStyle: React.CSSProperties = {
+    gridRow: gridRow,
+    gridColumn: gridCol,
+    ...(isValidMove && !disabled && {
+      animationDelay: `${animationDelay}s`
+    })
+  };
+
   return (
     <div
       className={squareClasses}
-      style={{ gridRow: gridRow, gridColumn: gridCol }}
+      style={squareStyle}
       onClick={handleClick}
     >
-      {/* Valid move indicator */}
-      {isValidMove && !player && !disabled && (
-        <div className="valid-move-indicator w-6 h-6 rounded-full animate-pulse" />
-      )}
-      
       {/* Player pawn with dynamic theme */}
       {player && (
-        <div 
+        <img 
+          src={getSafePawnImagePath(player)}
+          alt={`${player.username} pawn`}
           className={getSafePawnClasses(player)}
           title={`${player.username} (${player.wallsRemaining} walls left)`}
         />
@@ -393,43 +422,51 @@ const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4">
+    <div className="w-full p-2 sm:p-4">
       {/* Game info */}
-      <div className="mb-4 text-center">
-        <div className="flex justify-center space-x-4 text-sm">
+      <div className="mb-2 sm:mb-4 text-center">
+        <div className="flex justify-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
           {gameState.players.map(player => (
             <div key={player.id} className={`flex items-center space-x-1 ${
               player.id === currentPlayerId ? 'font-bold' : ''
             }`}>
-              <div className={`w-4 h-4 rounded-full ${
+              <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${
                 player.color === 'red' ? 'bg-red-500' :
                 player.color === 'blue' ? 'bg-blue-500' :
                 player.color === 'green' ? 'bg-green-500' :
                 'bg-yellow-500'
               }`} />
-              <span>{player.username}: {player.wallsRemaining} walls</span>
+              <span className="hidden xs:inline">{player.username}: {player.wallsRemaining} walls</span>
+              <span className="xs:hidden">{player.wallsRemaining}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Game board */}
-      <div 
-        className={`game-board aspect-square relative ${boardTheme || ''}`}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
-          gridTemplateRows: '1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr 10px 1fr',
-        }}
-      >
-        {renderGridCells()}
+      {/* Game board container with responsive sizing */}
+      <div className="flex justify-center">
+        <div className="board-wrapper p-4 sm:p-6 lg:p-8">
+          <div 
+            className={`game-board aspect-square relative max-w-[90vw] max-h-[90vh] w-full 
+                       sm:max-w-[min(90vw,90vh)] lg:max-w-4xl xl:max-w-5xl ${boardTheme || ''}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr',
+              gridTemplateRows: '1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr',
+              '--board-size': 'min(90vw, 90vh)',
+              '--wall-size': 'calc(var(--board-size) / 60)',
+            } as React.CSSProperties}
+          >
+            {renderGridCells()}
+          </div>
+        </div>
       </div>
 
-      {/* Debug info */}
-      <div className="mt-4 text-xs text-gray-500">
-        <div>Valid moves: {validMoves.length}</div>
-        <div>Walls placed: {gameState.walls.length}</div>
-        <div>Current player ID: {currentPlayerId}</div>
+      {/* Debug info - responsive */}
+      <div className="mt-2 sm:mt-4 text-xs text-gray-500 text-center">
+        <div className="hidden sm:block">Valid moves: {validMoves.length}</div>
+        <div className="hidden sm:block">Walls placed: {gameState.walls.length}</div>
+        <div className="hidden lg:block">Current player ID: {currentPlayerId}</div>
       </div>
     </div>
   );

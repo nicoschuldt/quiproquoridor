@@ -1,37 +1,58 @@
 import type { Player, PlayerColor } from '@/types';
 
 /**
- * Get CSS classes for a player's pawn based on their theme and color
+ * Get the theme name from CSS class (remove "theme-pawn-" prefix)
+ * @param themeClass - CSS class like "theme-pawn-knights"
+ * @returns Theme name like "knights"
+ */
+const getThemeNameFromClass = (themeClass: string): string => {
+  return themeClass.replace('theme-pawn-', '');
+};
+
+/**
+ * Get image path for a player's pawn based on their theme and color
  * @param player - The player object containing theme information
- * @returns Combined CSS class string for the pawn
+ * @returns Image path for the pawn
  */
-export const getPawnClasses = (player: Player): string => {
-  const theme = player.selectedPawnTheme || 'theme-pawn-default';
-  const color = `color-${player.color}`;
-  return `${theme} ${color}`;
+export const getPawnImagePath = (player: Player): string => {
+  const themeClass = player.selectedPawnTheme || 'theme-pawn-default';
+  const themeName = getThemeNameFromClass(themeClass);
+  const color = player.color;
+  return `/images/pawns/${themeName}/${color}.png`;
 };
 
 /**
- * Get fallback CSS classes for a pawn when theme data is missing
+ * Get fallback image path for a pawn when theme data is missing
  * @param color - The player color
- * @returns Fallback CSS class string
+ * @returns Fallback image path
  */
-export const getFallbackPawnClasses = (color: PlayerColor): string => {
-  return `theme-pawn-default color-${color}`;
+export const getFallbackPawnImagePath = (color: PlayerColor): string => {
+  return `/images/pawns/default/${color}.png`;
 };
 
 /**
- * Get safe CSS classes for a pawn with fallback
+ * Get safe image path for a pawn with fallback
  * @param player - The player object
- * @returns Safe CSS class string with fallback
+ * @returns Safe image path with fallback
+ */
+export const getSafePawnImagePath = (player: Player): string => {
+  try {
+    return getPawnImagePath(player);
+  } catch (error) {
+    console.warn('Failed to get pawn image path, using fallback:', error);
+    return getFallbackPawnImagePath(player.color);
+  }
+};
+
+/**
+ * @deprecated Use getSafePawnImagePath instead. This function is kept for compatibility
+ * but now returns basic CSS classes for the pawn container
+ * @param player - The player object
+ * @returns Basic CSS classes for pawn container
  */
 export const getSafePawnClasses = (player: Player): string => {
-  try {
-    return getPawnClasses(player);
-  } catch (error) {
-    console.warn('Failed to get pawn classes, using fallback:', error);
-    return getFallbackPawnClasses(player.color);
-  }
+  // Return basic container classes for positioning and sizing
+  return 'pawn-image';
 };
 
 /**

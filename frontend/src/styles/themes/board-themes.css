@@ -1,16 +1,34 @@
+/* Isometric Voxel Board Theme System
+ * Designed to match the cute blocky character aesthetic
+ * Features: Matte pastels, soft shadows, 3D depth, ambient lighting
+ */
 
+/* Main Game Board - Voxel Platform Base */
 .game-board {
-  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
-  border-radius: 12px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.1),
-    0 8px 16px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 2px solid rgba(148, 163, 184, 0.3);
+  background: linear-gradient(135deg, #f1f5ff 0%, #e8efff 25%, #f8faff 50%, #eff4ff 75%, #f5f8ff 100%);
+  border-radius: 20px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  
+  /* Isometric 3D platform effect */
+  box-shadow: 
+    /* Main platform shadow */
+    0 25px 50px rgba(100, 116, 139, 0.15),
+    0 15px 30px rgba(100, 116, 139, 0.1),
+    0 8px 16px rgba(100, 116, 139, 0.08),
+    
+    /* Top light reflection */
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4),
+    
+    /* Subtle border glow */
+    0 0 0 1px rgba(148, 163, 184, 0.2);
+    
+  /* Subtle neumorphic border */
+  border: 3px solid rgba(255, 255, 255, 0.6);
 }
 
+/* Ambient lighting overlay */
 .game-board::before {
   content: '';
   position: absolute;
@@ -18,201 +36,294 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%);
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  border-radius: inherit;
   pointer-events: none;
   z-index: 1;
 }
 
-/* Pawn Squares - Modern elevated look */
+/* Pawn Squares - Voxel Tiles with Soft Elevation */
 .game-board .pawn-square {
-  background: linear-gradient(145deg, #ffffff, #f1f5f9);
-  border: 1px solid rgba(203, 213, 225, 0.6);
-  border-radius: 6px;
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-radius: 8px;
   position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Voxel-style 3D elevation */
+  box-shadow:
+    /* Main tile shadow */
+    0 6px 12px rgba(100, 116, 139, 0.12),
+    0 3px 6px rgba(100, 116, 139, 0.08),
+    
+    /* Top highlight */
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.6),
+    
+    /* Subtle border */
+    0 0 0 1px rgba(203, 213, 225, 0.3);
+    
+  /* Isometric transform hint */
+  transform: 
+    perspective(1000px) 
+    rotateX(1deg) 
+    rotateY(1deg);
 }
 
-.game-board .pawn-square:hover {
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
-}
-
-/* Walls - Sophisticated depth */
-.game-board .wall {
-  background: linear-gradient(145deg, #374151, #1f2937);
-  border-radius: 3px;
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  position: relative;
-}
-
-.game-board .wall::after {
+.game-board .pawn-square::after {
   content: '';
   position: absolute;
-  top: 1px;
-  left: 1px;
-  right: 1px;
-  bottom: 50%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
-  border-radius: 2px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-/* Wall Preview - Elegant hint */
-.game-board .wall-preview {
-  background: linear-gradient(145deg, #ef4444, #dc2626);
-  border-radius: 3px;
-  box-shadow: 
-    0 2px 4px rgba(239, 68, 68, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  position: relative;
+/* Hover Effect - Voxel Lift */
+.game-board .pawn-square:hover {
+  transform: 
+    perspective(1000px) 
+    rotateX(1deg) 
+    rotateY(1deg) 
+    translateY(-4px) 
+    scale(1.02);
+    
+  box-shadow:
+    /* Enhanced elevation */
+    0 12px 24px rgba(100, 116, 139, 0.16),
+    0 6px 12px rgba(100, 116, 139, 0.12),
+    0 3px 6px rgba(100, 116, 139, 0.08),
+    
+    /* Brighter highlight */
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 1px 1px 3px rgba(255, 255, 255, 0.7),
+    
+    /* Glow effect */
+    0 0 20px rgba(59, 130, 246, 0.1);
 }
 
-/* Valid Move Indicators - Clean glow */
+/* Valid Move Tiles - Smooth Clockwise Wave Animation */
+.game-board .pawn-square.valid-move {
+  /* Add softer glowing border around the entire tile */
+  box-shadow:
+    /* Original tile shadows */
+    0 6px 12px rgba(100, 116, 139, 0.12),
+    0 3px 6px rgba(100, 116, 139, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.6),
+    0 0 0 1px rgba(203, 213, 225, 0.3),
+    
+    /* Soft animated glow effect */
+    0 0 15px rgba(220, 252, 231, 0.4),
+    0 0 30px rgba(220, 252, 231, 0.2),
+    0 0 0 2px rgba(187, 247, 208, 0.3);
+    
+  /* Smooth floating animation with clockwise wave delays */
+  animation: valid-move-wave 3s ease-in-out infinite;
+}
+
+/* Generate clockwise wave delays using CSS custom properties */
+.game-board .pawn-square.valid-move {
+  /* This will be overridden by inline styles for each position */
+  animation-delay: 0s;
+}
+
+.game-board .pawn-square.valid-move:hover {
+  /* Enhanced glow on hover */
+  box-shadow:
+    0 12px 24px rgba(100, 116, 139, 0.16),
+    0 6px 12px rgba(100, 116, 139, 0.12),
+    0 3px 6px rgba(100, 116, 139, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 1px 1px 3px rgba(255, 255, 255, 0.7),
+    0 0 20px rgba(59, 130, 246, 0.1),
+    
+    /* Stronger but still soft glow when hovering */
+    0 0 25px rgba(187, 247, 208, 0.6),
+    0 0 50px rgba(187, 247, 208, 0.3),
+    0 0 0 3px rgba(34, 197, 94, 0.4);
+}
+
+@keyframes valid-move-wave {
+  0%, 100% {
+    transform: 
+      perspective(1000px) 
+      rotateX(1deg) 
+      rotateY(1deg) 
+      translateY(0px);
+    box-shadow:
+      0 6px 12px rgba(100, 116, 139, 0.12),
+      0 3px 6px rgba(100, 116, 139, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.6),
+      0 0 0 1px rgba(203, 213, 225, 0.3),
+      0 0 15px rgba(220, 252, 231, 0.4),
+      0 0 30px rgba(220, 252, 231, 0.2),
+      0 0 0 2px rgba(187, 247, 208, 0.3);
+  }
+  50% {
+    transform: 
+      perspective(1000px) 
+      rotateX(1deg) 
+      rotateY(1deg) 
+      translateY(-5px)
+      scale(1.02);
+    box-shadow:
+      0 10px 20px rgba(100, 116, 139, 0.16),
+      0 5px 10px rgba(100, 116, 139, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.7),
+      0 0 0 1px rgba(203, 213, 225, 0.4),
+      0 0 25px rgba(187, 247, 208, 0.6),
+      0 0 50px rgba(187, 247, 208, 0.4),
+      0 0 0 3px rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* Remove the old gem indicator styles */
 .game-board .valid-move-indicator {
-  background: radial-gradient(circle, #10b981, #059669);
-  box-shadow: 
-    0 2px 8px rgba(16, 185, 129, 0.4),
-    0 0 16px rgba(16, 185, 129, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  display: none;
 }
 
-.theme-board-forest {
-  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
-  border-color: rgba(34, 197, 94, 0.3);
+/* Walls - Chunky Voxel Blocks */
+.game-board .wall {
+  background: linear-gradient(135deg, #475569 0%, #334155 50%, #1e293b 100%);
+  border-radius: 6px;
+  position: relative;
+  
+  /* Solid voxel block appearance */
+  box-shadow:
+    /* Block depth */
+    0 8px 16px rgba(30, 41, 59, 0.4),
+    0 4px 8px rgba(30, 41, 59, 0.3),
+    
+    /* Top surface highlight */
+    inset 0 2px 0 rgba(255, 255, 255, 0.15),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+    
+    /* Side shadow for 3D effect */
+    inset -1px -1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.theme-board-forest .pawn-square {
-  background: linear-gradient(145deg, #fefffe, #f0fdf4);
-  border-color: rgba(74, 222, 128, 0.4);
+.game-board .wall::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  height: 40%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  border-radius: 4px 4px 0 0;
+  /* Top surface shine */
 }
 
-.theme-board-forest .pawn-square:hover {
-  background: linear-gradient(145deg, #f0fdf4, #ecfdf5);
-  box-shadow: 
-    0 4px 8px rgba(34, 197, 94, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+/* Wall Preview - Glowing Placement Indicator */
+.game-board .wall-preview {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+  border-radius: 6px;
+  position: relative;
+  opacity: 0.9;
+  
+  /* Pulsing preview effect */
+  box-shadow:
+    0 8px 16px rgba(239, 68, 68, 0.4),
+    0 4px 8px rgba(239, 68, 68, 0.3),
+    0 0 20px rgba(239, 68, 68, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+    
+  animation: wall-preview-pulse 1.5s ease-in-out infinite;
 }
 
-.theme-board-forest .wall {
-  background: linear-gradient(145deg, #92400e, #78350f);
+@keyframes wall-preview-pulse {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
-.theme-board-forest .wall-preview {
-  background: linear-gradient(145deg, #d97706, #b45309);
+/* Pastel Theme Variations */
+
+/* Cotton Candy Theme - Soft pastels */
+.theme-board-cotton {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 25%, #fbcfe8 50%, #f9a8d4 75%, #f472b6 100%);
+  border-color: rgba(244, 114, 182, 0.3);
 }
 
-/* Ocean Theme - Deep blue waters */
-.theme-board-ocean {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  border-color: rgba(59, 130, 246, 0.3);
+.theme-board-cotton .pawn-square {
+  background: linear-gradient(135deg, #fefcff 0%, #fdf4ff 50%, #fae8ff 100%);
 }
 
-.theme-board-ocean .pawn-square {
-  background: linear-gradient(145deg, #ffffff, #f0f9ff);
-  border-color: rgba(96, 165, 250, 0.4);
+.theme-board-cotton .wall {
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7c3aed 100%);
 }
 
-.theme-board-ocean .pawn-square:hover {
-  background: linear-gradient(145deg, #f0f9ff, #e0f2fe);
-  box-shadow: 
-    0 4px 8px rgba(59, 130, 246, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+/* Mint Theme - Fresh greens */
+.theme-board-mint {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #bbf7d0 50%, #86efac 75%, #4ade80 100%);
+  border-color: rgba(74, 222, 128, 0.3);
 }
 
-.theme-board-ocean .wall {
-  background: linear-gradient(145deg, #1e40af, #1e3a8a);
+.theme-board-mint .pawn-square {
+  background: linear-gradient(135deg, #fefffe 0%, #f0fdf4 50%, #ecfdf5 100%);
 }
 
-.theme-board-ocean .wall-preview {
-  background: linear-gradient(145deg, #3b82f6, #2563eb);
+.theme-board-mint .wall {
+  background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
 }
 
-/* Neon Theme - Futuristic cyber */
-.theme-board-neon {
-  background: linear-gradient(145deg, #1e1b4b, #312e81);
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 8px 16px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(168, 85, 247, 0.3),
-    0 0 40px rgba(168, 85, 247, 0.1);
-}
-
-.theme-board-neon .pawn-square {
-  background: linear-gradient(145deg, #1e1b4b, #0f0d3b);
-  border-color: rgba(196, 181, 253, 0.6);
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(196, 181, 253, 0.2),
-    0 0 8px rgba(168, 85, 247, 0.1);
-}
-
-.theme-board-neon .pawn-square:hover {
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(196, 181, 253, 0.3),
-    0 0 12px rgba(168, 85, 247, 0.2);
-}
-
-.theme-board-neon .wall {
-  background: linear-gradient(145deg, #ec4899, #db2777);
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 8px rgba(236, 72, 153, 0.3);
-}
-
-.theme-board-neon .wall-preview {
-  background: linear-gradient(145deg, #06b6d4, #0891b2);
-  box-shadow: 
-    0 2px 4px rgba(6, 182, 212, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 0 12px rgba(6, 182, 212, 0.4);
-}
-
-/* Desert Theme - Warm sand & terracotta */
-.theme-board-desert {
-  background: linear-gradient(145deg, #fff7ed, #fed7aa);
+/* Peach Theme - Warm oranges */
+.theme-board-peach {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 25%, #fed7aa 50%, #fdba74 75%, #fb923c 100%);
   border-color: rgba(251, 146, 60, 0.3);
 }
 
-.theme-board-desert .pawn-square {
-  background: linear-gradient(145deg, #fffbeb, #fef3c7);
-  border-color: rgba(252, 176, 64, 0.4);
+.theme-board-peach .pawn-square {
+  background: linear-gradient(135deg, #fffbf5 0%, #fff7ed 50%, #ffedd5 100%);
 }
 
-.theme-board-desert .pawn-square:hover {
-  background: linear-gradient(145deg, #fef3c7, #fde68a);
-  box-shadow: 
-    0 4px 8px rgba(251, 146, 60, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+.theme-board-peach .wall {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #b91c1c 100%);
 }
 
-.theme-board-desert .wall {
-  background: linear-gradient(145deg, #b91c1c, #991b1b);
+/* Sky Theme - Soft blues */
+.theme-board-sky {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #60a5fa 100%);
+  border-color: rgba(96, 165, 250, 0.3);
 }
 
-.theme-board-desert .wall-preview {
-  background: linear-gradient(145deg, #f97316, #ea580c);
+.theme-board-sky .pawn-square {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
 }
 
+.theme-board-sky .wall {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 50%, #1e3a8a 100%);
+}
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .game-board {
-    border-radius: 8px;
-    box-shadow: 
-      0 10px 20px rgba(0, 0, 0, 0.1),
-      0 4px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    border-width: 2px;
   }
   
   .game-board .pawn-square {
+    border-radius: 6px;
+    transform: perspective(800px) rotateX(0.5deg) rotateY(0.5deg);
+  }
+  
+  .game-board .pawn-square:hover {
+    transform: perspective(800px) rotateX(0.5deg) rotateY(0.5deg) translateY(-2px) scale(1.01);
+  }
+  
+  .game-board .wall {
     border-radius: 4px;
   }
 } 
