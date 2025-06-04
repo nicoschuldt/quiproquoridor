@@ -84,3 +84,4 @@ storybook-static/
 *.bak
 *.swp
 *.swo
+quoridor_backup.db
