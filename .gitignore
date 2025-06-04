@@ -84,3 +84,7 @@ storybook-static/
 *.bak
 *.swp
 *.swo
+
+
+# Database
+*.db

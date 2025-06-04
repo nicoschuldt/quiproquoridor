@@ -6,7 +6,9 @@ import { db, rooms, roomMembers, users } from '../db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
-import type { AIDifficulty } from '../../../shared/types';
+import { gameStateService } from '../game/GameStateService';
+import type { AIDifficulty, ServerToClientEvents, ClientToServerEvents } from '../../../shared/types';
+import type { Server } from 'socket.io';
 
 const router = Router();
 
@@ -404,6 +406,76 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
     userId: aiUser[0].id,
     isHost: false,
   });
+
+  // **NEW**: Emit socket events for AI player addition
+  const io = req.app.get('io') as Server<ClientToServerEvents, ServerToClientEvents>;
+  
+  // Get updated room members for socket events
+  const updatedMembers = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      isHost: roomMembers.isHost,
+      joinedAt: roomMembers.joinedAt,
+      isAI: users.isAI,
+      aiDifficulty: users.aiDifficulty,
+    })
+    .from(roomMembers)
+    .innerJoin(users, eq(roomMembers.userId, users.id))
+    .where(eq(roomMembers.roomId, roomId));
+
+  // Convert to Player format for socket events
+  const players = updatedMembers.map((member, index) => ({
+    id: member.id,
+    username: member.username,
+    color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
+    position: { x: 4, y: index === 0 ? 0 : 8 },
+    wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
+    isConnected: true,
+    joinedAt: member.joinedAt,
+    selectedPawnTheme: 'theme-pawn-default',
+    isAI: member.isAI || false,
+    aiDifficulty: member.aiDifficulty || undefined,
+  }));
+
+  const aiPlayer = players.find(p => p.id === aiUser[0].id)!;
+  
+  // Emit events to all players in the room
+  io.to(roomId).emit('player-joined', { player: aiPlayer });
+  
+  const updatedRoomData = {
+    id: room.id,
+    code: room.code,
+    hostId: room.hostId,
+    players,
+    maxPlayers: room.maxPlayers as 2 | 4,
+    status: room.status,
+    isPrivate: room.isPrivate,
+    hasTimeLimit: room.hasTimeLimit,
+    timeLimitSeconds: room.timeLimitSeconds || undefined,
+    createdAt: room.createdAt,
+  };
+  
+  io.to(roomId).emit('room-updated', { room: updatedRoomData });
+
+  // **NEW**: Check if room is full and auto-start the game
+  if (players.length === room.maxPlayers) {
+    console.log(`🎮 Room ${roomId} is full after AI addition, auto-starting game`);
+    
+    // Update room status to 'playing'
+    await db
+      .update(rooms)
+      .set({ status: 'playing' })
+      .where(eq(rooms.id, roomId));
+
+    // Create game state
+    const gameState = await gameStateService.createGame(roomId);
+    
+    // Emit game-started event to all players
+    io.to(roomId).emit('game-started', { gameState });
+    
+    console.log(`✅ Game auto-started for room ${roomId} with ${players.length} players`);
+  }
 
   res.json({
     success: true,

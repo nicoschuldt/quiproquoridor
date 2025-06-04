@@ -55,7 +55,7 @@ export class RandomAI implements AIEngine {
   }
 
   getName(): string {
-    return `AI (${this.difficulty})`;
+    return `RandomAI (${this.difficulty})`;
   }
 
   /**

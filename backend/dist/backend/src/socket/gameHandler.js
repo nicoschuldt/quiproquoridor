@@ -127,8 +127,8 @@ class GameHandlers {
                     move: {
                         id: crypto.randomUUID(),
                         timestamp: new Date(),
-                        type: 'pawn', // Placeholder - actual move data would need to be stored
-                        playerId: 'ai-system' // Placeholder
+                        type: 'pawn', // TODO: Placeholder - actual move data would need to be stored
+                        playerId: 'ai-player'
                     },
                     gameState: aiProcessedState
                 });
@@ -139,7 +139,6 @@ class GameHandlers {
             if (GameEngineManager_1.gameEngineManager.isGameFinished(newGameState)) {
                 const winner = GameEngineManager_1.gameEngineManager.getWinner(newGameState);
                 if (winner) {
-                    // **ENHANCED**: Send game finished event with full completion info
                     this.io.to(data.roomId).emit('game-finished', {
                         gameState: newGameState,
                         winner: newGameState.players.find(p => p.id === winner)

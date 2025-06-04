@@ -15,13 +15,13 @@ class RandomAI {
         // Set thinking time based on difficulty
         switch (difficulty) {
             case 'easy':
-                this.thinkingTimeMs = 500; // 0.5 seconds
+                this.thinkingTimeMs = 0; // 0.5 seconds
                 break;
             case 'medium':
-                this.thinkingTimeMs = 1000; // 1 second
+                this.thinkingTimeMs = 0; // 1 second
                 break;
             case 'hard':
-                this.thinkingTimeMs = 1500; // 1.5 seconds
+                this.thinkingTimeMs = 0; // 1.5 seconds
                 break;
         }
     }
@@ -45,7 +45,7 @@ class RandomAI {
         return this.difficulty;
     }
     getName() {
-        return `AI (${this.difficulty})`;
+        return `RandomAI (${this.difficulty})`;
     }
     /**
      * Simple delay utility for simulating thinking time

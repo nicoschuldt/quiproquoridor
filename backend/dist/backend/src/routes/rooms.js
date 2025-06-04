@@ -12,6 +12,7 @@ const db_1 = require("../db");
 const drizzle_orm_1 = require("drizzle-orm");
 const nanoid_1 = require("nanoid");
 const errorHandler_1 = require("../middleware/errorHandler");
+const GameStateService_1 = require("../game/GameStateService");
 const router = (0, express_1.Router)();
 exports.roomsRouter = router;
 // All routes require authentication
@@ -321,7 +322,7 @@ router.post('/:roomId/ai', (0, errorHandler_1.asyncHandler)(async (req, res) => 
         throw new errorHandler_1.AppError(400, 'ROOM_FULL', 'Room is full');
     }
     // Create AI user record
-    const aiUsername = `AI (${difficulty})`;
+    const aiUsername = `AI (${difficulty}) ${Date.now()}`;
     const aiUser = await db_1.db
         .insert(db_1.users)
         .values({
@@ -337,6 +338,63 @@ router.post('/:roomId/ai', (0, errorHandler_1.asyncHandler)(async (req, res) => 
         userId: aiUser[0].id,
         isHost: false,
     });
+    const io = req.app.get('io');
+    // Get updated room members for socket events
+    const updatedMembers = await db_1.db
+        .select({
+        id: db_1.users.id,
+        username: db_1.users.username,
+        isHost: db_1.roomMembers.isHost,
+        joinedAt: db_1.roomMembers.joinedAt,
+        isAI: db_1.users.isAI,
+        aiDifficulty: db_1.users.aiDifficulty,
+    })
+        .from(db_1.roomMembers)
+        .innerJoin(db_1.users, (0, drizzle_orm_1.eq)(db_1.roomMembers.userId, db_1.users.id))
+        .where((0, drizzle_orm_1.eq)(db_1.roomMembers.roomId, roomId));
+    // Convert to Player format for socket events
+    const players = updatedMembers.map((member, index) => ({
+        id: member.id,
+        username: member.username,
+        color: ['red', 'blue', 'green', 'yellow'][index],
+        position: { x: 4, y: index === 0 ? 0 : 8 },
+        wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
+        isConnected: true,
+        joinedAt: member.joinedAt,
+        selectedPawnTheme: 'theme-pawn-default',
+        isAI: member.isAI || false,
+        aiDifficulty: member.aiDifficulty || undefined,
+    }));
+    const aiPlayer = players.find(p => p.id === aiUser[0].id);
+    // Emit events to all players in the room
+    io.to(roomId).emit('player-joined', { player: aiPlayer });
+    const updatedRoomData = {
+        id: room.id,
+        code: room.code,
+        hostId: room.hostId,
+        players,
+        maxPlayers: room.maxPlayers,
+        status: room.status,
+        isPrivate: room.isPrivate,
+        hasTimeLimit: room.hasTimeLimit,
+        timeLimitSeconds: room.timeLimitSeconds || undefined,
+        createdAt: room.createdAt,
+    };
+    io.to(roomId).emit('room-updated', { room: updatedRoomData });
+
+    if (players.length === room.maxPlayers) {
+        console.log(`🎮 Room ${roomId} is full after AI addition, auto-starting game`);
+        // Update room status to 'playing'
+        await db_1.db
+            .update(db_1.rooms)
+            .set({ status: 'playing' })
+            .where((0, drizzle_orm_1.eq)(db_1.rooms.id, roomId));
+        // Create game state
+        const gameState = await GameStateService_1.gameStateService.createGame(roomId);
+        // Emit game-started event to all players
+        io.to(roomId).emit('game-started', { gameState });
+        console.log(`✅ Game auto-started for room ${roomId} with ${players.length} players`);
+    }
     res.json({
         success: true,
         data: {
