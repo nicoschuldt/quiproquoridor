@@ -1,0 +1,103 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Core Principles
+- Prioritize type safety and strong TypeScript usage
+- Use existing patterns and utilities from the codebase
+- Keep code simple, readable, and maintainable
+- Follow established project structure and conventions
+- Minimize boilerplate by leveraging existing abstractions
+
+## TypeScript Requirements
+- NEVER use `any` type - use proper types or `unknown` with type guards
+- Always import types from `@/types` (shared types) when available
+- Use type inference where possible, explicit types where clarity is needed
+- Prefer interfaces over type aliases for object shapes
+- Use type guards for runtime type checking (isPosition, isMove, etc.)
+- Leverage generic types and utility types when appropriate
+
+## Import/Export Patterns
+- Use absolute imports with `@/` prefix for internal modules
+- Import shared types from `@/types` consistently
+
+## Error Handling
+- Always handle errors explicitly with try/catch or proper error boundaries
+- Use our established AppError class for API errors
+- Provide meaningful error messages that help users understand what went wrong
+- Log errors appropriately for debugging
+
+## Code Structure
+- Keep functions small and focused on single responsibility
+- Use descriptive variable names that explain intent
+- Add JSDoc comments for complex business logic
+- Prefer composition over inheritance
+- Use early returns to reduce nesting
+
+## Security
+- Always validate user inputs using Zod schemas where established
+- Use authentication middleware for protected route
+- Never expose sensitive information in error messages to clients
+- Follow principle of least privilege
+
+## Project Structure
+```
+shared/types.ts           # All TypeScript interfaces
+frontend/src/components/  # Reusable React components
+frontend/src/pages/       # Page-level components
+frontend/src/services/    # API calls and external services
+frontend/src/contexts/    # React contexts
+backend/src/routes/       # Express route handlers
+backend/src/db/          # Database schema and operations
+backend/src/socket/      # Socket.io event handlers
+backend/src/auth/        # Authentication logic
+backend/src/middleware/  # Express middleware
+```
+Frontend should ALWAYS run on port 3000 (npm run dev -- --port 3000).
+Backend should run on 3001 (npm run dev).
+
+## Shared Types Usage
+- Always use types from `shared/types.ts` for data structures
+- When creating new data structures, add them to shared types first
+- Use type-safe API calls with proper request/response typing
+- Leverage discriminated unions for different game states/moves
+
+## Database Patterns
+- Use Drizzle ORM consistently - never write raw SQL
+- Leverage our established schema from `backend/src/db/schema.ts`
+- Always handle database errors with meaningful messages
+
+## Real-time (Socket.io) Patterns
+- Use typed events from ClientToServerEvents/ServerToClientEvents
+- Always authenticate socket connections
+- Handle socket errors gracefully
+- Follow our established room management patterns
+- Emit events only to relevant users/rooms
+
+## API Response Format
+Always use our established API response format:
+```typescript
+{
+  success: boolean;
+  data?: T;
+  error?: ApiError;
+  message?: string;
+}
+```
+
+## Constants and Configuration
+- Use constants from `shared/types.ts` (BOARD_SIZE, MAX_WALLS_2P, etc.)
+- Read configuration from environment variables in backend
+- Use our established validation rules (MIN_USERNAME_LENGTH, etc.)
+
+## Testing Considerations
+- Write code that's easy to test - avoid side effects
+- Use dependency injection where appropriate
+- Mock external dependencies consistently
+- Test error paths, not just happy paths
+
+## Documentation
+- Add JSDoc comments for public API functions
+- Keep README files updated with setup instructions
+- Document complex business logic and game rules

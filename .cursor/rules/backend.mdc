@@ -1,0 +1,113 @@
+---
+description: 
+globs: backend/*
+alwaysApply: false
+---
+# Backend Cursor Rules - Node.js/Express/TypeScript
+
+## Express Route Patterns
+- Use our established asyncHandler wrapper for all async routes
+- Follow RESTful conventions: GET, POST, PUT, DELETE
+- Use proper HTTP status codes (200, 201, 400, 401, 404, 500)
+- Always validate inputs using Zod schemas
+- Use our established API response format consistently
+
+## Database Operations with Drizzle
+- Always use Drizzle ORM - never raw SQL queries
+- Import db and tables from our established db/index.ts
+- Use proper TypeScript types from schema
+- Handle database errors with meaningful messages
+- Use transactions for multi-step operations
+
+```typescript
+import { db, users, rooms } from '../db';
+import { eq, and, desc } from 'drizzle-orm';
+
+// Simple query
+const user = await db
+  .select()
+  .from(users)
+  .where(eq(users.id, userId))
+  .limit(1);
+
+// Complex query with joins
+const roomsWithHost = await db
+  .select({
+    room: rooms,
+    host: users,
+  })
+  .from(rooms)
+  .innerJoin(users, eq(rooms.hostId, users.id))
+  .where(eq(rooms.status, 'lobby'));
+
+// Insert with returning
+const newRoom = await db
+  .insert(rooms)
+  .values(roomData)
+  .returning();
+```
+
+## Authentication & Authorization
+- Use Passport.js JWT strategy for route protection
+- Use our authenticate middleware for protected routes
+- Access authenticated user via req.user (typed properly)
+- Always verify user permissions for resources they're accessing
+
+
+## Error Handling
+- Use our AppError class for operational errors
+- Use asyncHandler wrapper for route handlers
+- Never expose sensitive information in error messages
+- Log errors appropriately for debugging
+- Provide meaningful error codes and messages
+
+## Socket.io Server Patterns
+- Use our established socket authentication middleware
+- Type all socket events using our interfaces
+- Handle socket errors gracefully
+- Use room-based event broadcasting
+- Always verify user permissions before socket operations
+
+## Input Validation with Zod
+- Define schemas for all API inputs
+- Use descriptive error messages
+- Validate nested objects and arrays properly
+- Reuse schemas across related endpoints
+
+## Configuration Management
+- Use our config object from config/index.ts
+- Never hardcode sensitive values
+- Use environment variables for all configuration
+- Provide sensible defaults for development
+- Validate required environment variables at startup
+
+```typescript
+import { config } from '../config';
+
+// Use config values
+const token = jwt.sign(payload, config.jwtSecret);
+const dbConnection = drizzle(config.dbFileName);
+```
+
+## Logging and Monitoring
+- Log important events (user actions, errors, performance issues)
+- Use structured logging in production
+- Include context in error logs
+
+```typescript
+console.log(`User ${user.username} created room ${room.id}`);
+console.error('Database error:', { error, userId: user.id, operation: 'createRoom' });
+```
+
+## Game Engine Integration
+- Keep game logic separate from API logic
+- Use our GameEngine interface consistently
+- Validate moves through game engine before applying
+- Handle game engine errors gracefully
+- Store complete game state in database as JSON
+
+## Testing Considerations
+- Write testable code by avoiding side effects
+- Mock database operations properly
+- Test error conditions, not just success paths
+- Use proper TypeScript types in tests

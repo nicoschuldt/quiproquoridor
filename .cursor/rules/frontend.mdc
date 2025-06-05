@@ -1,0 +1,79 @@
+---
+description: 
+globs: frontend/*
+alwaysApply: false
+---
+# Frontend Cursor Rules - React/TypeScript
+
+## React Component Patterns
+- Use functional components with hooks - no class components
+- TypeScript with React: use `React.FC<Props>` for component typing
+- Keep components small and focused on single responsibility
+- Extract custom hooks for complex state logic
+- Use proper component file structure: Component.tsx in components/
+
+## React Hooks Best Practices
+- Always include all dependencies in useEffect dependency arrays
+- Use useCallback for event handlers passed to child components
+- Use useMemo for expensive computations only
+- Custom hooks should start with 'use' and be in hooks/ directory
+- Prefer useState over useReducer for simple state
+
+## State Management
+- Use our AuthContext for user authentication state
+- Use our SocketContext for real-time connection state
+- For component state, prefer multiple useState over single complex object
+- Lift state up only when multiple components need it
+
+## Event Handling
+- Use TypeScript event types: `React.ChangeEvent<HTMLInputElement>`
+- Prevent default behavior when appropriate: `e.preventDefault()`
+- Use useCallback for handlers passed to child components
+- Handle async operations in event handlers with proper error handling
+
+## API Integration
+- Use our established API services from `services/api.ts`
+- Always handle loading and error states in components
+- Use proper TypeScript types for API requests/responses
+- Show user feedback for async operations
+- Handle network errors gracefully
+
+## Socket.io Integration
+- Use our SocketContext for real-time features
+- Always check socket connection before emitting events
+- Handle socket events in useEffect with cleanup
+- Type socket events using our established interfaces
+- Show connection status to users
+
+## Styling with Tailwind
+- Use our established utility classes from globals.css
+- Use component classes: .btn-primary, .btn-secondary, .input-field, .card
+- Prefer Tailwind utilities over custom CSS
+- Use responsive design with mobile-first approach
+- Leverage our color palette: primary-*, etc.
+
+## Conditional Rendering
+- Use early returns for loading/error states
+- Use && for conditional rendering when no else case
+- Use ternary operator for simple if/else rendering
+- Prefer multiple conditional renders over complex nested ternaries
+
+## Error Boundaries
+- Wrap main sections in error boundaries for better UX
+- Show user-friendly error messages, not technical details
+- Provide recovery actions when possible (retry buttons)
+- Log errors for debugging in development
+
+## Game-Specific Patterns
+- Use our shared types for all game-related data structures
+- Handle real-time game updates through Socket.io
+- Show clear visual feedback for user actions
+- Implement proper turn-based UI patterns
+- Handle game state synchronization properly
+
+## Testing Considerations
+- Write components that are easy to test
+- Avoid side effects in render
+- Use data-testid attributes for testing
+- Mock our API services and contexts properly
+- Test user interactions, not implementation details

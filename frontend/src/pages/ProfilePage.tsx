@@ -91,12 +91,6 @@ const ProfilePage: React.FC = () => {
               </p>
             </div>
           </div>
-          <Link 
-            to="/coin-purchase"
-            className="btn btn-primary"
-          >
-            Buy Coins
-          </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">

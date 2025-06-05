@@ -1,0 +1,29 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.coverage
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+dist
+.DS_Store
+*.log
+
+# Frontend specific
+frontend/node_modules
+frontend/dist
+frontend/.eslintcache
+
+# Backend specific  
+backend/node_modules
+backend/dist
+backend/quoridor.db
+
+# Cursor specific
+.cursor 
