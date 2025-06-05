@@ -1,6 +1,6 @@
 // backend/src/game/QuoridorEngine.test.ts
 import { QuoridorEngine } from '../QuoridorEngine';
-import type { GameState, Player, Position, WallOrientation, Move } from '@/types';
+import type { GameState, Player, Position, WallOrientation, Move } from '../../shared/types';
 
 // Fonction utilitaire pour créer un mouvement valide pour les tests
 function createTestMove(partialMove: Omit<Move, 'id' | 'timestamp'>): Move {

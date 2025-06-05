@@ -17,9 +17,16 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@/types": ["../shared/types"]
+      "@/types": ["./shared/types"]
     }
   },
-  "include": ["src/**/*", "../shared"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules", 
+    "dist",
+    "shared",
+    "src/**/*.test.ts",
+    "src/**/test-*.ts",
+    "src/**/*-validation.ts"
+  ]
 } 

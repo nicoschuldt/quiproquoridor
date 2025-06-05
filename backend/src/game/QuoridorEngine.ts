@@ -9,12 +9,12 @@ import type {
   Wall,
   WallOrientation,
   PlayerColor,
-} from '../../../shared/types';
+} from '../../shared/types';
 import {
   BOARD_SIZE,
   MAX_WALLS_2P,
   MAX_WALLS_4P,
-} from '../../../shared/types';
+} from '../../shared/types';
 
 /**
  * QuoridorEngine - Moteur de jeu corrigé pour prendre en compte que chaque barrière

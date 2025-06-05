@@ -6,7 +6,7 @@ import type {
     Player, 
     Position, 
     WallOrientation 
-  } from '../../../shared/types';
+  } from '../../shared/types';
   import { mockQuoridorEngine } from './MockQuoridorEngine';
   import { quoridorEngine } from './QuoridorEngine';
   

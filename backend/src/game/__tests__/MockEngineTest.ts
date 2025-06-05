@@ -1,6 +1,6 @@
 // backend/src/game/__tests__/MockEngineTest.ts
 import { gameEngineManager } from '../GameEngineManager';
-import type { GameState, Move } from '../../../../shared/types';
+import type { GameState, Move } from '../../../shared/types';
 
 /**
  * MockEngineTest - Demonstrates and validates the mock game engine

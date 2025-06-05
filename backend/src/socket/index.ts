@@ -5,7 +5,7 @@ import { config } from '../config';
 import { db, users, rooms, roomMembers } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { GameHandlers } from './gameHandler';
-import type { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
+import type { ClientToServerEvents, ServerToClientEvents } from '../../shared/types';
 import { gameStateService } from '../game/GameStateService';
 
 export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {

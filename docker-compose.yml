@@ -1,37 +1,47 @@
-version: '3.8'
-
 services:
   backend:
-    build: ./backend
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "3001:3001"
+    volumes:
+      - ./data:/app/data
+      - backend_node_modules:/app/node_modules
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - DB_FILE_NAME=file:/app/data/quoridor.db
-      - JWT_SECRET=super-secret-jwt-key-for-development
       - CORS_ORIGIN=http://localhost:3000
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-      - backend_data:/app/data
-    command: npm run dev
-    restart: unless-stopped
+      - DB_FILE_NAME=file:/app/data/quoridor.db
+    networks:
+      - quoridor-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://localhost:3001
-      - REACT_APP_SOCKET_URL=http://localhost:3001
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    networks:
+      - quoridor-network
     depends_on:
-      - backend
-    command: npm run dev
-    restart: unless-stopped
+      backend:
+        condition: service_healthy
 
 volumes:
-  backend_data:
+  backend_node_modules:
+  frontend_node_modules:
+
+networks:
+  quoridor-network:
+    driver: bridge 
