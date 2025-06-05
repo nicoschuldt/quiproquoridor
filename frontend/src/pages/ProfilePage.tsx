@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { authApi } from '../services/api';
 import PageLayout from '../components/PageLayout';
 import type { GameHistoryEntry, TransactionHistoryEntry } from '@/types';
+import { shopApi } from '../services/api';
+
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
@@ -208,7 +210,7 @@ const ProfilePage: React.FC = () => {
                   )}
                 </div>
               )}
-
+ 
               {/* Transactions Tab */}
               {activeTab === 'transactions' && (
                 <div>

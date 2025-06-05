@@ -165,6 +165,7 @@ console.log('Thème récupéré:', theme);
       success: true,
       newBalance,
       purchasedItem: theme,
+      previewImageUrl: theme.previewImageUrl || '/images/pawns/default.png', // Ajout ici 
     },
     message: `Successfully purchased ${theme.name}`,
   });

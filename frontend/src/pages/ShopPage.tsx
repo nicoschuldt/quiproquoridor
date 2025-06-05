@@ -25,6 +25,17 @@ const ShopPage: React.FC = () => {
   }
 };
 
+const [selectedCosmetic, setSelectedCosmetic] = useState<string | null>(null);
+const handleSelectCosmetic = async (cosmeticId: string) => {
+  setSelectedCosmetic(cosmeticId);
+  try {
+    await shopApi.selectTheme('pawn', cosmeticId); // Enregistre le choix du cosmétique actif
+  } catch (error) {
+    console.error("Erreur lors de la sélection du cosmétique:", error);
+  }
+};
+
+
 
   useEffect(() => {
     loadThemes();
@@ -35,13 +46,15 @@ const ShopPage: React.FC = () => {
   try {
     setLoading(true);
     const response = await shopApi.purchaseTheme(shopItemId);
-    console.log('Réponse API:', response);
-    
+
     if (response.success && response.purchasedItem) {
       setPurchaseMessage(`✅ Achat réussi : ${response.purchasedItem.name}`);
-      setTimeout(() => {
-        window.location.reload(); // 🔄 Recharge la page après 500ms
-      }, 500);
+
+     setThemes(prevThemes =>
+  prevThemes.map(theme =>
+    theme.id === shopItemId ? { ...theme, owned: true, previewImageUrl: response.purchasedItem.previewImageUrl || "/images/pawns/default.png" } : theme
+  )
+);
     } else {
       setPurchaseMessage(`❌ Achat échoué : ${response.message || 'Donnée manquante dans la réponse'}`);
     }
@@ -51,10 +64,6 @@ const ShopPage: React.FC = () => {
     setLoading(false);
   }
 };
-
-
-
-
   return (
     <PageLayout title="Pawn Theme Previews" showBackButton>
       <div className="text-center mb-8 mt-6 max-w-4xl mx-auto px-4">
@@ -72,18 +81,43 @@ const ShopPage: React.FC = () => {
 
       {error && <p className="text-red-600 text-center mb-4">{error}</p>}
 
+{/* Sélection des Cosmétiques */}
+<section className="mt-8">
+  <h2 className="text-2xl font-semibold mb-4">🎨 Sélectionner un cosmétique</h2>
+
+  
+  {themes.filter(theme => theme.owned).length === 0 ? (
+    <p className="text-center text-gray-600">Vous n'avez pas encore de cosmétiques. Achetez-en dans le shop !</p>
+  ) : (
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+      {themes.filter(theme => theme.owned).map(theme => (
+        
+        <ThemePreviewCard
+          key={theme.id}
+          item={theme}
+          onPurchaseSuccess={loadThemes}
+          onPurchase={() => handleSelectCosmetic(theme.id)} // Sélectionner un cosmétique pour jouer avec
+        />
+      ))}
+    </div>
+    
+  )}
+</section>
       {loading ? (
         <p className="text-center">Loading themes...</p>
+        
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {themes.map(theme => (
-            <ThemePreviewCard
-              key={theme.id}
-              item={theme}
-              onPurchaseSuccess={loadThemes}
-              onPurchase={() => handlePurchase(theme.id)} // Gérer l'achat
-            />
-          ))}
+          {themes.filter(theme => !theme.owned).map(theme => (
+  <ThemePreviewCard
+    key={theme.id}
+    item={theme}
+    onPurchaseSuccess={loadThemes}
+    onPurchase={() => handlePurchase(theme.id)}
+  />
+))}
+
         </div>
       )}
     </PageLayout>
