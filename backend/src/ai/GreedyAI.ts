@@ -27,6 +27,32 @@ export class GreedyAI implements AIEngine {
     this.thinkingTimeMs = 100; 
   }
 
+  // New private method to determine player goals (row or column)
+  private getPlayerGoal(playerIndex: number, maxPlayers: number): { type: 'row' | 'col', value: number } {
+    const maxCoord = this.BOARD_SIZE - 1; // Max index, e.g., 8 for a 9x9 board
+
+    if (maxPlayers <= 2) { // Handles 1v1 and single player scenarios
+        // Player 0 (e.g., starts "bottom", Y=maxCoord) goal is Y=0 ("top")
+        // Player 1 (e.g., starts "top", Y=0) goal is Y=maxCoord ("bottom")
+        if (playerIndex === 0) return { type: 'row', value: 0 };
+        if (playerIndex === 1) return { type: 'row', value: maxCoord };
+        // Fallback for maxPlayers=1, assuming playerIndex is 0
+        if (maxPlayers === 1 && playerIndex === 0) return { type: 'row', value: 0 };
+    } else if (maxPlayers === 4) {
+        // User-specified 4-player Quoridor goals:
+        // Player 1 (index 0): bottom, goal top row (Y=0)
+        // Player 2 (index 1): right, goal left column (X=0)
+        // Player 3 (index 2): left, goal right column (X=maxCoord)
+        // Player 4 (index 3): top, goal bottom row (Y=maxCoord)
+        if (playerIndex === 0) return { type: 'row', value: 0 };          // Player 1 (bottom) -> goal top
+        if (playerIndex === 1) return { type: 'col', value: 0 };          // Player 2 (right) -> goal left
+        if (playerIndex === 2) return { type: 'col', value: maxCoord };   // Player 3 (left) -> goal right
+        if (playerIndex === 3) return { type: 'row', value: maxCoord };   // Player 4 (top) -> goal bottom
+    }
+    // If execution reaches here, it's an unsupported/unexpected configuration
+    throw new Error(`Cannot determine goal for playerIndex ${playerIndex} in a game with ${maxPlayers} players. Board size (0-${maxCoord}).`);
+  }
+
   async generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {
     console.log(`🤖 ${this.getName()} thinking for player ${playerId}...`);
     await this.delay(this.thinkingTimeMs);
@@ -41,24 +67,51 @@ export class GreedyAI implements AIEngine {
     }
 
     // Identify opponent (assuming 2-player game for simplicity first)
-    const opponent = gameState.players.find(p => p.id !== playerId);
+    // const opponent = gameState.players.find(p => p.id !== playerId); // OLD
+    const opponents = gameState.players.filter(p => p.id !== playerId);
 
-    if (opponent && currentPlayer.wallsRemaining > 0) {
-      const opponentIndex = gameState.players.findIndex(p => p.id === opponent.id);
-      if (opponentIndex !== -1) {
-        const opponentGoalY = gameEngineManager.getPlayerGoalRow(opponentIndex, gameState.maxPlayers);
-        const opponentPathLength = this.computeShortestPath(opponent.position, opponentGoalY, gameState, opponent.id);
+    // if (opponent && currentPlayer.wallsRemaining > 0) { // OLD
+    if (opponents.length > 0 && currentPlayer.wallsRemaining > 0) { // MODIFIED: Check multiple opponents
+      let mostThreateningOpponent: Player | null = null;
+      let mostThreateningOpponentIndex = -1;
+      let minOpponentPathToGoal = MAX_PATH_DISTANCE;
+
+      for (const opp of opponents) {
+        const oppIndex = gameState.players.findIndex(p => p.id === opp.id);
+        if (oppIndex === -1) {
+            console.warn(`Could not find index for opponent ${opp.id}`);
+            continue;
+        }
+
+        // opponentGoalY is no longer passed directly; computeShortestPath determines goal
+        const oppPathLength = this.computeShortestPath(opp.position, gameState, opp.id, oppIndex);
         
-        console.log(`🤖 Opponent ${opponent.id} is ${opponentPathLength} moves away from goal.`);
+        console.log(`🤖 Opponent ${opp.id} (P${oppIndex}) is ${oppPathLength} moves away from their goal.`);
 
-        if (opponentPathLength <= OPPONENT_CLOSE_THRESHOLD) {
-          console.log(`🤖 Opponent is close! Attempting to block.`);
-          const blockingWallMove = this.chooseBlockingWallMove(currentPlayer, opponent, gameState, opponentGoalY, opponentPathLength);
+        if (oppPathLength < minOpponentPathToGoal) {
+          minOpponentPathToGoal = oppPathLength;
+          mostThreateningOpponent = opp;
+          mostThreateningOpponentIndex = oppIndex;
+        }
+      }
+
+      // const opponentIndex = gameState.players.findIndex(p => p.id === opponent.id); // OLD
+      // if (opponentIndex !== -1) { // OLD
+      if (mostThreateningOpponent && mostThreateningOpponentIndex !== -1) { // MODIFIED
+        // const opponentGoalY = gameEngineManager.getPlayerGoalRow(opponentIndex, gameState.maxPlayers); // OLD
+        // const opponentPathLength = this.computeShortestPath(opponent.position, opponentGoalY, gameState, opponent.id); // OLD
+        
+        // console.log(`🤖 Opponent ${opponent.id} is ${opponentPathLength} moves away from goal.`); // OLD
+
+        if (minOpponentPathToGoal <= OPPONENT_CLOSE_THRESHOLD) {
+          console.log(`🤖 Opponent ${mostThreateningOpponent.id} (P${mostThreateningOpponentIndex}) is close (${minOpponentPathToGoal} moves)! Attempting to block.`);
+          // MODIFIED: Pass opponentIndex instead of opponentGoalY to chooseBlockingWallMove
+          const blockingWallMove = this.chooseBlockingWallMove(currentPlayer, mostThreateningOpponent, mostThreateningOpponentIndex, gameState, minOpponentPathToGoal);
           if (blockingWallMove) {
-            console.log(`🤖 ${this.getName()} chose blocking wall: ${JSON.stringify(blockingWallMove.wallPosition)} ${blockingWallMove.wallOrientation}`);
+            console.log(`🤖 ${this.getName()} chose blocking wall for ${mostThreateningOpponent.id}: ${JSON.stringify(blockingWallMove.wallPosition)} ${blockingWallMove.wallOrientation}`);
             return blockingWallMove;
           }
-          console.log(`🤖 Could not find an effective blocking wall.`);
+          console.log(`🤖 Could not find an effective blocking wall for ${mostThreateningOpponent.id}.`);
         }
       }
     }
@@ -89,7 +142,7 @@ export class GreedyAI implements AIEngine {
 
     let bestMove: Omit<Move, 'id' | 'timestamp'> | null = null;
     let minDistance = MAX_PATH_DISTANCE;
-    const targetY = gameEngineManager.getPlayerGoalRow(playerIndex, gameState.maxPlayers);
+    // const targetY = gameEngineManager.getPlayerGoalRow(playerIndex, gameState.maxPlayers); // OLD: targetY not needed directly for computeShortestPath
 
     for (const pawnMove of validPawnMoves) {
       if (!pawnMove.toPosition) continue;
@@ -98,7 +151,8 @@ export class GreedyAI implements AIEngine {
       const playerInSimulatedState = simulatedGameState.players.find(p => p.id === player.id)!;
       playerInSimulatedState.position = pawnMove.toPosition;
 
-      const distance = this.computeShortestPath(pawnMove.toPosition, targetY, simulatedGameState, player.id);
+      // MODIFIED: Pass playerIndex to computeShortestPath instead of targetY
+      const distance = this.computeShortestPath(pawnMove.toPosition, simulatedGameState, player.id, playerIndex);
       if (distance < minDistance) {
         minDistance = distance;
         bestMove = pawnMove;
@@ -110,8 +164,8 @@ export class GreedyAI implements AIEngine {
   private chooseBlockingWallMove(
     currentPlayer: Player,
     opponent: Player,
+    opponentIndex: number, // ADDED
     gameState: GameState,
-    opponentGoalY: number,
     opponentCurrentPath: number
   ): Omit<Move, 'id' | 'timestamp'> | null {
     if (currentPlayer.wallsRemaining === 0) return null;
@@ -147,7 +201,8 @@ export class GreedyAI implements AIEngine {
       // }
       // For now, we trust getValidMoves from gameEngineManager
 
-      const newOpponentPath = this.computeShortestPath(opponent.position, opponentGoalY, simulatedState, opponent.id);
+      // MODIFIED: computeShortestPath call updated (remove opponentGoalY, add opponentIndex)
+      const newOpponentPath = this.computeShortestPath(opponent.position, simulatedState, opponent.id, opponentIndex);
 
       if (newOpponentPath === MAX_PATH_DISTANCE && opponentCurrentPath !== MAX_PATH_DISTANCE) {
         // This wall completely blocks the opponent, and they weren't blocked before. Ideal.
@@ -171,10 +226,11 @@ export class GreedyAI implements AIEngine {
 
   private computeShortestPath(
     startPosition: Position,
-    goalY: number,
-    gameState: GameState,
-    playerId: string
+    gameState: GameState, // ADDED gameState for maxPlayers
+    playerId: string,
+    playerIndexForGoal: number // ADDED to determine goal
   ): number {
+    const goal = this.getPlayerGoal(playerIndexForGoal, gameState.maxPlayers); // Get goal based on player index and max players
     const queue: PathNodeInfo[] = [{ position: startPosition, distance: 0 }];
     const visited: Set<string> = new Set([`${startPosition.y},${startPosition.x}`]);
     const DIRS: Array<[number, number]> = [
@@ -193,7 +249,11 @@ export class GreedyAI implements AIEngine {
     while (queue.length > 0) {
       const { position: currentPos, distance } = queue.shift()!;
 
-      if (currentPos.y === goalY) {
+      // MODIFIED: Goal check now considers row or column based goals
+      if (
+        (goal.type === 'row' && currentPos.y === goal.value) ||
+        (goal.type === 'col' && currentPos.x === goal.value)
+      ) {
         playerForPathfinding.position = originalPlayerPosition; // Restore original position
         return distance;
       }
