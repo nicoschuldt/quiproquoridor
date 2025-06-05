@@ -21,4 +21,4 @@ RUN npm run build
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npm run db:migrate && sqlite3 /app/data/quoridor.db 'ALTER TABLE users ADD COLUMN ai_difficulty text;' || true && node dist/src/server.js"] 
+CMD ["sh", "-c", "npm run db:migrate && sqlite3 /app/data/quoridor.db 'ALTER TABLE users ADD COLUMN ai_difficulty text;' || true && npm run db:seed && node dist/src/server.js"] 
