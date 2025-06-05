@@ -32,7 +32,7 @@ const ShopPage: React.FC = () => {
     <PageLayout title="Pawn Theme Previews" showBackButton>
       <div className="text-center mb-8 mt-6 max-w-4xl mx-auto px-4">
         <div className="text-6xl mb-2">🎨</div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-1">Pawn Theme Previews</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-1">Shop</h1>
         <p className="text-lg text-gray-600 mb-4">
           Choose your favorite pawn and board style below and bring your battles to life with flair!
         </p>
