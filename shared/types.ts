@@ -425,16 +425,18 @@ export type ThemeType = 'board' | 'pawn';
 export type TransactionType = 'coin_purchase' | 'theme_purchase' | 'game_reward';
 
 export interface ShopItem {
-  id: string; // e.g., 'board_forest', 'pawn_knights'
-  name: string; // e.g., 'Forest Theme', 'Medieval Knights'
-  description?: string; // e.g., 'Mystical forest themed board'
+  id: string;
+  name: string;
+  description?: string;
   type: ThemeType;
   priceCoins: number;
-  cssClass: string; // e.g., 'theme-board-forest'
-  previewImageUrl?: string; // e.g., '/images/themes/forest-preview.jpg'
+  cssClass: string;
+  previewImageUrl?: string;
   isActive: boolean;
   createdAt: Date;
+  owned?: boolean; 
 }
+
 
 export interface UserPurchase {
   id: string;
@@ -482,6 +484,7 @@ export interface PurchaseThemeResponse {
   success: boolean;
   newBalance: number;
   purchasedItem: ShopItem;
+  message?: string; 
 }
 
 export interface SelectThemeRequest {

@@ -61,6 +61,7 @@ router.get('/data', asyncHandler(async (req: Request, res: Response): Promise<vo
   const owned = allShopItems.filter(item => ownedIds.has(item.id));
   const available = allShopItems.filter(item => !ownedIds.has(item.id));
 
+
   res.json({
     success: true,
     data: {
@@ -79,6 +80,7 @@ router.get('/data', asyncHandler(async (req: Request, res: Response): Promise<vo
 router.post('/purchase', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { shopItemId } = purchaseThemeSchema.parse(req.body);
+console.log('Tentative d’achat avec ShopItem ID:', shopItemId);
 
   // Get theme details
   const themeResult = await db
@@ -89,13 +91,13 @@ router.post('/purchase', asyncHandler(async (req: Request, res: Response): Promi
       eq(shopItems.isActive, true)
     ))
     .limit(1);
-
+console.log('Résultat de la recherche du thème:', themeResult);
   if (themeResult.length === 0) {
     throw new AppError(404, 'THEME_NOT_FOUND', 'Theme not found or not available');
   }
 
   const theme = themeResult[0];
-
+console.log('Thème récupéré:', theme);
   // Check if user already owns this theme
   const existingPurchase = await db
     .select()

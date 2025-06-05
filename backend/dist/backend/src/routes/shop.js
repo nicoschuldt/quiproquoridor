@@ -68,6 +68,7 @@ router.get('/data', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         },
     });
 }));
+
 // Purchase a theme
 router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;

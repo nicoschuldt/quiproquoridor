@@ -1,18 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MiniGameBoard from '../../components/shop/MiniGameBoard';
 import type { ShopItem } from '@/types';
 
 interface ThemePreviewCardProps {
   item: ShopItem;
-  onPurchaseSuccess?: () => void;
+  onPurchase: () => void;
+  onPurchaseSuccess?: () => void; // Ajout ici ✅
 }
 
-const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({ item, onPurchaseSuccess }) => {
+const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({ item, onPurchase, onPurchaseSuccess }) => {
+  const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const isBoardTheme = item.type === 'board';
   const isPawnTheme = item.type === 'pawn';
-
-  // Extraction du thème pour chemin image pawn : 'pawn_knights' → 'knights'
   const pawnThemeName = isPawnTheme ? item.id.replace(/^pawn_/, '') : '';
+
+  const handleBuyClick = async () => {
+    setPurchaseMessage(null);
+    try {
+      await onPurchase();
+      setPurchaseMessage(`✅ Achat réussi : ${item.name}`);
+      
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess(); // Mise à jour après achat ✅
+      }
+    } catch (error: any) {
+      setPurchaseMessage(`❌ Achat échoué : ${error.message || 'Erreur inconnue'}`);
+    }
+  };
 
   return (
     <div className="card p-4 shadow rounded-lg max-w-sm flex flex-col items-center">
@@ -24,7 +38,6 @@ const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({ item, onPurchaseSuc
           alt={`${item.name} preview`}
           className="w-full h-auto object-contain"
           onError={(e) => {
-            // Fallback si image manquante
             (e.currentTarget as HTMLImageElement).src = '/images/pawns/default.png';
           }}
         />
@@ -36,14 +49,15 @@ const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({ item, onPurchaseSuc
       <p className="text-sm text-gray-600 text-center">{item.description}</p>
       <p className="mt-2 font-bold text-blue-600">{item.priceCoins} coins</p>
 
+      {/* Affichage du message après achat */}
+      {purchaseMessage && <p className="text-center text-red-600 mt-2">{purchaseMessage}</p>}
+
       <button
         className="btn btn-primary mt-4"
-        onClick={() => {
-          // Ici ta logique d'achat avec onPurchaseSuccess si besoin
-          if (onPurchaseSuccess) onPurchaseSuccess();
-        }}
+        onClick={handleBuyClick}
+        disabled={item.owned} // Désactiver si déjà possédé
       >
-        Buy
+        {item.owned ? 'Déjà acheté' : 'Acheter'}
       </button>
     </div>
   );
