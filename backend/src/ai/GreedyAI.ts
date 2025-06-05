@@ -13,18 +13,23 @@ interface PathNodeInfo {
   distance: number;
 }
 
-const OPPONENT_CLOSE_THRESHOLD = 3; // If opponent is this many moves or less from winning, try to block.
 const MAX_PATH_DISTANCE = Infinity; // Used for path calculations
 
 export class GreedyAI implements AIEngine {
   private difficulty: AIDifficulty;
   private thinkingTimeMs: number;
+  private opponentCloseThresholdValue: number;
   private readonly BOARD_SIZE = 9; // Quoridor board size (0-8 for 9x9)
 
   constructor(difficulty: AIDifficulty = 'medium') {
     this.difficulty = difficulty;
-    // Increased thinking time slightly to account for more complex decision making
-    this.thinkingTimeMs = 100; 
+    if (difficulty === 'hard') {
+      this.thinkingTimeMs = 400;
+      this.opponentCloseThresholdValue = 2;
+    } else {
+      this.thinkingTimeMs = 100;
+      this.opponentCloseThresholdValue = 4;
+    }
   }
 
   // New private method to determine player goals (row or column)
@@ -103,7 +108,7 @@ export class GreedyAI implements AIEngine {
         
         // console.log(`🤖 Opponent ${opponent.id} is ${opponentPathLength} moves away from goal.`); // OLD
 
-        if (minOpponentPathToGoal <= OPPONENT_CLOSE_THRESHOLD) {
+        if (minOpponentPathToGoal <= this.opponentCloseThresholdValue) {
           console.log(`🤖 Opponent ${mostThreateningOpponent.id} (P${mostThreateningOpponentIndex}) is close (${minOpponentPathToGoal} moves)! Attempting to block.`);
           // MODIFIED: Pass opponentIndex instead of opponentGoalY to chooseBlockingWallMove
           const blockingWallMove = this.chooseBlockingWallMove(currentPlayer, mostThreateningOpponent, mostThreateningOpponentIndex, gameState, minOpponentPathToGoal);
@@ -298,7 +303,7 @@ export class GreedyAI implements AIEngine {
   }
 
   getName(): string {
-    return `GreedyAI (${this.difficulty} - Defensive)`;
+    return `GreedyAI (${this.difficulty})`;
   }
 
   private delay(ms: number): Promise<void> {

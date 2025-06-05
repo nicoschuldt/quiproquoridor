@@ -1,7 +1,6 @@
 import type { AIEngine, GameState, Move, AIDifficulty } from '../../../shared/types';
 import { RandomAI } from './RandomAI';
-import {MonteCarloAI} from "./MonteCarloAI";
-import {GreedyAI} from "./GreedyAI";
+import { GreedyAI } from "./GreedyAI";
 
 /**
  * AIManager - Manages AI players and their move generation
@@ -28,9 +27,10 @@ export class AIManager {
         ai = new GreedyAI(difficulty);
         break;
       case 'hard':
-        ai = new MonteCarloAI(difficulty);
+        ai = new GreedyAI(difficulty);
         break;
       default:
+        console.warn(`Unknown AI difficulty: ${difficulty}. Defaulting to RandomAI (easy).`);
         ai = new RandomAI('easy'); // Fallback par défaut
         break;
     }
@@ -55,7 +55,16 @@ export class AIManager {
       throw new Error(`No AI instance found for player ${playerId}`);
     }
 
-    return ai.generateMove(gameState, playerId);
+    try {
+        return await ai.generateMove(gameState, playerId);
+    } catch (error) {
+        console.error(`AIManager: Error during AI move generation for player ${playerId} (difficulty: ${ai.constructor.name}).`, error);
+        // Implement a safe fallback move if AI fails catastrophically
+        // For example, try to return a random valid move from the current game state
+        // This requires access to game logic for getting legal moves.
+        // For now, rethrow or throw a more specific error.
+        throw new Error(`AI ${playerId} failed to generate a move: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   /**
