@@ -97,59 +97,57 @@ const ShopPage: React.FC = () => {
         <h3 className="text-lg font-semibold mt-4">🛑 Sélectionner un Board</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => theme.owned && theme.type === 'board').map(theme => (
-            <div 
-              key={theme.id} 
-              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                selectedBoard === theme.id ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
-              }`}
-              onClick={() => handleSelectCosmetic('board', theme.id)}
-            >
-              {/* <img 
-                src={theme.previewImageUrl || "/images/boards/default.png"} 
-                alt={theme.name} 
-                className="w-full h-auto rounded-md"
-                onError={(e) => { e.currentTarget.src = "/images/boards/default.png"; }}
-              /> */}
-              <p className="text-center font-semibold mt-2">{theme.name}</p>
-              {selectedBoard === theme.id && <p className="text-center text-blue-600 font-semibold mt-2">✔ Sélectionné</p>}
-            </div>
+            <ThemePreviewCard
+              key={theme.id}
+              item={theme}
+              mode="select"
+              onSelect={() => handleSelectCosmetic('board', theme.cssClass)}
+              selected={selectedBoard === theme.cssClass}
+            />
           ))}
         </div>
 
         {/* Sélection des Pawns */}
-        <h3 className="text-lg font-semibold mt-6">♟️ Sélectionner un Pawn</h3>
+        <h3 className="text-lg font-semibold mt-8">♟️ Sélectionner un Pawn</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => theme.owned && theme.type === 'pawn').map(theme => (
-            <div 
-              key={theme.id} 
-              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                selectedPawn === theme.id ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
-              }`}
-              onClick={() => handleSelectCosmetic('pawn', theme.id)}
-            >
-
-              <p className="text-center font-semibold mt-2">{theme.name}</p>
-              {selectedPawn === theme.id && <p className="text-center text-blue-600 font-semibold mt-2">✔ Sélectionné</p>}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Liste des items disponibles à l'achat */}
-      {loading ? (
-        <p className="text-center">Loading themes...</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {themes.filter(theme => !theme.owned).map(theme => (
             <ThemePreviewCard
               key={theme.id}
               item={theme}
-              onPurchaseSuccess={loadThemes}
+              mode="select"
+              onSelect={() => handleSelectCosmetic('pawn', theme.cssClass)}
+              selected={selectedPawn === theme.cssClass}
+            />
+          ))}
+        </div>
+
+        {/* Liste des items disponibles à l'achat */}
+        <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Board</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+          {themes.filter(theme => !theme.owned && theme.type === 'board').map(theme => (
+            <ThemePreviewCard
+              key={theme.id}
+              item={theme}
+              mode="purchase"
               onPurchase={() => handlePurchase(theme.id)}
             />
           ))}
         </div>
-      )}
+
+        <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Pawn</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+          {themes.filter(theme => !theme.owned && theme.type === 'pawn').map(theme => (
+            <ThemePreviewCard
+              key={theme.id}
+              item={theme}
+              mode="purchase"
+              onPurchase={() => handlePurchase(theme.id)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Liste des items disponibles à l'achat (handled above) */}
     </PageLayout>
   );
 };
