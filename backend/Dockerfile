@@ -1,6 +1,6 @@
 FROM node:22.16.0-alpine
 
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl sqlite
 
 WORKDIR /app
 
@@ -21,4 +21,4 @@ RUN npm run build
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npm run db:migrate && node dist/src/server.js"] 
+CMD ["sh", "-c", "npm run db:migrate && sqlite3 /app/data/quoridor.db 'ALTER TABLE users ADD COLUMN ai_difficulty text;' || true && node dist/src/server.js"] 
