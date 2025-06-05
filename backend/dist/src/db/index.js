@@ -42,11 +42,8 @@ const libsql_1 = require("drizzle-orm/libsql");
 const client_1 = require("@libsql/client");
 const config_1 = require("../config");
 const schema = __importStar(require("./schema"));
-// Create LibSQL client
 const client = (0, client_1.createClient)({
     url: config_1.config.dbFileName
 });
-// Initialize Drizzle with schema
 exports.db = (0, libsql_1.drizzle)(client, { schema });
-// Export schema for use in queries
 __exportStar(require("./schema"), exports);

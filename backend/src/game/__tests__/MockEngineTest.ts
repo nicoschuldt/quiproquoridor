@@ -1,5 +1,5 @@
 import { gameEngineManager } from '../GameEngineManager';
-import type { GameState, Move } from '../../shared/types';
+import type { GameState, Move } from '../../../shared/types';
 
 function runMockEngineTest(): void {
   console.log('\n🧪 Starting Mock Engine Test...\n');

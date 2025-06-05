@@ -10,7 +10,6 @@ const db_1 = require("../db");
 const drizzle_orm_1 = require("drizzle-orm");
 const config_1 = require("../config");
 const setupPassport = () => {
-    // JWT Strategy
     passport_1.default.use(new passport_jwt_1.Strategy({
         jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
         secretOrKey: config_1.config.jwtSecret,

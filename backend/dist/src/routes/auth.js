@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authRouter = void 0;
-// backend/src/routes/auth.ts
 const express_1 = require("express");
 const passport_1 = __importDefault(require("passport"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -16,7 +15,6 @@ const config_1 = require("../config");
 const errorHandler_1 = require("../middleware/errorHandler");
 const router = (0, express_1.Router)();
 exports.authRouter = router;
-// Validation schemas
 const registerSchema = zod_1.z.object({
     username: zod_1.z.string().min(3).max(50),
     password: zod_1.z.string().min(6),
@@ -25,10 +23,8 @@ const loginSchema = zod_1.z.object({
     username: zod_1.z.string(),
     password: zod_1.z.string(),
 });
-// Register route
 router.post('/register', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const { username, password } = registerSchema.parse(req.body);
-    // Check if user exists
     const existingUser = await db_1.db
         .select()
         .from(db_1.users)
@@ -37,9 +33,7 @@ router.post('/register', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     if (existingUser.length > 0) {
         throw new errorHandler_1.AppError(400, 'USER_EXISTS', 'Username already taken');
     }
-    // Hash password
     const passwordHash = await bcrypt_1.default.hash(password, 10);
-    // Create user
     const newUser = await db_1.db
         .insert(db_1.users)
         .values({
@@ -48,41 +42,6 @@ router.post('/register', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     })
         .returning();
     const user = newUser[0];
-    // Generate JWT
-    const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, config_1.config.jwtSecret, { expiresIn: '7d' });
-    res.json({
-        success: true,
-        data: {
-            token,
-            user: {
-                id: user.id,
-                username: user.username,
-                gamesPlayed: user.gamesPlayed,
-                gamesWon: user.gamesWon,
-                createdAt: user.createdAt, // Drizzle already converts this to Date
-            },
-        },
-    });
-}));
-// Login route
-router.post('/login', (0, errorHandler_1.asyncHandler)(async (req, res) => {
-    const { username, password } = loginSchema.parse(req.body);
-    // Find user
-    const userResult = await db_1.db
-        .select()
-        .from(db_1.users)
-        .where((0, drizzle_orm_1.eq)(db_1.users.username, username))
-        .limit(1);
-    if (userResult.length === 0) {
-        throw new errorHandler_1.AppError(401, 'INVALID_CREDENTIALS', 'Invalid username or password');
-    }
-    const user = userResult[0];
-    // Verify password
-    const isValidPassword = await bcrypt_1.default.compare(password, user.passwordHash);
-    if (!isValidPassword) {
-        throw new errorHandler_1.AppError(401, 'INVALID_CREDENTIALS', 'Invalid username or password');
-    }
-    // Generate JWT
     const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, config_1.config.jwtSecret, { expiresIn: '7d' });
     res.json({
         success: true,
@@ -98,10 +57,38 @@ router.post('/login', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         },
     });
 }));
-// Get current user profile
+router.post('/login', (0, errorHandler_1.asyncHandler)(async (req, res) => {
+    const { username, password } = loginSchema.parse(req.body);
+    const userResult = await db_1.db
+        .select()
+        .from(db_1.users)
+        .where((0, drizzle_orm_1.eq)(db_1.users.username, username))
+        .limit(1);
+    if (userResult.length === 0) {
+        throw new errorHandler_1.AppError(401, 'INVALID_CREDENTIALS', 'Invalid username or password');
+    }
+    const user = userResult[0];
+    const isValidPassword = await bcrypt_1.default.compare(password, user.passwordHash);
+    if (!isValidPassword) {
+        throw new errorHandler_1.AppError(401, 'INVALID_CREDENTIALS', 'Invalid username or password');
+    }
+    const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, config_1.config.jwtSecret, { expiresIn: '7d' });
+    res.json({
+        success: true,
+        data: {
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                gamesPlayed: user.gamesPlayed,
+                gamesWon: user.gamesWon,
+                createdAt: user.createdAt,
+            },
+        },
+    });
+}));
 router.get('/me', passport_1.default.authenticate('jwt', { session: false }), (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
-    // Get full user data including shop information
     const fullUserData = await db_1.db
         .select({
         id: db_1.users.id,
@@ -134,10 +121,8 @@ router.get('/me', passport_1.default.authenticate('jwt', { session: false }), (0
         },
     });
 }));
-// Get user's game history
 router.get('/game-history', passport_1.default.authenticate('jwt', { session: false }), (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
-    // Get games where user participated with basic info
     const gameHistory = await db_1.db
         .select({
         gameId: db_1.gamePlayers.gameId,
@@ -153,13 +138,12 @@ router.get('/game-history', passport_1.default.authenticate('jwt', { session: fa
         .innerJoin(db_1.games, (0, drizzle_orm_1.eq)(db_1.games.id, db_1.gamePlayers.gameId))
         .where((0, drizzle_orm_1.eq)(db_1.gamePlayers.userId, user.id))
         .orderBy((0, drizzle_orm_1.desc)(db_1.games.createdAt))
-        .limit(50); // Limit to last 50 games
+        .limit(50);
     res.json({
         success: true,
         data: gameHistory,
     });
 }));
-// Get user's transaction history  
 router.get('/transaction-history', passport_1.default.authenticate('jwt', { session: false }), (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
     const transactionHistory = await db_1.db
@@ -175,7 +159,7 @@ router.get('/transaction-history', passport_1.default.authenticate('jwt', { sess
         .from(db_1.transactions)
         .where((0, drizzle_orm_1.eq)(db_1.transactions.userId, user.id))
         .orderBy((0, drizzle_orm_1.desc)(db_1.transactions.createdAt))
-        .limit(100); // Limit to last 100 transactions
+        .limit(100);
     res.json({
         success: true,
         data: transactionHistory,

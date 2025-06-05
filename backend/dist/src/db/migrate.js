@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// backend/src/db/migrate.ts
 require("dotenv/config");
 const migrator_1 = require("drizzle-orm/libsql/migrator");
 const index_1 = require("./index");

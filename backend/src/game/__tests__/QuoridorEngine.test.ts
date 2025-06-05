@@ -1,5 +1,5 @@
 import { QuoridorEngine } from '../QuoridorEngine';
-import type { GameState, Player, Position, WallOrientation, Move } from '../shared/types';
+import type { GameState, Player, Position, WallOrientation, Move } from '../../../shared/types';
 
 function createTestMove(partialMove: Omit<Move, 'id' | 'timestamp'>): Move {
   return {

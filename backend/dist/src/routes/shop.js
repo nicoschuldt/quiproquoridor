@@ -12,9 +12,7 @@ const drizzle_orm_1 = require("drizzle-orm");
 const errorHandler_1 = require("../middleware/errorHandler");
 const router = (0, express_1.Router)();
 exports.shopRouter = router;
-// All routes require authentication
 router.use(passport_1.default.authenticate('jwt', { session: false }));
-// Validation schemas
 const purchaseThemeSchema = zod_1.z.object({
     shopItemId: zod_1.z.string().min(1),
 });
@@ -22,10 +20,8 @@ const selectThemeSchema = zod_1.z.object({
     themeType: zod_1.z.enum(['board', 'pawn']),
     cssClass: zod_1.z.string().min(1),
 });
-// Get all shop data for user (owned themes, available themes, balance, selected themes)
 router.get('/data', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
-    // Get user data with current balance and selected themes
     const userData = await db_1.db
         .select({
         coinBalance: db_1.users.coinBalance,
@@ -39,12 +35,10 @@ router.get('/data', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         throw new errorHandler_1.AppError(404, 'USER_NOT_FOUND', 'User not found');
     }
     const { coinBalance, selectedBoardTheme, selectedPawnTheme } = userData[0];
-    // Get all active shop items
     const allShopItems = await db_1.db
         .select()
         .from(db_1.shopItems)
         .where((0, drizzle_orm_1.eq)(db_1.shopItems.isActive, true));
-    // Get user's owned themes
     const ownedThemeIds = await db_1.db
         .select({
         shopItemId: db_1.userPurchases.shopItemId,
@@ -52,7 +46,6 @@ router.get('/data', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         .from(db_1.userPurchases)
         .where((0, drizzle_orm_1.eq)(db_1.userPurchases.userId, user.id));
     const ownedIds = new Set(ownedThemeIds.map(p => p.shopItemId));
-    // Separate owned and available themes
     const owned = allShopItems.filter(item => ownedIds.has(item.id));
     const available = allShopItems.filter(item => !ownedIds.has(item.id));
     res.json({
@@ -68,12 +61,10 @@ router.get('/data', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         },
     });
 }));
-// Purchase a theme
 router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
     const { shopItemId } = purchaseThemeSchema.parse(req.body);
     console.log('Tentative d’achat avec ShopItem ID:', shopItemId);
-    // Get theme details
     const themeResult = await db_1.db
         .select()
         .from(db_1.shopItems)
@@ -85,7 +76,6 @@ router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     }
     const theme = themeResult[0];
     console.log('Thème récupéré:', theme);
-    // Check if user already owns this theme
     const existingPurchase = await db_1.db
         .select()
         .from(db_1.userPurchases)
@@ -94,7 +84,6 @@ router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     if (existingPurchase.length > 0) {
         throw new errorHandler_1.AppError(400, 'ALREADY_OWNED', 'You already own this theme');
     }
-    // Get user's current balance
     const userResult = await db_1.db
         .select({
         coinBalance: db_1.users.coinBalance,
@@ -106,24 +95,19 @@ router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         throw new errorHandler_1.AppError(404, 'USER_NOT_FOUND', 'User not found');
     }
     const currentBalance = userResult[0].coinBalance;
-    // Check if user has sufficient funds
     if (currentBalance < theme.priceCoins) {
         throw new errorHandler_1.AppError(400, 'INSUFFICIENT_FUNDS', `Insufficient coins. You have ${currentBalance}, need ${theme.priceCoins}`);
     }
     const newBalance = currentBalance - theme.priceCoins;
-    // Execute purchase transaction atomically
     await db_1.db.transaction(async (tx) => {
-        // Deduct coins from user
         await tx
             .update(db_1.users)
             .set({ coinBalance: newBalance })
             .where((0, drizzle_orm_1.eq)(db_1.users.id, user.id));
-        // Record the purchase
         await tx.insert(db_1.userPurchases).values({
             userId: user.id,
             shopItemId: shopItemId,
         });
-        // Record the transaction for audit trail
         await tx.insert(db_1.transactions).values({
             userId: user.id,
             type: 'theme_purchase',
@@ -143,7 +127,6 @@ router.post('/purchase', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         message: `Successfully purchased ${theme.name}`,
     });
 }));
-// Select/change active theme
 router.post('/select-theme', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const user = req.user;
     const { themeType, cssClass } = selectThemeSchema.parse(req.body);
@@ -159,8 +142,6 @@ router.post('/select-theme', (0, errorHandler_1.asyncHandler)(async (req, res) =
         });
         return;
     }
-    // For non-default themes, verify ownership
-    // First, find the theme by CSS class and type
     const themeResult = await db_1.db
         .select()
         .from(db_1.shopItems)
@@ -170,7 +151,6 @@ router.post('/select-theme', (0, errorHandler_1.asyncHandler)(async (req, res) =
         throw new errorHandler_1.AppError(404, 'THEME_NOT_FOUND', 'Theme not found');
     }
     const theme = themeResult[0];
-    // Check if user owns this theme
     const ownership = await db_1.db
         .select()
         .from(db_1.userPurchases)
@@ -179,7 +159,6 @@ router.post('/select-theme', (0, errorHandler_1.asyncHandler)(async (req, res) =
     if (ownership.length === 0) {
         throw new errorHandler_1.AppError(403, 'NOT_OWNED', 'You do not own this theme');
     }
-    // Update user's selected theme
     const updateField = themeType === 'board' ? 'selectedBoardTheme' : 'selectedPawnTheme';
     await db_1.db
         .update(db_1.users)

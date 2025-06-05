@@ -23,7 +23,6 @@ const errorHandler = (err, req, res, next) => {
             error: apiError
         });
     }
-    // Unhandled errors
     res.status(500).json({
         success: false,
         error: {

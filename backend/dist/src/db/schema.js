@@ -1,21 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transactions = exports.userPurchases = exports.shopItems = exports.roomMembers = exports.gamePlayers = exports.games = exports.rooms = exports.users = void 0;
-// backend/src/db/schema.ts
 const sqlite_core_1 = require("drizzle-orm/sqlite-core");
 const drizzle_orm_1 = require("drizzle-orm");
-// Users 
 exports.users = (0, sqlite_core_1.sqliteTable)('users', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     username: (0, sqlite_core_1.text)('username', { length: 50 }).unique().notNull(),
     passwordHash: (0, sqlite_core_1.text)('password_hash', { length: 255 }).notNull(),
     gamesPlayed: (0, sqlite_core_1.int)('games_played').default(0).notNull(),
     gamesWon: (0, sqlite_core_1.int)('games_won').default(0).notNull(),
-    // Shop functionality
     coinBalance: (0, sqlite_core_1.int)('coin_balance').default(0).notNull(),
     selectedBoardTheme: (0, sqlite_core_1.text)('selected_board_theme').default('theme-board-default').notNull(),
     selectedPawnTheme: (0, sqlite_core_1.text)('selected_pawn_theme').default('theme-pawn-default').notNull(),
-    // AI functionality
     isAI: (0, sqlite_core_1.int)('is_ai', { mode: 'boolean' }).default(false).notNull(),
     aiDifficulty: (0, sqlite_core_1.text)('ai_difficulty', { enum: ['easy', 'medium', 'hard'] }),
     createdAt: (0, sqlite_core_1.int)('created_at', { mode: 'timestamp' })
@@ -25,7 +21,6 @@ exports.users = (0, sqlite_core_1.sqliteTable)('users', {
         .default((0, drizzle_orm_1.sql) `(unixepoch())`)
         .notNull(),
 });
-// Rooms table
 exports.rooms = (0, sqlite_core_1.sqliteTable)('rooms', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     code: (0, sqlite_core_1.text)('code', { length: 6 }).unique().notNull(),
@@ -44,7 +39,6 @@ exports.rooms = (0, sqlite_core_1.sqliteTable)('rooms', {
         .default((0, drizzle_orm_1.sql) `(unixepoch())`)
         .notNull(),
 });
-// Games table
 exports.games = (0, sqlite_core_1.sqliteTable)('games', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     roomId: (0, sqlite_core_1.text)('room_id').references(() => exports.rooms.id).notNull(),
@@ -59,7 +53,6 @@ exports.games = (0, sqlite_core_1.sqliteTable)('games', {
     startedAt: (0, sqlite_core_1.int)('started_at', { mode: 'timestamp' }),
     finishedAt: (0, sqlite_core_1.int)('finished_at', { mode: 'timestamp' }),
 });
-// Game players table - tracks players in each game
 exports.gamePlayers = (0, sqlite_core_1.sqliteTable)('game_players', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     gameId: (0, sqlite_core_1.text)('game_id').references(() => exports.games.id).notNull(),
@@ -70,7 +63,6 @@ exports.gamePlayers = (0, sqlite_core_1.sqliteTable)('game_players', {
     wallsUsed: (0, sqlite_core_1.int)('walls_used').default(0).notNull(),
     isWinner: (0, sqlite_core_1.int)('is_winner', { mode: 'boolean' }).default(false).notNull(),
 });
-// Room members table - tracks current players in rooms
 exports.roomMembers = (0, sqlite_core_1.sqliteTable)('room_members', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     roomId: (0, sqlite_core_1.text)('room_id').references(() => exports.rooms.id).notNull(),
@@ -80,7 +72,6 @@ exports.roomMembers = (0, sqlite_core_1.sqliteTable)('room_members', {
         .default((0, drizzle_orm_1.sql) `(unixepoch())`)
         .notNull(),
 });
-// Shop items table - defines all purchasable themes
 exports.shopItems = (0, sqlite_core_1.sqliteTable)('shop_items', {
     id: (0, sqlite_core_1.text)('id').primaryKey(), // e.g., 'board_forest', 'pawn_knights'
     name: (0, sqlite_core_1.text)('name').notNull(), // e.g., 'Forest Theme', 'Medieval Knights'
@@ -94,7 +85,6 @@ exports.shopItems = (0, sqlite_core_1.sqliteTable)('shop_items', {
         .default((0, drizzle_orm_1.sql) `(unixepoch())`)
         .notNull(),
 });
-// User purchases table - tracks what themes users own
 exports.userPurchases = (0, sqlite_core_1.sqliteTable)('user_purchases', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     userId: (0, sqlite_core_1.text)('user_id').references(() => exports.users.id).notNull(),
@@ -103,10 +93,8 @@ exports.userPurchases = (0, sqlite_core_1.sqliteTable)('user_purchases', {
         .default((0, drizzle_orm_1.sql) `(unixepoch())`)
         .notNull(),
 }, (table) => ({
-    // Prevent duplicate purchases
     userItemUnique: (0, sqlite_core_1.unique)().on(table.userId, table.shopItemId),
 }));
-// Transactions table - audit trail for all coin movements
 exports.transactions = (0, sqlite_core_1.sqliteTable)('transactions', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     userId: (0, sqlite_core_1.text)('user_id').references(() => exports.users.id).notNull(),

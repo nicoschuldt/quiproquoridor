@@ -2,7 +2,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db, games, gamePlayers, rooms, roomMembers, users } from '../db';
 import { gameEngineManager } from './GameEngineManager';
 import { aiManager } from '../ai/AIManager';
-import type { GameState, Player } from '../shared/types';
+import type { GameState, Player } from '../../shared/types';
 
 export class GameStateService {
   async createGame(roomId: string): Promise<GameState> {

@@ -1,4 +1,4 @@
-import type { AIEngine, GameState, Move, AIDifficulty } from '../shared/types';
+import type { AIEngine, GameState, Move, AIDifficulty } from '../../shared/types';
 import { RandomAI } from './RandomAI';
 import { GreedyAI } from "./GreedyAI";
 

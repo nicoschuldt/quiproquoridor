@@ -13,7 +13,6 @@ exports.config = {
     jwtSecret: process.env.JWT_SECRET || 'super-secret-jwt-key',
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-    // Stripe configuration
     stripe: {
         secretKey: process.env.STRIPE_SECRET_KEY || '',
         webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
@@ -24,11 +23,9 @@ exports.config = {
             pro: process.env.STRIPE_PRO_PRICE_ID || 'price_test_pro',
         },
     },
-    // Game settings
     roomCodeLength: 6,
     maxRoomsPerUser: 5,
-    roomIdleTimeout: 30 * 60 * 1000, // 30 minutes
-    // Rate limiting
-    rateLimitWindow: 15 * 60 * 1000, // 15 minutes
-    rateLimitMax: 100, // requests per window
+    roomIdleTimeout: 30 * 60 * 1000,
+    rateLimitWindow: 15 * 60 * 1000,
+    rateLimitMax: 100,
 };
