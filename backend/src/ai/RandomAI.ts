@@ -13,19 +13,7 @@ export class RandomAI implements AIEngine {
 
   constructor(difficulty: AIDifficulty = 'easy') {
     this.difficulty = difficulty;
-    
-    // Set thinking time based on difficulty
-    switch (difficulty) {
-      case 'easy':
-        this.thinkingTimeMs = 0; // 0.5 seconds
-        break;
-      case 'medium':
-        this.thinkingTimeMs = 0; // 1 second
-        break;
-      case 'hard':
-        this.thinkingTimeMs = 0; // 1.5 seconds
-        break;
-    }
+    this.thinkingTimeMs = 0; // 0.5 seconds
   }
 
   async generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {

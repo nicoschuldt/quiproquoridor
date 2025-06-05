@@ -1,9 +1,11 @@
 import type { AIEngine, GameState, Move, AIDifficulty } from '../../../shared/types';
 import { RandomAI } from './RandomAI';
+import {MonteCarloAI} from "./MonteCarloAI";
+import {GreedyAI} from "./GreedyAI";
 
 /**
  * AIManager - Manages AI players and their move generation
- * 
+ *
  * This service handles all AI-related operations including creating AI instances,
  * generating moves, and managing AI player lifecycles.
  */
@@ -15,10 +17,25 @@ export class AIManager {
    */
   createAI(playerId: string, difficulty: AIDifficulty): AIEngine {
     console.log(`🤖 Creating AI instance for player ${playerId} with difficulty ${difficulty}`);
-    
-    const ai = new RandomAI(difficulty);
+
+    let ai: AIEngine;
+
+    switch (difficulty) {
+      case 'easy':
+        ai = new RandomAI(difficulty);
+        break;
+      case 'medium':
+        ai = new GreedyAI(difficulty);
+        break;
+      case 'hard':
+        ai = new MonteCarloAI(difficulty);
+        break;
+      default:
+        ai = new RandomAI('easy'); // Fallback par défaut
+        break;
+    }
+
     this.aiInstances.set(playerId, ai);
-    
     return ai;
   }
 
