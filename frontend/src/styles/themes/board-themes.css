@@ -251,60 +251,121 @@
 /* Pastel Theme Variations */
 
 /* Cotton Candy Theme - Soft pastels */
-.theme-board-cotton {
+/* .theme-board-neon {
   background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 25%, #fbcfe8 50%, #f9a8d4 75%, #f472b6 100%);
   border-color: rgba(244, 114, 182, 0.3);
 }
 
-.theme-board-cotton .pawn-square {
+.theme-board-neon .pawn-square {
   background: linear-gradient(135deg, #fefcff 0%, #fdf4ff 50%, #fae8ff 100%);
 }
 
-.theme-board-cotton .wall {
+.theme-board-neon .wall {
   background: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7c3aed 100%);
+} */
+
+/* Neon Theme - Futuristic cyan/purple/pink glow */
+.theme-board-neon {
+  background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, #0d0d0d 100%);
+  border-color: #ff00ff; /* rose vif */
+  box-shadow:
+    0 0 20px #ff00ff,
+    0 0 40px #7f00ff inset;
 }
 
-/* Mint Theme - Fresh greens */
-.theme-board-mint {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #bbf7d0 50%, #86efac 75%, #4ade80 100%);
-  border-color: rgba(74, 222, 128, 0.3);
+.theme-board-neon .pawn-square {
+  background: linear-gradient(135deg, #00fff7 0%, #bb00ff 50%, #ff007f 100%);
+  box-shadow:
+    0 0 10px #ff00ff,
+    0 0 20px #bb00ff inset;
+  border: 1px solid #ff00ff;
 }
 
-.theme-board-mint .pawn-square {
-  background: linear-gradient(135deg, #fefffe 0%, #f0fdf4 50%, #ecfdf5 100%);
+.theme-board-neon .wall {
+  background: linear-gradient(135deg, #1a001a 0%, #330033 50%, #1a001a 100%);
+  box-shadow:
+    0 0 15px #ff00ff,
+    0 0 30px #bb00ff inset;
+  border: 1px solid #ff00ff;
 }
 
-.theme-board-mint .wall {
-  background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+
+
+/* Forest Theme - Deep greens and natural vibes */
+.theme-board-forest {
+  background: linear-gradient(135deg, #2e4d25 0%, #3b6a3a 50%, #1f3d15 100%);
+  border-color: rgba(46, 77, 37, 0.7);
+  box-shadow: 0 0 12px rgba(34, 85, 23, 0.6);
 }
 
-/* Peach Theme - Warm oranges */
-.theme-board-peach {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 25%, #fed7aa 50%, #fdba74 75%, #fb923c 100%);
-  border-color: rgba(251, 146, 60, 0.3);
+.theme-board-forest .pawn-square {
+  background: linear-gradient(135deg, #4a7d2f 0%, #5ea742 50%, #3a661d 100%);
+  box-shadow: 0 0 8px rgba(46, 77, 37, 0.8);
 }
 
-.theme-board-peach .pawn-square {
-  background: linear-gradient(135deg, #fffbf5 0%, #fff7ed 50%, #ffedd5 100%);
+.theme-board-forest .wall {
+  background: linear-gradient(135deg, #1b3011 0%, #2a451b 50%, #133004 100%);
+  box-shadow: 0 0 10px #2a5c12, 0 0 15px #3b7a1f;
 }
 
-.theme-board-peach .wall {
-  background: linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #b91c1c 100%);
+
+/* Desert Theme - Warm oranges */
+.theme-board-desert {
+  background: linear-gradient(135deg, #f4e7c5 0%, #e8d49b 50%, #d7c58b 100%);
+  border: 3px solid #c2a661;
+  box-shadow:
+    0 0 10px #d6b84a,
+    inset 0 0 15px #f0e3a2;
 }
 
-/* Sky Theme - Soft blues */
-.theme-board-sky {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #60a5fa 100%);
-  border-color: rgba(96, 165, 250, 0.3);
+.theme-board-desert .pawn-square {
+  background: #f9f1d4; /* sable clair */
+  border: 2px solid #c2a661; /* contour sable foncé */
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.7);
+  transition: background-color 0.3s ease;
 }
 
-.theme-board-sky .pawn-square {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+.theme-board-desert .pawn-square:hover {
+  background: #f7e8a3; /* un peu plus saturé */
+  box-shadow: 0 0 8px #d6b84a, inset 0 2px 6px rgba(255,255,255,0.9);
 }
 
-.theme-board-sky .wall {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 50%, #1e3a8a 100%);
+.theme-board-desert .wall {
+  background: #b5933d; /* brun sable */
+  border-radius: 6px;
+  box-shadow: inset 0 0 8px #8a6f1a;
 }
+
+
+/* Ocean Theme - Cool blues and sea vibes */
+.theme-board-ocean {
+  background: linear-gradient(135deg, #004d99 0%, #007acc 50%, #005f99 100%);
+  border: 3px solid #004d99;
+  box-shadow:
+    0 0 10px #007acc,
+    inset 0 0 20px #00aaff;
+}
+
+.theme-board-ocean .pawn-square {
+  background: #b3d9ff; /* bleu clair uni */
+  border: 2px solid #007acc; /* contour bleu foncé */
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.6);
+  transition: background-color 0.3s ease;
+}
+
+.theme-board-ocean .pawn-square:hover {
+  background: #80c1ff;
+  box-shadow: 0 0 8px #00aaff, inset 0 2px 6px rgba(255,255,255,0.8);
+}
+
+.theme-board-ocean .wall {
+  background: #003366; /* bleu marine foncé */
+  border-radius: 6px;
+  box-shadow: inset 0 0 8px #001a4d;
+}
+
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {

@@ -1,4 +1,3 @@
-// MiniGameBoard.tsx
 import React from 'react';
 
 interface MiniGameBoardProps {
