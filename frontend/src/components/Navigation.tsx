@@ -18,7 +18,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const { user, logout } = useAuth();
 
   return (
-    <nav aria-label="Primary navigation" className={`bg-white shadow-sm border-b ${className}`}>
+    <nav className={`bg-white shadow-sm border-b ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
@@ -27,7 +27,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 to={backTo} 
                 className="text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
               >
-                <span aria-hidden="true">←</span>
+                <span>←</span>
                 <span>Back to {backTo === "/" ? "Home" : "Previous"}</span>
               </Link>
             ) : (
@@ -54,11 +54,6 @@ const Navigation: React.FC<NavigationProps> = ({
                   <Link to="/buy-coins" className="btn btn-warning">
                     Buy Coins
                   </Link>
-
-                  <Link to="/shop" className="btn btn-primary">
-                    Shop
-                  </Link>
-
                   <Link to="/profile" className="btn btn-secondary">
                     Profile
                   </Link>
@@ -84,4 +79,4 @@ const Navigation: React.FC<NavigationProps> = ({
   );
 };
 
-export default Navigation;
+export default Navigation; 
