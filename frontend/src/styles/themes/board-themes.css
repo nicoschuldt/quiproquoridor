@@ -325,4 +325,13 @@
   .game-board .wall {
     border-radius: 4px;
   }
-} 
+}
+
+.mini-game-board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  gap: 3px;
+  width: 270px;
+  height: 270px;
+}

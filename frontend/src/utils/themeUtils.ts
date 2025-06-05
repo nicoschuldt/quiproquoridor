@@ -88,6 +88,7 @@ export const getBoardThemeClass = (selectedBoardTheme?: string): string => {
  * @param themeClass - The theme CSS class
  * @returns Boolean indicating if theme is valid
  */
+
 export const isValidBoardTheme = (themeClass: string): boolean => {
   const validThemes = [
     'theme-board-default',
@@ -97,4 +98,4 @@ export const isValidBoardTheme = (themeClass: string): boolean => {
     'theme-board-desert'
   ];
   return validThemes.includes(themeClass);
-}; 
+};

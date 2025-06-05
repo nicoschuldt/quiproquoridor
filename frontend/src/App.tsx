@@ -12,6 +12,8 @@ import GamePage from './pages/GamePage';
 import CoinPurchasePage from './pages/CoinPurchasePage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
+import ShopPage from './pages/ShopPage';
+
 
 const AppContent: React.FC = () => {
   const { isLoading, isReconnecting } = useAuth();
@@ -96,6 +98,14 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             } 
           />
+          <Route
+            path="/shop"
+            element={
+              <ProtectedRoute>
+                <ShopPage />
+              </ProtectedRoute>
+            }
+            />
         </Routes>
       </div>
     </Router>
