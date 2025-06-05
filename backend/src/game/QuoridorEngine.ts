@@ -8,12 +8,12 @@ import type {
   Wall,
   WallOrientation,
   PlayerColor,
-} from '../../../shared/types';
+} from '../../shared/types';
 import {
   BOARD_SIZE,
   MAX_WALLS_2P,
   MAX_WALLS_4P,
-} from '../../../shared/types';
+} from '../../shared/types';
 
 export class QuoridorEngine implements GameEngine {
   private pathCache: Map<string, boolean> = new Map();

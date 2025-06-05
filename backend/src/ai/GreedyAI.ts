@@ -1,4 +1,4 @@
-import type { AIEngine, GameState, Move, AIDifficulty, Player, Position, Wall } from '../../../shared/types';
+import type { AIEngine, GameState, Move, AIDifficulty, Player, Position, Wall } from '../../shared/types';
 import { gameEngineManager } from '../game/GameEngineManager';
 
 function deepCopy<T>(obj: T): T {

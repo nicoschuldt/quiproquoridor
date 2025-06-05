@@ -51,7 +51,7 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
     type: 'pawn',
     priceCoins: 75,
     cssClass: 'theme-pawn-knights',
-    previewImageUrl: '/images/themes/knights-preview.jpg',
+    previewImageUrl: '/images/pawns/knights/all.png',
     isActive: true,
   },
   {
@@ -61,7 +61,7 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
     type: 'pawn',
     priceCoins: 75,
     cssClass: 'theme-pawn-robots',
-    previewImageUrl: '/images/themes/robots-preview.jpg',
+    previewImageUrl: '/images/pawns/robots/all.png',
     isActive: true,
   },
   {
@@ -71,7 +71,7 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
     type: 'pawn',
     priceCoins: 75,
     cssClass: 'theme-pawn-animals',
-    previewImageUrl: '/images/themes/animals-preview.jpg',
+    previewImageUrl: '/images/pawns/animals/all.png',
     isActive: true,
   },
   {
@@ -81,7 +81,17 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
     type: 'pawn',
     priceCoins: 90,
     cssClass: 'theme-pawn-gems',
-    previewImageUrl: '/images/themes/gems-preview.jpg',
+    previewImageUrl: '/images/pawns/gems/all.png',
+    isActive: true,
+  },
+  {
+    id: 'pawn_frogs',
+    name: 'Frogs',
+    description: 'Frogs',
+    type: 'pawn',
+    priceCoins: 60,
+    cssClass: 'theme-pawn-frogs',
+    previewImageUrl: '/images/pawns/frogs/all.png',
     isActive: true,
   },
 ];

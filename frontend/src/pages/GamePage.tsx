@@ -321,12 +321,12 @@ const GamePage: React.FC = () => {
                 </button>
               )}
               
-              <button 
+              {/* <button 
                 onClick={() => navigate('/')}
                 className="btn btn-secondary"
               >
                 Leave Game
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

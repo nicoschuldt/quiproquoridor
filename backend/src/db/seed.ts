@@ -5,15 +5,15 @@ import { nanoid } from 'nanoid';
 import { seedShopItems } from './seed-shop';
 
 async function seed() {
-  console.log('🌱 Seeding database...');
+  console.log('Seeding database...');
 
   try {
     await seedShopItems();
 
     const testUsers = [
       {
-        username: 'alice',
-        passwordHash: await bcrypt.hash('password123', 10),
+        username: 'nouria',
+        passwordHash: await bcrypt.hash('123456', 10),
         gamesPlayed: 5,
         gamesWon: 3,
         coinBalance: 500,
@@ -21,18 +21,32 @@ async function seed() {
         selectedPawnTheme: 'theme-pawn-default',
       },
       {
-        username: 'bob',
-        passwordHash: await bcrypt.hash('password123', 10),
+        username: 'florian',
+        passwordHash: await bcrypt.hash('123456', 10),
         gamesPlayed: 3,
         gamesWon: 1,
         coinBalance: 200,
         selectedBoardTheme: 'theme-board-default',
         selectedPawnTheme: 'theme-pawn-default',
       },
+      {
+        username: 'nico',
+        passwordHash: await bcrypt.hash('123456', 10),
+        gamesPlayed: 1000,
+        gamesWon: 1000,
+        coinBalance: 1000,
+      },
+      {
+        username: 'oscarito',
+        passwordHash: await bcrypt.hash('123456', 10),
+        gamesPlayed: 0,
+        gamesWon: 0,
+        coinBalance: 0,
+      },
     ];
 
     const insertedUsers = await db.insert(users).values(testUsers).returning();
-    console.log(`✅ Created ${insertedUsers.length} test users`);
+    console.log(`Created ${insertedUsers.length} test users`);
 
     const testRoom = {
       code: nanoid(6).toUpperCase(),
@@ -44,9 +58,9 @@ async function seed() {
     };
 
     const insertedRooms = await db.insert(rooms).values(testRoom).returning();
-    console.log(`✅ Created ${insertedRooms.length} test room with code: ${testRoom.code}`);
+    console.log(`Created ${insertedRooms.length} test room with code: ${testRoom.code}`);
 
-    console.log('✅ Database seeded successfully!');
+    console.log('Database seeded successfully!');
     console.log('');
     console.log('Test accounts:');
     console.log('- Username: alice, Password: password123 (500 coins)');
@@ -54,7 +68,7 @@ async function seed() {
     console.log(`- Test room code: ${testRoom.code}`);
 
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    console.error('Seeding failed:', error);
     process.exit(1);
   }
 }

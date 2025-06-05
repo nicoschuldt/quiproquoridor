@@ -11,14 +11,16 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
+    port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://backend:3001',
         changeOrigin: true,
         secure: false,
       },
       '/socket.io': {
-        target: 'ws://localhost:3001',
+        target: 'ws://backend:3001',
         ws: true,
       },
     },
