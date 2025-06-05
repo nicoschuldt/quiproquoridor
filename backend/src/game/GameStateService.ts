@@ -4,22 +4,11 @@ import { gameEngineManager } from './GameEngineManager';
 import { aiManager } from '../ai/AIManager';
 import type { GameState, Player } from '../../../shared/types';
 
-/**
- * GameStateService - Handles all game state persistence and retrieval
- * 
- * This service manages the database operations for game states and provides
- * a clean interface for game state management.
- */
 export class GameStateService {
-  
-  /**
-   * Creates and persists a new game state to the database
-   */
   async createGame(roomId: string): Promise<GameState> {
     try {
       console.log(`🎮 Creating game for room ${roomId}`);
 
-      // Get room and players
       const room = await db
         .select()
         .from(rooms)
@@ -30,7 +19,6 @@ export class GameStateService {
         throw new Error('Room not found');
       }
 
-      // Get all players in the room with their usernames and theme data
       const playersData = await db
         .select({
           userId: roomMembers.userId,
@@ -43,17 +31,15 @@ export class GameStateService {
         .from(roomMembers)
         .innerJoin(users, eq(roomMembers.userId, users.id))
         .where(eq(roomMembers.roomId, roomId))
-        .orderBy(roomMembers.joinedAt); // Consistent player order
+        .orderBy(roomMembers.joinedAt);
 
       if (playersData.length === 0) {
         throw new Error('No players found in room');
       }
 
-      // Create game state using game engine
       const playerIds = playersData.map(p => p.userId);
       const gameState = gameEngineManager.createGame(playerIds, room[0].maxPlayers as 2 | 4);
 
-      // Update players with real usernames and theme data
       gameState.players = gameState.players.map((player, index) => ({
         ...player,
         username: playersData[index].username,
@@ -63,7 +49,6 @@ export class GameStateService {
         aiDifficulty: playersData[index].aiDifficulty || undefined,
       }));
 
-      // Set up AI instances for AI players
       for (const playerData of playersData) {
         if (playerData.isAI && playerData.aiDifficulty) {
           aiManager.createAI(playerData.userId, playerData.aiDifficulty);
@@ -71,7 +56,6 @@ export class GameStateService {
         }
       }
 
-      // Save game to database
       const [gameRecord] = await db
         .insert(games)
         .values({
@@ -82,7 +66,6 @@ export class GameStateService {
         })
         .returning();
 
-      // Save game players
       const gamePlayerRecords = gameState.players.map((player, index) => ({
         gameId: gameRecord.id,
         userId: player.id,
@@ -103,9 +86,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Retrieves the current game state for a room
-   */
   async getGameState(roomId: string): Promise<GameState | null> {
     try {
       const gameRecord = await db
@@ -123,18 +103,15 @@ export class GameStateService {
 
       const gameState = gameRecord[0].gameState as GameState;
       
-      // Ensure dates are properly converted
       gameState.createdAt = new Date(gameState.createdAt);
       if (gameState.startedAt) gameState.startedAt = new Date(gameState.startedAt);
       if (gameState.finishedAt) gameState.finishedAt = new Date(gameState.finishedAt);
       
-      // Convert move timestamps
       gameState.moves = gameState.moves.map(move => ({
         ...move,
         timestamp: new Date(move.timestamp),
       }));
 
-      // Convert player joinedAt dates
       gameState.players = gameState.players.map(player => ({
         ...player,
         joinedAt: new Date(player.joinedAt),
@@ -148,15 +125,12 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Updates the game state in the database
-   */
   async saveGameState(roomId: string, gameState: GameState): Promise<void> {
     try {
       await db
         .update(games)
         .set({
-          gameState: gameState as any, // JSON field
+          gameState: gameState as any,
           status: gameState.status,
           winnerId: gameState.winner || null,
           finishedAt: gameState.status === 'finished' ? new Date() : null,
@@ -170,7 +144,6 @@ export class GameStateService {
         await this.completeGame(roomId, gameState);
       }
 
-      // **NEW AI INTEGRATION**: Process AI turns after saving state
       await this.processAITurns(roomId, gameState);
 
     } catch (error) {
@@ -179,11 +152,7 @@ export class GameStateService {
     }
   }
 
-  /**
-   * **NEW**: Processes AI turns automatically after human moves
-   */
   private async processAITurns(roomId: string, gameState: GameState): Promise<void> {
-    // Don't process AI turns if game is finished
     if (gameState.status !== 'playing') {
       return;
     }
@@ -191,11 +160,9 @@ export class GameStateService {
     let currentState = gameState;
     let processedAIMove = false;
 
-    // Keep processing AI turns until it's a human player's turn or game ends
     while (currentState.status === 'playing') {
       const currentPlayer = gameEngineManager.getCurrentPlayer(currentState);
       
-      // If current player is not AI, stop processing
       if (!currentPlayer.isAI) {
         break;
       }
@@ -203,22 +170,18 @@ export class GameStateService {
       try {
         console.log(`🤖 Processing AI turn for player ${currentPlayer.id} (${currentPlayer.username})`);
         
-        // Generate AI move
         const aiMove = await aiManager.generateMove(currentState, currentPlayer.id);
         
-        // Validate the AI move
         if (!gameEngineManager.validateMove(currentState, aiMove)) {
           console.error(`❌ AI generated invalid move for player ${currentPlayer.id}`);
           break;
         }
 
-        // Apply the AI move
         currentState = gameEngineManager.applyMove(currentState, aiMove);
         processedAIMove = true;
 
         console.log(`✅ AI move applied for player ${currentPlayer.id}`);
 
-        // Save the updated state (this will trigger socket emissions)
         await db
           .update(games)
           .set({
@@ -232,7 +195,6 @@ export class GameStateService {
             eq(games.status, 'playing')
           ));
 
-        // If game finished, handle completion
         if (currentState.status === 'finished' && currentState.winner) {
           await this.completeGame(roomId, currentState);
           break;
@@ -244,54 +206,39 @@ export class GameStateService {
       }
     }
 
-    // Emit socket events if we processed any AI moves
     if (processedAIMove) {
-      // Store the updated game state for socket handler to pick up
-      // This is a simple way to communicate with socket handler without tight coupling
       this.aiMoveProcessed.set(roomId, currentState);
     }
   }
 
-  // Map to communicate AI moves to socket handler
   private aiMoveProcessed = new Map<string, GameState>();
 
-  /**
-   * **NEW**: Checks if an AI move was processed and returns the updated state
-   */
   getProcessedAIMove(roomId: string): GameState | null {
     const state = this.aiMoveProcessed.get(roomId);
     if (state) {
-      this.aiMoveProcessed.delete(roomId); // Clean up after retrieval
+      this.aiMoveProcessed.delete(roomId);
       return state;
     }
     return null;
   }
 
-  /**
-   * Handles complete game finishing including room cleanup
-   */
   async completeGame(roomId: string, gameState: GameState): Promise<void> {
     try {
       console.log(`🏁 Completing game for room ${roomId}, winner: ${gameState.winner}`);
 
-      // Update player statistics
       await this.updatePlayerStats(roomId, gameState);
 
-      // Update room status to 'finished' and schedule cleanup
       await db
         .update(rooms)
         .set({ 
           status: 'finished',
-          // Set a cleanup time for 30 minutes from now
           updatedAt: new Date()
         })
         .where(eq(rooms.id, roomId));
 
-      // room cleanup after a delay
-      // This allows players to see final results before room is cleaned up
       setTimeout(async () => {
         await this.cleanupFinishedRoom(roomId);
-      }, 30 * 60 * 1000); // 30 minutes
+      }, 30 * 60 * 1000);
 
       console.log(`✅ Game completion processed for room ${roomId}`);
 
@@ -301,19 +248,14 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Cleans up a finished room and removes players
-   */
   async cleanupFinishedRoom(roomId: string): Promise<void> {
     try {
       console.log(`🧹 Cleaning up finished room ${roomId}`);
 
-      // Remove all room members
       await db
         .delete(roomMembers)
         .where(eq(roomMembers.roomId, roomId));
 
-      // Mark room as cleaned up (keep for history) or delete it
       await db
         .delete(rooms)
         .where(eq(rooms.id, roomId));
@@ -325,9 +267,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Checks if a game exists for a room
-   */
   async hasActiveGame(roomId: string): Promise<boolean> {
     try {
       const count = await db
@@ -346,9 +285,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Gets finished game results for display
-   */
   async getFinishedGame(roomId: string): Promise<GameState | null> {
     try {
       const gameRecord = await db
@@ -366,7 +302,6 @@ export class GameStateService {
 
       const gameState = gameRecord[0].gameState as GameState;
       
-      // Ensure dates are properly converted
       gameState.createdAt = new Date(gameState.createdAt);
       if (gameState.startedAt) gameState.startedAt = new Date(gameState.startedAt);
       if (gameState.finishedAt) gameState.finishedAt = new Date(gameState.finishedAt);
@@ -379,9 +314,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Gets all players in a game with their current connection status
-   */
   async getGamePlayers(roomId: string): Promise<Player[]> {
     try {
       const gameState = await this.getGameState(roomId);
@@ -392,15 +324,11 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Updates player connection status in game state
-   */
   async updatePlayerConnection(roomId: string, playerId: string, isConnected: boolean): Promise<void> {
     try {
       const gameState = await this.getGameState(roomId);
       if (!gameState) return;
 
-      // Update player connection status
       gameState.players = gameState.players.map(player =>
         player.id === playerId ? { ...player, isConnected } : player
       );
@@ -413,9 +341,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Updates player statistics after game completion
-   */
   private async updatePlayerStats(roomId: string, gameState: GameState): Promise<void> {
     try {
       const gameRecord = await db
@@ -441,7 +366,6 @@ export class GameStateService {
 
         console.log(`📊 Updating stats for player ${player.username} (${player.id}): winner=${isWinner}, wallsUsed=${wallsUsed}`);
 
-        // Update game_players table with correct game ID
         await db
           .update(gamePlayers)
           .set({
@@ -454,7 +378,6 @@ export class GameStateService {
             eq(gamePlayers.gameId, gameId)
           ));
 
-        // Update user statistics
         await db
           .update(users)
           .set({
@@ -470,9 +393,6 @@ export class GameStateService {
     }
   }
 
-  /**
-   * Cleans up abandoned games (games where all players are disconnected)
-   */
   async cleanupAbandonedGames(): Promise<void> {
     try {
       // This will be implemented as part of a cleanup job
@@ -491,33 +411,27 @@ export class GameStateService {
         throw new Error('No active game found');
       }
 
-      // Check if player is in the game
       const forfeiter = gameState.players.find(p => p.id === playerId);
       if (!forfeiter) {
         throw new Error('Player not found in game');
       }
 
-      // Mark game as finished and determine winner(s)
       const remainingPlayers = gameState.players.filter(p => p.id !== playerId && p.isConnected);
       
       if (remainingPlayers.length === 1) {
-        // Single winner
         const winner = remainingPlayers[0];
         gameState.status = 'finished';
         gameState.winner = winner.id;
         gameState.finishedAt = new Date();
       } else if (remainingPlayers.length > 1) {
-        // Multiple players remaining - continue with forfeited player removed
-        gameState.players = gameState.players.map(p => 
+        gameState.players = gameState.players.map(p =>
           p.id === playerId ? { ...p, isConnected: false } : p
         );
       } else {
-        // All players forfeited/disconnected - end game with no winner
         gameState.status = 'finished';
         gameState.finishedAt = new Date();
       }
 
-      // Save the updated game state
       await this.saveGameState(roomId, gameState);
 
       console.log(`✅ Player forfeit processed for ${playerId}`);
@@ -535,7 +449,6 @@ export class GameStateService {
   startDisconnectionTimeout(roomId: string, playerId: string, timeoutSeconds: number = 60): void {
     const key = `${roomId}:${playerId}`;
     
-    // Clear existing timeout if any
     if (this.disconnectionTimeouts.has(key)) {
       clearTimeout(this.disconnectionTimeouts.get(key)!);
     }
@@ -548,8 +461,6 @@ export class GameStateService {
       try {
         const gameState = await this.forfeitPlayer(roomId, playerId);
         if (gameState) {
-          // The socket handler will need to emit events for this
-          // We'll store this information for the socket handler to pick up
           this.disconnectionTimeouts.set(`${key}:expired`, setTimeout(() => {}, 0));
         }
       } catch (error) {
@@ -581,5 +492,4 @@ export class GameStateService {
   }
 }
 
-// Singleton instance
-export const gameStateService = new GameStateService(); 
+export const gameStateService = new GameStateService();

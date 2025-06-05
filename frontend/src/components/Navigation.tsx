@@ -38,7 +38,6 @@ const Navigation: React.FC<NavigationProps> = ({
           <div className="flex items-center space-x-6">
             {user ? (
               <>
-                {/* User Info Section - Single Line */}
                 <div className="flex items-center space-x-4">
                   <span className="text-gray-700 font-medium whitespace-nowrap">Hi, {user.username}!</span>
                   <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 px-3 py-1.5 rounded-lg whitespace-nowrap">
@@ -49,7 +48,6 @@ const Navigation: React.FC<NavigationProps> = ({
                   </div>
                 </div>
                 
-                {/* Action Buttons */}
                 <div className="flex items-center space-x-3">
                   <Link to="/buy-coins" className="btn btn-warning">
                     Buy Coins

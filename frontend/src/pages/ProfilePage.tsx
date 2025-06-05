@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { authApi } from '../services/api';
 import PageLayout from '../components/PageLayout';
 import type { GameHistoryEntry, TransactionHistoryEntry } from '@/types';
-import { shopApi } from '../services/api';
 
 
 const ProfilePage: React.FC = () => {
@@ -100,7 +99,6 @@ const ProfilePage: React.FC = () => {
           </Link>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-900 mb-1">{user.gamesPlayed}</div>
@@ -121,7 +119,6 @@ const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="card" style={{ padding: 0 }}>
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex">
@@ -156,7 +153,6 @@ const ProfilePage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Games Tab */}
               {activeTab === 'games' && (
                 <div>
                   {gameHistory.length === 0 ? (
@@ -211,7 +207,6 @@ const ProfilePage: React.FC = () => {
                 </div>
               )}
  
-              {/* Transactions Tab */}
               {activeTab === 'transactions' && (
                 <div>
                   {transactionHistory.length === 0 ? (

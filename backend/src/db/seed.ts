@@ -1,4 +1,3 @@
-// backend/src/db/seed.ts
 import 'dotenv/config';
 import { db, users, rooms, games } from './index';
 import bcrypt from 'bcrypt';
@@ -9,10 +8,8 @@ async function seed() {
   console.log('🌱 Seeding database...');
 
   try {
-    // Seed shop items first
     await seedShopItems();
 
-    // Create test users with initial coins
     const testUsers = [
       {
         username: 'alice',
@@ -37,7 +34,6 @@ async function seed() {
     const insertedUsers = await db.insert(users).values(testUsers).returning();
     console.log(`✅ Created ${insertedUsers.length} test users`);
 
-    // Create test room
     const testRoom = {
       code: nanoid(6).toUpperCase(),
       hostId: insertedUsers[0].id,

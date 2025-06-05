@@ -1,8 +1,6 @@
-// backend/src/db/schema.ts
 import { int, text, sqliteTable, real, unique } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
-// Users 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: text('username', { length: 50 }).unique().notNull(),
@@ -10,12 +8,10 @@ export const users = sqliteTable('users', {
   gamesPlayed: int('games_played').default(0).notNull(),
   gamesWon: int('games_won').default(0).notNull(),
   
-  // Shop functionality
   coinBalance: int('coin_balance').default(0).notNull(),
   selectedBoardTheme: text('selected_board_theme').default('theme-board-default').notNull(),
   selectedPawnTheme: text('selected_pawn_theme').default('theme-pawn-default').notNull(),
   
-  // AI functionality
   isAI: int('is_ai', { mode: 'boolean' }).default(false).notNull(),
   aiDifficulty: text('ai_difficulty', { enum: ['easy', 'medium', 'hard'] }),
   
@@ -27,7 +23,6 @@ export const users = sqliteTable('users', {
     .notNull(),
 });
 
-// Rooms table
 export const rooms = sqliteTable('rooms', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   code: text('code', { length: 6 }).unique().notNull(),
@@ -47,7 +42,6 @@ export const rooms = sqliteTable('rooms', {
     .notNull(),
 });
 
-// Games table
 export const games = sqliteTable('games', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   roomId: text('room_id').references(() => rooms.id).notNull(),
@@ -63,7 +57,6 @@ export const games = sqliteTable('games', {
   finishedAt: int('finished_at', { mode: 'timestamp' }),
 });
 
-// Game players table - tracks players in each game
 export const gamePlayers = sqliteTable('game_players', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   gameId: text('game_id').references(() => games.id).notNull(),
@@ -75,7 +68,6 @@ export const gamePlayers = sqliteTable('game_players', {
   isWinner: int('is_winner', { mode: 'boolean' }).default(false).notNull(),
 });
 
-// Room members table - tracks current players in rooms
 export const roomMembers = sqliteTable('room_members', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   roomId: text('room_id').references(() => rooms.id).notNull(),
@@ -86,7 +78,6 @@ export const roomMembers = sqliteTable('room_members', {
     .notNull(),
 });
 
-// Shop items table - defines all purchasable themes
 export const shopItems = sqliteTable('shop_items', {
   id: text('id').primaryKey(), // e.g., 'board_forest', 'pawn_knights'
   name: text('name').notNull(), // e.g., 'Forest Theme', 'Medieval Knights'
@@ -101,7 +92,6 @@ export const shopItems = sqliteTable('shop_items', {
     .notNull(),
 });
 
-// User purchases table - tracks what themes users own
 export const userPurchases = sqliteTable('user_purchases', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id').references(() => users.id).notNull(),
@@ -110,11 +100,9 @@ export const userPurchases = sqliteTable('user_purchases', {
     .default(sql`(unixepoch())`)
     .notNull(),
 }, (table) => ({
-  // Prevent duplicate purchases
   userItemUnique: unique().on(table.userId, table.shopItemId),
 }));
 
-// Transactions table - audit trail for all coin movements
 export const transactions = sqliteTable('transactions', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id').references(() => users.id).notNull(),
@@ -128,7 +116,6 @@ export const transactions = sqliteTable('transactions', {
     .notNull(),
 });
 
-// Export types for use in application
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
@@ -144,7 +131,6 @@ export type NewGamePlayer = typeof gamePlayers.$inferInsert;
 export type RoomMember = typeof roomMembers.$inferSelect;
 export type NewRoomMember = typeof roomMembers.$inferInsert;
 
-// Export new types for use in application
 export type ShopItem = typeof shopItems.$inferSelect;
 export type NewShopItem = typeof shopItems.$inferInsert;
 

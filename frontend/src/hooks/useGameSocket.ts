@@ -24,11 +24,9 @@ interface UseGameSocketProps {
 }
 
 interface UseGameSocketReturn {
-  // Connection state
   isConnected: boolean;
   connectionStatus: 'connected' | 'disconnected' | 'connecting';
   
-  // Game actions
   startGame: () => void;
   makeMove: (move: Omit<Move, 'id' | 'timestamp'>) => void;
   requestGameState: () => void;
@@ -36,7 +34,6 @@ interface UseGameSocketReturn {
   leaveRoom: () => void;
   forfeitGame: () => void;
   
-  // Helper methods
   makePawnMove: (from: Position, to: Position) => void;
   placeWall: (position: Position, orientation: WallOrientation) => void;
 }
@@ -57,18 +54,15 @@ export const useGameSocket = ({
   const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
 
-  // Update connection status
   useEffect(() => {
     setConnectionStatus(isConnected ? 'connected' : 'disconnected');
   }, [isConnected]);
 
-  // Setup event listeners
   useEffect(() => {
     if (!socket || !isConnected) return;
 
     console.log('🎮 Setting up game socket listeners for room:', roomId);
 
-    // Set up all the event listeners
     if (onGameStarted) socket.on('game-started', onGameStarted);
     if (onMoveMade) socket.on('move-made', onMoveMade);
     if (onGameFinished) socket.on('game-finished', onGameFinished);
@@ -79,7 +73,6 @@ export const useGameSocket = ({
     if (onReconnectionSuccess) socket.on('reconnection-success', onReconnectionSuccess);
     if (onError) socket.on('error', onError);
 
-    // Cleanup on unmount or dependency change
     return () => {
       console.log('🧹 Cleaning up game socket listeners');
       if (onGameStarted) socket.off('game-started', onGameStarted);
@@ -94,7 +87,6 @@ export const useGameSocket = ({
     };
   }, [socket, isConnected, roomId, onGameStarted, onMoveMade, onGameFinished, onGameStateSync, onInvalidMove, onPlayerForfeited, onDisconnectionWarning, onReconnectionSuccess, onError]);
 
-  // Game action functions
   const startGame = useCallback(() => {
     if (!socket || !roomId) {
       console.warn('Cannot start game: no socket or roomId');
@@ -149,7 +141,6 @@ export const useGameSocket = ({
     socket.emit('forfeit-game', { roomId });
   }, [socket, roomId]);
 
-  // Convenience methods for specific move types
   const makePawnMove = useCallback((from: Position, to: Position) => {
     if (!user) {
       console.warn('Cannot make pawn move: no user');
@@ -183,11 +174,9 @@ export const useGameSocket = ({
   }, [user, makeMove]);
 
   return {
-    // Connection state
     isConnected,
     connectionStatus,
     
-    // Game actions
     startGame,
     makeMove,
     requestGameState,
@@ -195,7 +184,6 @@ export const useGameSocket = ({
     leaveRoom,
     forfeitGame,
     
-    // Helper methods
     makePawnMove,
     placeWall,
   };

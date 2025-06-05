@@ -9,7 +9,7 @@ const CreateGamePage: React.FC = () => {
     maxPlayers: 2,
     isPrivate: false,
     hasTimeLimit: false,
-    timeLimitSeconds: 300, // 5 minutes default
+    timeLimitSeconds: 300,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +63,6 @@ const CreateGamePage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Player Count */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Number of Players

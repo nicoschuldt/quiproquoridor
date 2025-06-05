@@ -12,7 +12,6 @@ const ShopPage: React.FC = () => {
   const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
   const [selectedPawn, setSelectedPawn] = useState<string | null>(null);
 
-  // Chargement des thèmes depuis l'API
   const loadThemes = async () => {
     setLoading(true);
     setError(null);
@@ -32,7 +31,6 @@ const ShopPage: React.FC = () => {
     loadThemes();
   }, []);
 
-  // Sélection d'un cosmétique actif (board ou pawn)
   const handleSelectCosmetic = async (themeType: 'board' | 'pawn', cosmeticId: string) => {
     if (themeType === 'board') {
       setSelectedBoard(cosmeticId);
@@ -47,7 +45,6 @@ const ShopPage: React.FC = () => {
     }
   };
 
-  // Achat d'un cosmétique et mise à jour
   const handlePurchase = async (shopItemId: string) => {
     setPurchaseMessage(null);
     try {
@@ -82,18 +79,15 @@ const ShopPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Message après achat */}
       {purchaseMessage && (
         <p className="text-center font-bold text-lg mb-4 text-blue-600">{purchaseMessage}</p>
       )}
 
       {error && <p className="text-red-600 text-center mb-4">{error}</p>}
 
-      {/* Sélection des Cosmétiques */}
       <section className="mt-8">
         <h2 className="text-2xl font-semibold mb-4">🎨 Sélectionner un cosmétique</h2>
 
-        {/* Sélection des Boards */}
         <h3 className="text-lg font-semibold mt-4">🛑 Sélectionner un Board</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => theme.owned && theme.type === 'board').map(theme => (
@@ -107,7 +101,6 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Sélection des Pawns */}
         <h3 className="text-lg font-semibold mt-8">♟️ Sélectionner un Pawn</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => theme.owned && theme.type === 'pawn').map(theme => (
@@ -121,7 +114,6 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Liste des items disponibles à l'achat */}
         <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Board</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => !theme.owned && theme.type === 'board').map(theme => (
@@ -147,7 +139,6 @@ const ShopPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Liste des items disponibles à l'achat (handled above) */}
     </PageLayout>
   );
 };

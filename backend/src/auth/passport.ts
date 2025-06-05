@@ -5,7 +5,6 @@ import { eq } from 'drizzle-orm';
 import { config } from '../config';
 
 export const setupPassport = () => {
-  // JWT Strategy
   passport.use(
     new JwtStrategy(
       {

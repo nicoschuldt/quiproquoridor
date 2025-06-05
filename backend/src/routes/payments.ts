@@ -10,12 +10,10 @@ import type { CoinPackage, CreateCheckoutRequest } from '@/types';
 
 const router = Router();
 
-// Initialize Stripe
 const stripe = config.stripe.secretKey ? new Stripe(config.stripe.secretKey, {
   apiVersion: '2025-05-28.basil',
 }) : null;
 
-// Coin packages configuration
 const COIN_PACKAGES: CoinPackage[] = [
   {
     id: 'starter',
@@ -31,7 +29,7 @@ const COIN_PACKAGES: CoinPackage[] = [
     priceEUR: 9.99,
     stripePriceId: config.stripe.priceIds.popular,
     popularBadge: true,
-    bonusCoins: 200, // 550 total coins
+    bonusCoins: 200,
   },
   {
     id: 'pro',
@@ -39,16 +37,14 @@ const COIN_PACKAGES: CoinPackage[] = [
     coins: 4000,
     priceEUR: 19.99,
     stripePriceId: config.stripe.priceIds.pro,
-    bonusCoins: 600, // 1400 total coins
+    bonusCoins: 600,
   },
 ];
 
-// Validation schemas
 const createCheckoutSchema = z.object({
   packageId: z.string().min(1),
 });
 
-// Get available coin packages
 router.get('/coin-packages', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   res.json({
     success: true,
@@ -56,8 +52,7 @@ router.get('/coin-packages', asyncHandler(async (req: Request, res: Response): P
   });
 }));
 
-// Create Stripe checkout session (requires authentication)
-router.post('/create-checkout-session', 
+router.post('/create-checkout-session',
   passport.authenticate('jwt', { session: false }),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!stripe) {
@@ -67,14 +62,12 @@ router.post('/create-checkout-session',
     const user = req.user as any;
     const { packageId } = createCheckoutSchema.parse(req.body);
 
-    // Find the coin package
     const coinPackage = COIN_PACKAGES.find(pkg => pkg.id === packageId);
     if (!coinPackage) {
       throw new AppError(404, 'PACKAGE_NOT_FOUND', 'Coin package not found');
     }
 
     try {
-      // Create Stripe checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
@@ -86,7 +79,7 @@ router.post('/create-checkout-session',
         mode: 'payment',
         success_url: `${config.frontendUrl}/buy-coins?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${config.frontendUrl}/buy-coins?payment=cancelled`,
-        client_reference_id: user.id, // Link session to user
+        client_reference_id: user.id,
         metadata: {
           userId: user.id,
           packageId: coinPackage.id,
@@ -112,8 +105,7 @@ router.post('/create-checkout-session',
   })
 );
 
-// Stripe webhook handler (raw body needed for signature verification)
-router.post('/webhook', 
+router.post('/webhook',
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!stripe) {
       throw new AppError(500, 'STRIPE_NOT_CONFIGURED', 'Stripe is not configured');
@@ -135,7 +127,6 @@ router.post('/webhook',
       throw new AppError(400, 'WEBHOOK_SIGNATURE_ERROR', `Webhook Error: ${err.message}`);
     }
 
-    // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
@@ -154,7 +145,6 @@ router.post('/webhook',
   })
 );
 
-// Handle successful checkout session
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
   try {
     const userId = session.client_reference_id;
@@ -171,16 +161,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
       return;
     }
 
-    // Find the coin package for description
     const coinPackage = COIN_PACKAGES.find(pkg => pkg.id === packageId);
     if (!coinPackage) {
       console.error('Coin package not found:', packageId);
       return;
     }
 
-    // Perform atomic transaction to add coins and record transaction
     await db.transaction(async (tx) => {
-      // Add coins to user balance
       await tx
         .update(users)
         .set({ 
@@ -188,7 +175,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
         })
         .where(eq(users.id, userId));
 
-      // Record the transaction
       await tx.insert(transactions).values({
         userId: userId,
         type: 'coin_purchase',
@@ -201,11 +187,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
     console.log(`Successfully processed coin purchase for user ${userId}: +${coinsToAdd} coins`);
   } catch (error) {
     console.error('Error processing checkout session completion:', error);
-    // In production, you might want to implement retry logic or alert mechanisms
   }
 }
 
-// Handle expired checkout session
 async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): Promise<void> {
   try {
     const userId = session.client_reference_id;
@@ -220,28 +204,17 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): P
       return;
     }
 
-    // Find the coin package for logging
     const coinPackage = COIN_PACKAGES.find(pkg => pkg.id === packageId);
     if (!coinPackage) {
       console.error('Coin package not found:', packageId);
       return;
     }
-
-    // Just log the expiration - no financial transaction needed
-    // since the user never completed the payment
     console.log(`Checkout session expired for user ${userId}: ${coinPackage.name} (${coinPackage.coins + (coinPackage.bonusCoins || 0)} coins), session: ${session.id}`);
-    
-    // In production, you might want to:
-    // - Send an email reminder to the user
-    // - Track abandonment analytics
-    // - Trigger remarketing campaigns
-    
   } catch (error) {
     console.error('Error processing expired checkout session:', error);
   }
 }
 
-// Mock webhook endpoint for testing (development only)
 if (config.nodeEnv === 'development') {
   router.post('/mock-webhook',
     passport.authenticate('jwt', { session: false }),
@@ -249,7 +222,6 @@ if (config.nodeEnv === 'development') {
       const user = req.user as any;
       const { packageId } = req.body;
 
-      // Find the coin package
       const coinPackage = COIN_PACKAGES.find(pkg => pkg.id === packageId);
       if (!coinPackage) {
         throw new AppError(404, 'PACKAGE_NOT_FOUND', 'Coin package not found');
@@ -258,9 +230,7 @@ if (config.nodeEnv === 'development') {
       const coinsToAdd = coinPackage.coins + (coinPackage.bonusCoins || 0);
       const mockSessionId = `mock_session_${Date.now()}_${user.id}`;
 
-      // Simulate the webhook processing
       await db.transaction(async (tx) => {
-        // Add coins to user balance
         await tx
           .update(users)
           .set({ 
@@ -268,7 +238,6 @@ if (config.nodeEnv === 'development') {
           })
           .where(eq(users.id, user.id));
 
-        // Record the transaction
         await tx.insert(transactions).values({
           userId: user.id,
           type: 'coin_purchase',

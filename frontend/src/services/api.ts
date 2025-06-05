@@ -28,7 +28,6 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token && config.headers) {
@@ -37,7 +36,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle API responses - extract data from our standard format
 api.interceptors.response.use(
   (response) => {
     const apiResponse = response.data as ApiResponse;
@@ -114,28 +112,15 @@ export const gameApi = {
 };
 
 export const shopApi = {
-  /**
-   * Get all shop data for the current user
-   * Returns available themes, owned themes, selected themes, and coin balance
-   */
   getShopData: async (): Promise<ShopBrowseResponse> => {
     return await api.get('/shop/data') as any;
   },
 
-  /**
-   * Purchase a theme using coins
-   * @param shopItemId - The ID of the theme to purchase
-   */
   purchaseTheme: async (shopItemId: string): Promise<PurchaseThemeResponse> => {
     const request: PurchaseThemeRequest = { shopItemId };
     return await api.post('/shop/purchase', request) as any;
   },
 
-  /**
-   * Select a theme as the active theme for the user
-   * @param themeType - Either 'board' or 'pawn'
-   * @param cssClass - The CSS class of the theme to select
-   */
   selectTheme: async (themeType: ThemeType, cssClass: string): Promise<{ message: string }> => {
     const request: SelectThemeRequest = { themeType, cssClass };
     return await api.post('/shop/select-theme', request) as any;
@@ -143,26 +128,15 @@ export const shopApi = {
 };
 
 export const paymentApi = {
-  /**
-   * Get available coin packages
-   */
   getCoinPackages: async (): Promise<CoinPackage[]> => {
     return await api.get('/payments/coin-packages') as any;
   },
 
-  /**
-   * Create a Stripe checkout session for purchasing coins
-   * @param packageId - The ID of the coin package to purchase
-   */
   createCheckoutSession: async (packageId: 'starter' | 'popular' | 'pro'): Promise<CreateCheckoutResponse> => {
     const request: CreateCheckoutRequest = { packageId };
     return await api.post('/payments/create-checkout-session', request) as any;
   },
 
-  /**
-   * Mock purchase for testing (development only)
-   * @param packageId - The ID of the coin package to mock purchase
-   */
   mockPurchase: async (packageId: string): Promise<{ message: string; coinsAdded: number; sessionId: string }> => {
     return await api.post('/payments/mock-webhook', { packageId }) as any;
   },

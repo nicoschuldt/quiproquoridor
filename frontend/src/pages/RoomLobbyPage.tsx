@@ -12,7 +12,6 @@ const RoomLobbyPage: React.FC = () => {
   const { user } = useAuth();
   const userRef = useRef(user);
   
-  // Keep userRef updated
   useEffect(() => {
     userRef.current = user;
   }, [user]);
@@ -23,11 +22,9 @@ const RoomLobbyPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   
-  // AI player state
   const [addingAI, setAddingAI] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<AIDifficulty>('easy');
 
-  // Load initial room data
   useEffect(() => {
     const loadRoomData = async () => {
       if (!roomId) return;
@@ -36,7 +33,6 @@ const RoomLobbyPage: React.FC = () => {
         const roomData: RoomData = await roomApi.getRoom(roomId);
         setRoom(roomData.room);
         setIsHost(roomData.isHost);
-        // Load players from room data
         setPlayers(roomData.room.players || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load room');
@@ -48,14 +44,11 @@ const RoomLobbyPage: React.FC = () => {
     loadRoomData();
   }, [roomId, user]);
 
-  // WebSocket connection and event listeners
   useEffect(() => {
     if (!socket || !roomId) return;
 
-    // Join the room
     socket.emit('join-room', { roomId });
 
-    // Listen for room events
     const handleRoomUpdated = (data: { room: Room }) => {
       setRoom(data.room);
       setPlayers(data.room.players || []);
@@ -63,17 +56,14 @@ const RoomLobbyPage: React.FC = () => {
 
     const handlePlayerJoined = (data: { player: Player }) => {
       setPlayers(prev => [...prev.filter(p => p.id !== data.player.id), data.player]);
-      // Room data will be updated via room-updated event
     };
 
     const handlePlayerLeft = (data: { playerId: string }) => {
       setPlayers(prev => prev.filter(p => p.id !== data.playerId));
-      // Room data will be updated via room-updated event
     };
 
     const handlePlayerDisconnected = (data: { playerId: string }) => {
-      // **CRITICAL FIX**: Show visual indication when players disconnect
-      setPlayers(prev => prev.map(p => 
+      setPlayers(prev => prev.map(p =>
         p.id === data.playerId 
           ? { ...p, isConnected: false } 
           : p
@@ -81,8 +71,7 @@ const RoomLobbyPage: React.FC = () => {
     };
 
     const handlePlayerReconnected = (data: { playerId: string }) => {
-      // **CRITICAL FIX**: Show visual indication when players reconnect
-      setPlayers(prev => prev.map(p => 
+      setPlayers(prev => prev.map(p =>
         p.id === data.playerId 
           ? { ...p, isConnected: true } 
           : p
@@ -90,14 +79,12 @@ const RoomLobbyPage: React.FC = () => {
     };
 
     const handleGameStarted = (data: { gameState: any }) => {
-      // Navigate to game page when game starts
       navigate(`/game/${roomId}`);
     };
 
     const handleError = (data: { error: any }) => {
       setError(data.error.message || 'An error occurred');
       
-      // **CRITICAL FIX**: Auto-retry on connection errors
       if (data.error.code === 'NOT_ROOM_MEMBER') {
         console.log('❌ Not a room member, attempting to rejoin...');
         setTimeout(() => {
@@ -106,7 +93,6 @@ const RoomLobbyPage: React.FC = () => {
       }
     };
 
-    // Register event listeners
     socket.on('room-updated', handleRoomUpdated);
     socket.on('player-joined', handlePlayerJoined);
     socket.on('player-left', handlePlayerLeft);
@@ -115,7 +101,6 @@ const RoomLobbyPage: React.FC = () => {
     socket.on('game-started', handleGameStarted);
     socket.on('error', handleError);
 
-    // Cleanup
     return () => {
       socket.off('room-updated', handleRoomUpdated);
       socket.off('player-joined', handlePlayerJoined);
@@ -136,7 +121,6 @@ const RoomLobbyPage: React.FC = () => {
       navigate('/');
     } catch (err: any) {
       console.error('Failed to leave room:', err);
-      // Navigate anyway
       navigate('/');
     }
   };
@@ -146,9 +130,7 @@ const RoomLobbyPage: React.FC = () => {
     
     try {
       await navigator.clipboard.writeText(room.code);
-      // TODO: Show success toast
     } catch (err) {
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = room.code;
       document.body.appendChild(textArea);
@@ -166,7 +148,6 @@ const RoomLobbyPage: React.FC = () => {
     
     try {
       await roomApi.addAIPlayer(roomId, selectedDifficulty);
-      // Success! The room will be updated via socket events
       console.log(`✅ AI player (${selectedDifficulty}) added successfully`);
     } catch (err: any) {
       console.error('Failed to add AI player:', err);
@@ -205,7 +186,6 @@ const RoomLobbyPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -213,7 +193,6 @@ const RoomLobbyPage: React.FC = () => {
               <Link to="/" className="text-2xl font-bold text-gray-900">Quoridor</Link>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Connection Status */}
               <div className="flex items-center">
                 <div className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 <span className="text-sm text-gray-600">
@@ -229,7 +208,6 @@ const RoomLobbyPage: React.FC = () => {
       </nav>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Room Info */}
         <div className="card mb-6">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -266,7 +244,6 @@ const RoomLobbyPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Players */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">
               Players ({players.length}/{room.maxPlayers})
@@ -333,7 +310,6 @@ const RoomLobbyPage: React.FC = () => {
               })}
             </div>
 
-            {/* AI Player Controls (Host Only) */}
             {isHost && !roomIsFull && room.status === 'lobby' && (
               <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h3 className="text-sm font-medium text-blue-900 mb-3">Add AI Opponent</h3>
@@ -362,7 +338,6 @@ const RoomLobbyPage: React.FC = () => {
               </div>
             )}
 
-            {/* Status Message */}
             <div className="mt-6">
               {roomIsFull ? (
                 <div className="w-full py-3 px-4 bg-green-100 text-green-800 rounded-lg font-medium text-center">
@@ -376,7 +351,6 @@ const RoomLobbyPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Game Info */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">How to Play</h2>
             <div className="prose prose-sm text-gray-600">

@@ -1,13 +1,9 @@
-/* Quoridor App - Voxel Theme Styles */
-
-/* Main App Container */
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* App Layout */
 .app-container {
   flex: 1;
   padding: 1rem;
@@ -16,7 +12,6 @@
   width: 100%;
 }
 
-/* Logo & Branding */
 .logo {
   height: 4rem;
   width: 4rem;
@@ -31,7 +26,6 @@
   box-shadow: var(--shadow-strong), 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
-/* Navigation */
 .nav-link {
   @apply px-4 py-2 rounded-xl font-medium transition-all duration-300;
   background: rgba(255, 255, 255, 0.7);
@@ -53,7 +47,6 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Navigation Responsive Design */
 .nav-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
@@ -62,7 +55,6 @@
   border-radius: 20px;
 }
 
-/* User Section in Navigation */
 .nav-user-section {
   @apply flex items-center space-x-4;
 }
@@ -78,7 +70,6 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* Page Headers */
 .page-header {
   @apply text-center mb-8;
 }
@@ -97,7 +88,6 @@
   line-height: 1.6;
 }
 
-/* Loading States */
 .loading-spinner {
   @apply w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin;
 }
@@ -107,19 +97,16 @@
   background: linear-gradient(135deg, #f8fafc, #e2e8f0);
 }
 
-/* Error States */
 .error-message {
   @apply card border-red-200 bg-red-50 text-red-700 text-center;
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* Success States */
 .success-message {
   @apply card border-green-200 bg-green-50 text-green-700 text-center;
   border-color: rgba(34, 197, 94, 0.3);
 }
 
-/* Game UI Elements */
 .player-avatar {
   @apply avatar;
   width: 3rem;
@@ -151,7 +138,6 @@
   @apply badge-info;
 }
 
-/* Modal & Dialog Styles */
 .modal-overlay {
   @apply fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-50;
 }
@@ -162,7 +148,6 @@
   animation: slide-up 0.3s ease-out;
 }
 
-/* Form Styles */
 .form-group {
   @apply mb-6;
 }
@@ -175,7 +160,6 @@
   @apply text-red-500 text-sm mt-1;
 }
 
-/* Stats & Metrics */
 .stat-card {
   @apply card text-center;
   padding: 1.5rem;
@@ -193,7 +177,6 @@
   @apply text-gray-600 text-sm font-medium mt-1;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .app-container {
     padding: 0.5rem;
@@ -213,20 +196,17 @@
     height: 4rem;
   }
   
-  /* Mobile Navigation */
   .nav-card {
     margin: 0.5rem;
     padding: 1rem;
   }
   
-  /* Mobile - Stack navigation elements */
   nav .max-w-7xl .flex.justify-between {
     @apply flex-col space-y-3 items-start;
     height: auto;
     padding: 1rem 0;
   }
   
-  /* Keep user info section compact on mobile */
   nav .flex.items-center.space-x-4 {
     @apply space-x-2;
   }
@@ -235,12 +215,10 @@
     @apply text-sm;
   }
   
-  /* Smaller buttons on mobile */
   nav .btn {
     @apply px-3 py-1.5 text-xs;
   }
   
-  /* Smaller coin display on mobile */
   nav .flex.items-center.space-x-2.bg-gradient-to-r {
     @apply px-2 py-1 text-xs;
   }
@@ -256,7 +234,6 @@
     width: 3rem;
   }
   
-  /* Very small screens - minimize spacing */
   nav .flex.items-center.space-x-6 {
     @apply space-x-3;
   }

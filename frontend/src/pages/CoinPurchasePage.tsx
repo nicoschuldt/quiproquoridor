@@ -15,23 +15,18 @@ const CoinPurchasePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Check for Stripe redirect parameters
   const paymentStatus = searchParams.get('payment');
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
     loadCoinPackages();
     
-    // Handle Stripe success/cancel redirects
     if (paymentStatus === 'success' && sessionId) {
       setSuccessMessage('Payment successful! Your coins will be added to your account shortly.');
-      // Refresh profile to update coin balance
       refreshProfile();
-      // Clear the URL parameters
       window.history.replaceState({}, '', '/coin-purchase');
     } else if (paymentStatus === 'cancelled') {
       setError('Payment was cancelled. You can try again below.');
-      // Clear the URL parameters
       window.history.replaceState({}, '', '/coin-purchase');
     }
   }, [paymentStatus, sessionId, refreshProfile]);
@@ -54,26 +49,15 @@ const CoinPurchasePage: React.FC = () => {
     try {
       setPurchaseLoading(packageId);
       setError(null);
-
-      // Handle mock purchases in development
       if (packageId.startsWith('mock_')) {
         const realPackageId = packageId.replace('mock_', '');
         await paymentApi.mockPurchase(realPackageId);
-        
-        // Refresh user profile to show updated balance
         await refreshProfile();
-        
-        // Show success message
         setSuccessMessage('Mock purchase successful! Your coin balance has been updated.');
         return;
       }
-
-      // Real Stripe purchase
       const checkout = await paymentApi.createCheckoutSession(packageId);
-      
-      // Redirect to Stripe checkout
       window.location.href = checkout.checkoutUrl;
-      
     } catch (err: any) {
       console.error('Purchase failed:', err);
       setError(err.message || 'Purchase failed. Please try again.');
@@ -97,7 +81,6 @@ const CoinPurchasePage: React.FC = () => {
 
   return (
     <PageLayout showBackButton title="Buy Coins" maxWidth="4xl">
-      {/* Page Header */}
       <div className="text-center mb-8">
         <div className="text-6xl mb-4">🪙</div>
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Buy Coins</h1>
@@ -106,7 +89,6 @@ const CoinPurchasePage: React.FC = () => {
         </p>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="card border-red-200 bg-red-50 text-red-700 mb-6">
           <div className="flex items-start space-x-3">
@@ -127,7 +109,6 @@ const CoinPurchasePage: React.FC = () => {
         </div>
       )}
 
-      {/* Success Message */}
       {successMessage && (
         <div className="card border-green-200 bg-green-50 text-green-700 mb-6">
           <div className="flex items-start space-x-3">
@@ -142,7 +123,6 @@ const CoinPurchasePage: React.FC = () => {
         </div>
       )}
 
-      {/* Coin Packages Grid */}
       {packages.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {packages.map((pkg) => (
