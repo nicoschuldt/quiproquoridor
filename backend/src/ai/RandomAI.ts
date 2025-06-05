@@ -1,4 +1,4 @@
-import type { AIEngine, GameState, Move, AIDifficulty } from '../../shared/types';
+import type { AIEngine, GameState, Move, AIDifficulty } from '../shared/types';
 import { gameEngineManager } from '../game/GameEngineManager';
 
 export class RandomAI implements AIEngine {

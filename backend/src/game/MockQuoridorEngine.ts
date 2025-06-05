@@ -6,7 +6,7 @@ import type {
     Position, 
     WallOrientation,
     Wall
-  } from '../../shared/types';
+  } from '../shared/types';
   
   /**
    * MockQuoridorEngine - A realistic implementation of Quoridor game logic

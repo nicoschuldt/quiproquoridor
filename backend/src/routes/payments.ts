@@ -6,7 +6,7 @@ import { db, users, transactions } from '../db';
 import { eq, sql } from 'drizzle-orm';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 import { config } from '../config';
-import type { CoinPackage, CreateCheckoutRequest } from '../../shared/types';
+import type { CoinPackage, CreateCheckoutRequest } from '../shared/types';
 
 const router = Router();
 

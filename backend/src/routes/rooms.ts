@@ -6,7 +6,7 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 import { gameStateService } from '../game/GameStateService';
-import type { AIDifficulty, ServerToClientEvents, ClientToServerEvents } from '../../shared/types';
+import type { AIDifficulty, ServerToClientEvents, ClientToServerEvents } from '../shared/types';
 import type { Server } from 'socket.io';
 
 const router = Router();
