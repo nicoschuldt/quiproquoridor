@@ -43,7 +43,6 @@ const GamePage: React.FC = () => {
     endGameModal: null,
   });
 
-  // **NEW**: Handle forfeit events
   const addNotification = useCallback((type: 'info' | 'warning' | 'success', message: string, timeout: number = 5000) => {
     const id = crypto.randomUUID();
     setState(prev => ({
@@ -51,7 +50,6 @@ const GamePage: React.FC = () => {
       notifications: [...prev.notifications, { id, type, message, timeout }]
     }));
     
-    // Auto-remove notification after timeout
     setTimeout(() => {
       setState(prev => ({
         ...prev,
@@ -60,7 +58,6 @@ const GamePage: React.FC = () => {
     }, timeout);
   }, []);
 
-  // Game socket hook with event handlers
   const gameSocket = useGameSocket({
     roomId: roomId!,
     onGameStarted: useCallback((data: { gameState: GameState }) => {
@@ -83,7 +80,6 @@ const GamePage: React.FC = () => {
         error: null,
       }));
       
-      // Request valid moves if it's now the user's turn
       if (user && data.gameState.players[data.gameState.currentPlayerIndex].id === user.id) {
         setTimeout(() => gameSocket.requestGameState(), 100);
       }
@@ -134,7 +130,6 @@ const GamePage: React.FC = () => {
         gameState: data.gameState,
       }));
       
-      // **FIXED**: Check if game is finished after forfeit
       if (data.gameState.status === 'finished') {
         const winner = data.gameState.players.find(p => p.id === data.gameState.winner);
         const isCurrentUser = data.playerId === user?.id;
@@ -155,7 +150,6 @@ const GamePage: React.FC = () => {
           }
         }));
       } else {
-        // Game continues with forfeit notification
         const isCurrentUser = data.playerId === user?.id;
         const message = isCurrentUser ? 
           'You have forfeited the game' : 
@@ -174,7 +168,6 @@ const GamePage: React.FC = () => {
       
       addNotification('warning', `${data.playerName} disconnected. Auto-forfeit in ${data.timeoutSeconds}s if they don't reconnect.`, 8000);
       
-      // **NEW**: Set timeout for auto-forfeit modal if current user disconnected
       if (data.playerId === user?.id) {
         setTimeout(() => {
           setState(prev => ({
@@ -211,7 +204,6 @@ const GamePage: React.FC = () => {
     }, [])
   });
 
-  // Join room on mount and request initial state
   useEffect(() => {
     if (roomId && gameSocket.isConnected) {
       gameSocket.joinRoom();
@@ -225,7 +217,6 @@ const GamePage: React.FC = () => {
     };
   }, [roomId, gameSocket.isConnected]);
 
-  // Redirect if no user or room
   if (!user) {
     navigate('/login');
     return null;
@@ -236,11 +227,9 @@ const GamePage: React.FC = () => {
     return null;
   }
 
-  const currentPlayer = state.gameState?.players.find(p => p.id === user.id);
-  const isCurrentTurn = state.gameState && 
+  const isCurrentTurn = state.gameState &&
     state.gameState.players[state.gameState.currentPlayerIndex].id === user.id;
 
-  // **NEW**: Forfeit confirmation
   const handleForfeit = useCallback(() => {
     if (!window.confirm('Are you sure you want to forfeit this game? This action cannot be undone.')) {
       return;
@@ -248,7 +237,6 @@ const GamePage: React.FC = () => {
     gameSocket.forfeitGame();
   }, [gameSocket]);
 
-  // **NEW**: Handle end game modal close
   const handleEndGameModalClose = useCallback(() => {
     setState(prev => ({
       ...prev,
@@ -259,7 +247,6 @@ const GamePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* **NEW**: End Game Modal */}
       {state.endGameModal?.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="card max-w-md w-full mx-4 text-center">
@@ -296,7 +283,6 @@ const GamePage: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -309,7 +295,6 @@ const GamePage: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Connection Status */}
               <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                 gameSocket.connectionStatus === 'connected' ? 'bg-green-100 text-green-800' :
                 gameSocket.connectionStatus === 'disconnected' ? 'bg-red-100 text-red-800' :
@@ -327,7 +312,6 @@ const GamePage: React.FC = () => {
                 </span>
               </div>
               
-              {/* **NEW**: Forfeit button - only show during active game */}
               {state.isGameStarted && state.gameState?.status === 'playing' && (
                 <button 
                   onClick={handleForfeit}
@@ -348,7 +332,6 @@ const GamePage: React.FC = () => {
         </div>
       </nav>
 
-      {/* **NEW**: Notifications */}
       {state.notifications.length > 0 && (
         <div className="fixed top-20 right-4 z-40 space-y-3">
           {state.notifications.map((notification) => (
@@ -391,9 +374,7 @@ const GamePage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Error Display */}
         {state.error && (
           <div className="card border-red-200 bg-red-50 text-red-700 mb-6" style={{ padding: '1rem' }}>
             <div className="flex justify-between items-center">
@@ -411,7 +392,6 @@ const GamePage: React.FC = () => {
           </div>
         )}
         
-        {/* Loading State */}
         {state.isLoading && (
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
@@ -421,7 +401,6 @@ const GamePage: React.FC = () => {
           </div>
         )}
         
-        {/* Game Not Started */}
         {!state.isLoading && !state.isGameStarted && (
           <div className="text-center py-16">
             <div className="card max-w-md mx-auto">
@@ -439,7 +418,6 @@ const GamePage: React.FC = () => {
           </div>
         )}
         
-        {/* Active Game */}
         {!state.isLoading && state.isGameStarted && state.gameState && (
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
             <div className="xl:col-span-3">
@@ -454,7 +432,6 @@ const GamePage: React.FC = () => {
               />
             </div>
             
-            {/* Game Info Sidebar */}
             <div className="space-y-6">
               <div className="card">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Turn</h3>

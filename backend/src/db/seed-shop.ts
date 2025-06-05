@@ -3,7 +3,6 @@ import { shopItems } from './schema';
 import type { NewShopItem } from './schema';
 
 export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
-  // Board Themes
   {
     id: 'board_forest',
     name: 'Forest Theme',
@@ -45,7 +44,6 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
     isActive: true,
   },
 
-  // Pawn Themes
   {
     id: 'pawn_knights',
     name: 'Medieval Knights',
@@ -88,10 +86,6 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
 ];
 
-/**
- * Seeds the shop_items table with initial themes
- * Can be run multiple times safely (uses INSERT OR IGNORE)
- */
 export async function seedShopItems(): Promise<void> {
   try {
     console.log('🌱 Seeding shop items...');
@@ -99,7 +93,7 @@ export async function seedShopItems(): Promise<void> {
     for (const item of INITIAL_SHOP_ITEMS) {
       await db.insert(shopItems)
         .values(item)
-        .onConflictDoNothing(); // SQLite equivalent of "INSERT OR IGNORE"
+        .onConflictDoNothing();
     }
     
     console.log(`✅ Successfully seeded ${INITIAL_SHOP_ITEMS.length} shop items`);
@@ -109,19 +103,11 @@ export async function seedShopItems(): Promise<void> {
   }
 }
 
-/**
- * Utility function to reset shop items (useful for development)
- */
 export async function resetShopItems(): Promise<void> {
   try {
     console.log('🔄 Resetting shop items...');
-    
-    // Delete all shop items
     await db.delete(shopItems);
-    
-    // Re-seed
     await seedShopItems();
-    
     console.log('✅ Shop items reset successfully');
   } catch (error) {
     console.error('❌ Error resetting shop items:', error);

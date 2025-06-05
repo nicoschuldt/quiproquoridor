@@ -1,4 +1,3 @@
-// frontend/src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
@@ -24,9 +23,6 @@ const AppContent: React.FC = () => {
         <div className="text-center max-w-md mx-auto p-6">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Reconnecting to your game...</h2>
-          {/* <p className="text-gray-600">
-            We found an active game session. You'll be redirected automatically.
-          </p> */}
         </div>
       </div>
     );

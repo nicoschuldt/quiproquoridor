@@ -1,4 +1,3 @@
-// backend/src/db/migrate.ts
 import 'dotenv/config';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { db } from './index';

@@ -1,4 +1,3 @@
-// backend/src/socket/gameHandlers.ts
 import { Server, Socket } from 'socket.io';
 import { gameEngineManager } from '../game/GameEngineManager';
 import { gameStateService } from '../game/GameStateService';
@@ -23,21 +22,12 @@ interface GameHandlerEvents {
   'forfeit-game': (data: { roomId: string }) => void;
 }
 
-/**
- * GameHandlers - Handles all game-related socket events
- * 
- * Integrates the game engine with real-time multiplayer functionality.
- * Provides robust error handling and type safety throughout.
- */
 export class GameHandlers {
   constructor(
     private io: Server<ClientToServerEvents, ServerToClientEvents>,
     private socket: AuthenticatedSocket
   ) {}
 
-  /**
-   * Sets up all game-related event listeners for a socket
-   */
   setupEventListeners(): void {
     this.socket.on('start-game', this.handleStartGame.bind(this));
     this.socket.on('make-move', this.handleMakeMove.bind(this));
@@ -47,14 +37,10 @@ export class GameHandlers {
     console.log(`🎮 Game handlers setup for user ${this.socket.user.username}`);
   }
 
-  /**
-   * Handles game start request (host only)
-   */
   private async handleStartGame(data: { roomId: string }): Promise<void> {
     try {
       console.log(`🚀 Starting game in room ${data.roomId} by ${this.socket.user.username}`);
 
-      // Verify user is host and room is in lobby state
       const room = await this.getRoomWithValidation(data.roomId);
       if (!room) return;
 
@@ -68,30 +54,25 @@ export class GameHandlers {
         return;
       }
 
-      // Check if room has enough players
       const members = await this.getRoomMembers(data.roomId);
       if (members.length < 2) {
         this.emitError('INSUFFICIENT_PLAYERS', 'Need at least 2 players to start');
         return;
       }
 
-      // Check if game already exists
       const existingGame = await gameStateService.hasActiveGame(data.roomId);
       if (existingGame) {
         this.emitError('GAME_ALREADY_EXISTS', 'Game already started for this room');
         return;
       }
 
-      // Create game state
       const gameState = await gameStateService.createGame(data.roomId);
 
-      // Update room status to playing
       await db
         .update(rooms)
         .set({ status: 'playing' })
         .where(eq(rooms.id, data.roomId));
 
-      // Broadcast game start to all players in room
       this.io.to(data.roomId).emit('game-started', { gameState });
       
       console.log(`✅ Game started successfully in room ${data.roomId}`);
@@ -102,9 +83,6 @@ export class GameHandlers {
     }
   }
 
-  /**
-   * Handles move requests with full validation
-   */
   private async handleMakeMove(data: { roomId: string; move: Omit<Move, 'id' | 'timestamp'> }): Promise<void> {
     try {
       console.log(`🎯 Processing move from ${this.socket.user.username}:`, {
@@ -112,14 +90,12 @@ export class GameHandlers {
         roomId: data.roomId
       });
 
-      // Get current game state
       const gameState = await gameStateService.getGameState(data.roomId);
       if (!gameState) {
         this.emitError('GAME_NOT_FOUND', 'No active game found for this room');
         return;
       }
 
-      // Verify the move is from the current player
       const currentPlayer = gameEngineManager.getCurrentPlayer(gameState);
       if (data.move.playerId !== this.socket.user.id) {
         this.emitError('INVALID_PLAYER', 'Move playerId does not match authenticated user');
@@ -131,53 +107,44 @@ export class GameHandlers {
         return;
       }
 
-      // Validate move with game engine
       const isValidMove = gameEngineManager.validateMove(gameState, data.move);
       if (!isValidMove) {
         this.emitInvalidMove('INVALID_MOVE', 'Move is not valid according to game rules', data.move);
         return;
       }
 
-      // Apply move to create new game state
       let newGameState = gameEngineManager.applyMove(gameState, data.move);
 
-      // Create full move object for broadcasting
       const fullMove: Move = {
         id: crypto.randomUUID(),
         timestamp: new Date(),
         ...data.move
       };
 
-      // Save updated game state to database
       await gameStateService.saveGameState(data.roomId, newGameState);
 
-      // Broadcast move to all players in room
       this.io.to(data.roomId).emit('move-made', {
         move: fullMove,
         gameState: newGameState
       });
 
-      // **NEW AI INTEGRATION**: Check if AI moves were processed and emit them
       const aiProcessedState = gameStateService.getProcessedAIMove(data.roomId);
       if (aiProcessedState) {
         console.log(`🤖 AI moves detected, broadcasting updated state for room ${data.roomId}`);
         
-        // Emit the AI-updated game state to all players
         this.io.to(data.roomId).emit('move-made', {
           move: {
             id: crypto.randomUUID(),
             timestamp: new Date(),
-            type: 'pawn', // TODO: Placeholder - actual move data would need to be stored
+            type: 'pawn',
             playerId: 'ai-player'
           },
           gameState: aiProcessedState
         });
 
-        // Update the newGameState reference for subsequent checks
         newGameState = aiProcessedState;
       }
 
-      // Check if game is finished
       if (gameEngineManager.isGameFinished(newGameState)) {
         const winner = gameEngineManager.getWinner(newGameState);
         if (winner) {
@@ -188,18 +155,15 @@ export class GameHandlers {
           
           console.log(`🏆 Game finished in room ${data.roomId}, winner: ${winner}`);
 
-          // **NEW**: Schedule room cleanup notification
-          // After 5 seconds, notify players they can return to lobby
           setTimeout(() => {
             this.io.to(data.roomId).emit('room-updated', {
               room: {
                 id: data.roomId,
                 status: 'finished' as any,
-                // Signal that players should return to lobby
                 isGameFinished: true
               } as any
             });
-          }, 5000); // 5 seconds delay to show results
+          }, 5000);
         }
       }
 
@@ -211,24 +175,18 @@ export class GameHandlers {
     }
   }
 
-  /**
-   * Handles request for current game state (for reconnection)
-   */
   private async handleRequestGameState(data: { roomId: string }): Promise<void> {
     try {
       console.log(`📊 Game state requested by ${this.socket.user.username} for room ${data.roomId}`);
 
-      // Verify user is member of the room
       const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
       if (!isMember) {
         this.emitError('ACCESS_DENIED', 'You are not a member of this room');
         return;
       }
 
-      // **ENHANCED**: Check for active game first
       const gameState = await gameStateService.getGameState(data.roomId);
       if (gameState) {
-        // Active game found - send current state
         const validMoves = gameEngineManager.getValidMoves(gameState, this.socket.user.id);
 
         this.socket.emit('game-state-sync', { 
@@ -244,10 +202,8 @@ export class GameHandlers {
         return;
       }
 
-      // **NEW**: Check for finished game
       const finishedGame = await gameStateService.getFinishedGame(data.roomId);
       if (finishedGame) {
-        // Finished game found - send results
         const winner = finishedGame.players.find(p => p.id === finishedGame.winner);
         
         this.socket.emit('game-finished', {
@@ -259,7 +215,6 @@ export class GameHandlers {
         return;
       }
 
-      // No game found at all
       this.emitError('GAME_NOT_FOUND', 'No active game found for this room');
 
     } catch (error) {
@@ -268,53 +223,43 @@ export class GameHandlers {
     }
   }
 
-  /**
-   * **NEW**: Handles player forfeit request
-   */
   private async handleForfeitGame(data: { roomId: string }): Promise<void> {
     try {
       console.log(`🏳️ Forfeit requested by ${this.socket.user.username} in room ${data.roomId}`);
 
-      // Verify user is member of the room
       const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
       if (!isMember) {
         this.emitError('ACCESS_DENIED', 'You are not a member of this room');
         return;
       }
 
-      // Get current game state
       const gameState = await gameStateService.getGameState(data.roomId);
       if (!gameState) {
         this.emitError('GAME_NOT_FOUND', 'No active game found for this room');
         return;
       }
 
-      // Verify player is in the game
       const player = gameState.players.find(p => p.id === this.socket.user.id);
       if (!player) {
         this.emitError('PLAYER_NOT_IN_GAME', 'You are not a player in this game');
         return;
       }
 
-      // Process the forfeit
       const updatedGameState = await gameStateService.forfeitPlayer(data.roomId, this.socket.user.id);
       if (!updatedGameState) {
         this.emitError('FORFEIT_FAILED', 'Failed to process forfeit');
         return;
       }
 
-      // Broadcast forfeit to all players in room
       this.io.to(data.roomId).emit('player-forfeited', {
         playerId: this.socket.user.id,
         playerName: this.socket.user.username,
         gameState: updatedGameState
       });
 
-      // If game is finished, handle completion
       if (updatedGameState.status === 'finished') {
         const winner = updatedGameState.players.find(p => p.id === updatedGameState.winner);
         
-        // Broadcast game finished
         this.io.to(data.roomId).emit('game-finished', {
           gameState: updatedGameState,
           winner: winner || updatedGameState.players.find(p => p.isConnected)!
@@ -330,10 +275,6 @@ export class GameHandlers {
       this.emitError('FORFEIT_PROCESSING_FAILED', 'Failed to process forfeit');
     }
   }
-
-  // ==========================================
-  // HELPER METHODS
-  // ==========================================
 
   private async getRoomWithValidation(roomId: string) {
     const roomResult = await db

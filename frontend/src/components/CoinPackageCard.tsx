@@ -28,7 +28,6 @@ const CoinPackageCard: React.FC<CoinPackageCardProps> = ({
       ${pkg.popularBadge ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
       ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
     `}>
-      {/* Popular Badge */}
       {pkg.popularBadge && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
           <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
@@ -38,12 +37,10 @@ const CoinPackageCard: React.FC<CoinPackageCardProps> = ({
       )}
 
       <div className="p-6">
-        {/* Package Name */}
         <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">
           {pkg.name}
         </h3>
 
-        {/* Coin Display */}
         <div className="text-center mb-4">
           <div className="flex items-center justify-center gap-2 mb-1">
             <span className="text-3xl font-bold text-yellow-600">{totalCoins}</span>
@@ -57,19 +54,16 @@ const CoinPackageCard: React.FC<CoinPackageCardProps> = ({
           )}
         </div>
 
-        {/* Price */}
         <div className="text-center mb-4">
           <span className="text-2xl font-bold text-gray-900">
             {pkg.priceEUR.toFixed(2)} €
           </span>
         </div>
 
-        {/* Value proposition */}
         <div className="text-center text-sm text-gray-500 mb-4">
           {(pkg.priceEUR / totalCoins).toFixed(3)} € per coin
         </div>
 
-        {/* Purchase Button */}
         <button
           onClick={handlePurchase}
           disabled={disabled || isLoading}
@@ -95,7 +89,6 @@ const CoinPackageCard: React.FC<CoinPackageCardProps> = ({
           )}
         </button>
 
-        {/* Development mock button */}
         {process.env.NODE_ENV === 'development' && (
           <button
             onClick={() => onPurchase(`mock_${pkg.id}`)}

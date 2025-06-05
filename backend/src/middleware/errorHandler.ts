@@ -33,7 +33,6 @@ export const errorHandler = (
     });
   }
 
-  // Unhandled errors
   res.status(500).json({
     success: false,
     error: {

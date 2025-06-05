@@ -7,10 +7,8 @@ import { asyncHandler, AppError } from '../middleware/errorHandler';
 
 const router = Router();
 
-// All routes require authentication
 router.use(passport.authenticate('jwt', { session: false }));
 
-// Validation schemas
 const purchaseThemeSchema = z.object({
   shopItemId: z.string().min(1),
 });
@@ -20,11 +18,9 @@ const selectThemeSchema = z.object({
   cssClass: z.string().min(1),
 });
 
-// Get all shop data for user (owned themes, available themes, balance, selected themes)
 router.get('/data', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
 
-  // Get user data with current balance and selected themes
   const userData = await db
     .select({
       coinBalance: users.coinBalance,
@@ -41,13 +37,11 @@ router.get('/data', asyncHandler(async (req: Request, res: Response): Promise<vo
 
   const { coinBalance, selectedBoardTheme, selectedPawnTheme } = userData[0];
 
-  // Get all active shop items
   const allShopItems = await db
     .select()
     .from(shopItems)
     .where(eq(shopItems.isActive, true));
 
-  // Get user's owned themes
   const ownedThemeIds = await db
     .select({
       shopItemId: userPurchases.shopItemId,
@@ -57,7 +51,6 @@ router.get('/data', asyncHandler(async (req: Request, res: Response): Promise<vo
 
   const ownedIds = new Set(ownedThemeIds.map(p => p.shopItemId));
 
-  // Separate owned and available themes
   const owned = allShopItems.filter(item => ownedIds.has(item.id));
   const available = allShopItems.filter(item => !ownedIds.has(item.id));
 
@@ -76,13 +69,11 @@ router.get('/data', asyncHandler(async (req: Request, res: Response): Promise<vo
   });
 }));
 
-// Purchase a theme
 router.post('/purchase', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { shopItemId } = purchaseThemeSchema.parse(req.body);
 console.log('Tentative d’achat avec ShopItem ID:', shopItemId);
 
-  // Get theme details
   const themeResult = await db
     .select()
     .from(shopItems)
@@ -98,7 +89,6 @@ console.log('Résultat de la recherche du thème:', themeResult);
 
   const theme = themeResult[0];
 console.log('Thème récupéré:', theme);
-  // Check if user already owns this theme
   const existingPurchase = await db
     .select()
     .from(userPurchases)
@@ -112,7 +102,6 @@ console.log('Thème récupéré:', theme);
     throw new AppError(400, 'ALREADY_OWNED', 'You already own this theme');
   }
 
-  // Get user's current balance
   const userResult = await db
     .select({
       coinBalance: users.coinBalance,
@@ -127,7 +116,6 @@ console.log('Thème récupéré:', theme);
 
   const currentBalance = userResult[0].coinBalance;
 
-  // Check if user has sufficient funds
   if (currentBalance < theme.priceCoins) {
     throw new AppError(400, 'INSUFFICIENT_FUNDS', 
       `Insufficient coins. You have ${currentBalance}, need ${theme.priceCoins}`);
@@ -135,21 +123,17 @@ console.log('Thème récupéré:', theme);
 
   const newBalance = currentBalance - theme.priceCoins;
 
-  // Execute purchase transaction atomically
   await db.transaction(async (tx) => {
-    // Deduct coins from user
     await tx
       .update(users)
       .set({ coinBalance: newBalance })
       .where(eq(users.id, user.id));
 
-    // Record the purchase
     await tx.insert(userPurchases).values({
       userId: user.id,
       shopItemId: shopItemId,
     });
 
-    // Record the transaction for audit trail
     await tx.insert(transactions).values({
       userId: user.id,
       type: 'theme_purchase',
@@ -171,7 +155,6 @@ console.log('Thème récupéré:', theme);
   });
 }));
 
-// Select/change active theme
 router.post('/select-theme', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { themeType, cssClass } = selectThemeSchema.parse(req.body);
@@ -191,8 +174,6 @@ router.post('/select-theme', asyncHandler(async (req: Request, res: Response): P
     return;
   }
 
-  // For non-default themes, verify ownership
-  // First, find the theme by CSS class and type
   const themeResult = await db
     .select()
     .from(shopItems)
@@ -209,7 +190,6 @@ router.post('/select-theme', asyncHandler(async (req: Request, res: Response): P
 
   const theme = themeResult[0];
 
-  // Check if user owns this theme
   const ownership = await db
     .select()
     .from(userPurchases)
@@ -223,7 +203,6 @@ router.post('/select-theme', asyncHandler(async (req: Request, res: Response): P
     throw new AppError(403, 'NOT_OWNED', 'You do not own this theme');
   }
 
-  // Update user's selected theme
   const updateField = themeType === 'board' ? 'selectedBoardTheme' : 'selectedPawnTheme';
   
   await db

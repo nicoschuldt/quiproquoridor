@@ -3,9 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Voxel Design System - Color Palette */
 :root {
-  /* Pastel Primary Colors (matching pawns) */
   --red-50: #fef2f2;
   --red-100: #fee2e2;
   --red-200: #fecaca;
@@ -38,7 +36,6 @@
   --yellow-500: #f59e0b;
   --yellow-600: #d97706;
 
-  /* Neutral Voxel Colors */
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
@@ -50,13 +47,11 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
-  /* Voxel Shadows */
   --shadow-soft: 0 4px 12px rgba(100, 116, 139, 0.08), 0 2px 6px rgba(100, 116, 139, 0.06);
   --shadow-medium: 0 8px 24px rgba(100, 116, 139, 0.12), 0 4px 12px rgba(100, 116, 139, 0.08);
   --shadow-strong: 0 16px 48px rgba(100, 116, 139, 0.16), 0 8px 24px rgba(100, 116, 139, 0.12);
   --shadow-floating: 0 20px 60px rgba(100, 116, 139, 0.18), 0 12px 32px rgba(100, 116, 139, 0.14);
 
-  /* Voxel Gradients */
   --gradient-soft: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   --gradient-warm: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%);
   --gradient-cool: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
@@ -100,7 +95,6 @@
 }
 
 @layer components {
-  /* Voxel Button System */
   .btn {
     @apply inline-flex items-center justify-center px-5 py-2.5 font-medium rounded-xl transition-all duration-300 cursor-pointer text-sm;
     box-shadow: var(--shadow-soft);
@@ -179,7 +173,6 @@
     box-shadow: var(--shadow-medium);
   }
 
-  /* Button Size Variants */
   .btn-lg {
     @apply px-8 py-3 text-base;
   }
@@ -188,7 +181,6 @@
     @apply px-3 py-1.5 text-xs;
   }
 
-  /* Voxel Card System */
   .card {
     background: var(--gradient-soft);
     border-radius: 24px;
@@ -227,7 +219,6 @@
     box-shadow: var(--shadow-floating);
   }
 
-  /* Voxel Input System */
   .input-field {
     @apply w-full px-4 py-3 rounded-2xl transition-all duration-300;
     background: var(--gradient-soft);
@@ -252,7 +243,6 @@
     color: var(--gray-400);
   }
 
-  /* Voxel Badge System */
   .badge {
     @apply inline-flex items-center px-3 py-1 text-sm font-medium rounded-full;
     box-shadow: var(--shadow-soft);
@@ -279,7 +269,6 @@
     color: var(--red-700);
   }
 
-  /* Navigation & Layout */
   .nav-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
@@ -288,7 +277,6 @@
     border-radius: 20px;
   }
 
-  /* Voxel Avatar System */
   .avatar {
     @apply rounded-2xl border-4 border-white;
     box-shadow: var(--shadow-medium);
@@ -300,7 +288,6 @@
     box-shadow: var(--shadow-strong);
   }
 
-  /* Game Elements */
   .game-card {
     background: var(--gradient-soft);
     border-radius: 20px;
@@ -316,7 +303,6 @@
     box-shadow: var(--shadow-strong);
   }
 
-  /* Status Indicators */
   .status-online {
     @apply w-3 h-3 rounded-full;
     background: linear-gradient(135deg, var(--green-400), var(--green-500));
@@ -329,7 +315,6 @@
     background: linear-gradient(135deg, var(--gray-300), var(--gray-400));
   }
 
-  /* Utility Classes */
   .text-gradient {
     background: linear-gradient(135deg, var(--blue-600), var(--green-500), var(--yellow-500), var(--red-500));
     -webkit-background-clip: text;
@@ -344,7 +329,6 @@
   }
 }
 
-/* Animations */
 @keyframes pulse-glow {
   0%, 100% { 
     box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
@@ -399,7 +383,6 @@
   animation: slide-up 0.4s ease-out;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .card {
     padding: 1.5rem;

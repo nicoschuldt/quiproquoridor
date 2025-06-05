@@ -2,11 +2,9 @@ import 'dotenv/config';
 import axios from 'axios';
 import { config } from './config';
 
-// Test configuration
 const BASE_URL = `http://localhost:${config.port}`;
 const API_URL = `${BASE_URL}/api`;
 
-// Test user credentials (from seed data)
 const TEST_USER = {
   username: 'alice',
   password: 'password123'
@@ -84,7 +82,6 @@ class ShopAPITester {
 
   async testPurchaseTheme(): Promise<boolean> {
     try {
-      // First get available themes
       const shopResponse = await axios.get(`${API_URL}/shop/data`, {
         headers: { Authorization: `Bearer ${this.token}` }
       });
@@ -95,7 +92,6 @@ class ShopAPITester {
         return false;
       }
 
-      // Try to purchase the first available theme
       const themeToPurchase = available[0];
       const purchaseResponse = await axios.post(`${API_URL}/shop/purchase`, {
         shopItemId: themeToPurchase.id
@@ -117,7 +113,6 @@ class ShopAPITester {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error?.message || error.message;
       
-      // Check if this is an expected error (insufficient funds, already owned)
       if (errorMessage.includes('Insufficient coins') || errorMessage.includes('already own')) {
         this.logTest('Purchase Theme (Expected Error)', true, undefined, { expectedError: errorMessage });
         return true;
@@ -130,14 +125,12 @@ class ShopAPITester {
 
   async testSelectTheme(): Promise<boolean> {
     try {
-      // First get owned themes
       const shopResponse = await axios.get(`${API_URL}/shop/data`, {
         headers: { Authorization: `Bearer ${this.token}` }
       });
 
       const owned = (shopResponse.data as any).data.owned;
       
-      // Test selecting default theme (should always work)
       const defaultResponse = await axios.post(`${API_URL}/shop/select-theme`, {
         themeType: 'board',
         cssClass: 'theme-board-default'
@@ -152,7 +145,6 @@ class ShopAPITester {
 
       this.logTest('Select Default Theme', true);
 
-      // Test selecting owned theme (if any)
       if (owned.length > 0) {
         const ownedTheme = owned[0];
         const selectResponse = await axios.post(`${API_URL}/shop/select-theme`, {
@@ -182,7 +174,6 @@ class ShopAPITester {
 
   async testUnauthorizedAccess(): Promise<boolean> {
     try {
-      // Test without token
       await axios.get(`${API_URL}/shop/data`);
       this.logTest('Unauthorized Access Protection', false, 'API allowed access without token');
       return false;
@@ -199,7 +190,6 @@ class ShopAPITester {
 
   async testInvalidRequests(): Promise<boolean> {
     try {
-      // Test purchasing non-existent theme
       const invalidPurchaseResponse = await axios.post(`${API_URL}/shop/purchase`, {
         shopItemId: 'non-existent-theme'
       }, {
@@ -222,20 +212,17 @@ class ShopAPITester {
   async runAllTests(): Promise<void> {
     console.log('🧪 Starting Shop API Tests...\n');
 
-    // Test authentication
     if (!(await this.login())) {
       console.log('❌ Authentication failed, stopping tests');
       return;
     }
 
-    // Run all API tests
     await this.testUnauthorizedAccess();
     await this.testGetShopData();
     await this.testPurchaseTheme();
     await this.testSelectTheme();
     await this.testInvalidRequests();
 
-    // Summary
     const passed = this.results.filter(r => r.passed).length;
     const total = this.results.length;
     
@@ -250,11 +237,9 @@ class ShopAPITester {
   }
 }
 
-// Run tests if this file is executed directly
 if (require.main === module) {
   const tester = new ShopAPITester();
   
-  // Wait a bit for server to be ready
   setTimeout(() => {
     tester.runAllTests()
       .then(() => process.exit(0))

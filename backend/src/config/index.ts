@@ -10,7 +10,6 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   
-  // Stripe configuration
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || '',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
@@ -22,12 +21,10 @@ export const config = {
     },
   },
   
-  // Game settings
   roomCodeLength: 6,
   maxRoomsPerUser: 5,
-  roomIdleTimeout: 30 * 60 * 1000, // 30 minutes
+  roomIdleTimeout: 30 * 60 * 1000,
   
-  // Rate limiting
-  rateLimitWindow: 15 * 60 * 1000, // 15 minutes
-  rateLimitMax: 100, // requests per window
+  rateLimitWindow: 15 * 60 * 1000,
+  rateLimitMax: 100,
 } as const; 

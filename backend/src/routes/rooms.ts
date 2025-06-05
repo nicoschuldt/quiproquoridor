@@ -1,4 +1,3 @@
-// backend/src/routes/rooms.ts
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import { z } from 'zod';
@@ -12,10 +11,8 @@ import type { Server } from 'socket.io';
 
 const router = Router();
 
-// All routes require authentication
 router.use(passport.authenticate('jwt', { session: false }));
 
-// Validation schemas
 const createRoomSchema = z.object({
   maxPlayers: z.union([z.literal(2), z.literal(4)]),
   isPrivate: z.boolean().optional(),
@@ -31,18 +28,14 @@ const addAIPlayerSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
 });
 
-// Create room
 router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const roomData = createRoomSchema.parse(req.body);
 
-  // **CRITICAL FIX**: Ensure user can only be in one room at a time
-  // Remove user from any existing rooms before creating/joining new one
   await db
     .delete(roomMembers)
     .where(eq(roomMembers.userId, user.id));
 
-  // Generate unique room code
   let code: string;
   let attempts = 0;
   do {
@@ -61,7 +54,6 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
     if (existing.length === 0) break;
   } while (true);
 
-  // Create room
   const newRoom = await db
     .insert(rooms)
     .values({
@@ -76,7 +68,6 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
 
   const room = newRoom[0];
 
-  // Add host as room member
   await db.insert(roomMembers).values({
     roomId: room.id,
     userId: user.id,
@@ -102,17 +93,14 @@ router.post('/', asyncHandler(async (req: Request, res: Response): Promise<void>
   });
 }));
 
-// Join room
 router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { code } = joinRoomSchema.parse(req.body);
 
-  // Remove user from any existing rooms before joining new one
   await db
     .delete(roomMembers)
     .where(eq(roomMembers.userId, user.id));
 
-  // Find room
   const roomResult = await db
     .select()
     .from(rooms)
@@ -127,9 +115,6 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
   }
 
   const room = roomResult[0];
-
-  // Note: No need to check if user already in room since we just removed them
-  // But we still need to check room capacity
   const currentMembers = await db
     .select()
     .from(roomMembers)
@@ -139,7 +124,6 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
     throw new AppError(400, 'ROOM_FULL', 'Room is full');
   }
 
-  // Add user to room
   await db.insert(roomMembers).values({
     roomId: room.id,
     userId: user.id,
@@ -165,12 +149,10 @@ router.post('/join', asyncHandler(async (req: Request, res: Response): Promise<v
   });
 }));
 
-// Get room details
 router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { roomId } = req.params;
 
-  // Get room
   const roomResult = await db
     .select()
     .from(rooms)
@@ -183,7 +165,6 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
 
   const room = roomResult[0];
 
-  // Check if user is member
   const membership = await db
     .select()
     .from(roomMembers)
@@ -197,7 +178,6 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
     throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
   }
 
-  // Get all room members with user details
   const membersWithUsers = await db
     .select({
       id: users.id,
@@ -211,7 +191,6 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
     .innerJoin(users, eq(roomMembers.userId, users.id))
     .where(eq(roomMembers.roomId, roomId));
 
-  // Convert to Player format expected by frontend
   const players = membersWithUsers.map((member, index) => ({
     id: member.id,
     username: member.username,
@@ -245,11 +224,9 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
   });
 }));
 
-// Check if user is currently in a room (for reconnection)
 router.get('/user/current', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
 
-  // Find if user is in any active room
   const roomMembership = await db
     .select({
       roomId: roomMembers.roomId,
@@ -260,7 +237,6 @@ router.get('/user/current', asyncHandler(async (req: Request, res: Response): Pr
     .innerJoin(rooms, eq(roomMembers.roomId, rooms.id))
     .where(and(
       eq(roomMembers.userId, user.id),
-      // **CRITICAL FIX**: Only get rooms that are truly active (exclude finished)
       inArray(rooms.status, ['lobby', 'playing'])
     ))
     .limit(1);
@@ -284,12 +260,10 @@ router.get('/user/current', asyncHandler(async (req: Request, res: Response): Pr
   });
 }));
 
-// Leave room
 router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { roomId } = req.params;
 
-  // Check if user is member of the room
   const membership = await db
     .select()
     .from(roomMembers)
@@ -305,7 +279,6 @@ router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response)
 
   const isHost = membership[0].isHost;
 
-  // Remove user from room
   await db
     .delete(roomMembers)
     .where(and(
@@ -313,20 +286,17 @@ router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response)
       eq(roomMembers.userId, user.id)
     ));
 
-  // Check remaining members
   const remainingMembers = await db
     .select()
     .from(roomMembers)
     .where(eq(roomMembers.roomId, roomId));
 
   if (remainingMembers.length === 0) {
-    // Delete room if empty
     await db
       .delete(rooms)
       .where(eq(rooms.id, roomId));
   } else if (isHost) {
-    // Transfer host to oldest member
-    const oldestMember = remainingMembers.sort((a, b) => 
+    const oldestMember = remainingMembers.sort((a, b) =>
       new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
     )[0];
 
@@ -338,7 +308,6 @@ router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response)
         eq(roomMembers.userId, oldestMember.userId)
       ));
 
-    // Update room host
     await db
       .update(rooms)
       .set({ hostId: oldestMember.userId })
@@ -351,13 +320,11 @@ router.delete('/:roomId/leave', asyncHandler(async (req: Request, res: Response)
   });
 }));
 
-// Add AI player to room (host only)
 router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user as any;
   const { roomId } = req.params;
   const { difficulty } = addAIPlayerSchema.parse(req.body);
 
-  // Get room and verify user is host
   const roomResult = await db
     .select()
     .from(rooms)
@@ -378,7 +345,6 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
     throw new AppError(400, 'INVALID_ROOM_STATE', 'Cannot add AI players after game has started');
   }
 
-  // Check room capacity
   const currentMembers = await db
     .select()
     .from(roomMembers)
@@ -388,7 +354,6 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
     throw new AppError(400, 'ROOM_FULL', 'Room is full');
   }
 
-  // Create AI user record
   const aiUsername = `AI (${difficulty}) ${Date.now()}`;
   const aiUser = await db
     .insert(users)
@@ -400,17 +365,14 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
     })
     .returning();
 
-  // Add AI to room
   await db.insert(roomMembers).values({
     roomId: roomId,
     userId: aiUser[0].id,
     isHost: false,
   });
 
-  // **NEW**: Emit socket events for AI player addition
   const io = req.app.get('io') as Server<ClientToServerEvents, ServerToClientEvents>;
   
-  // Get updated room members for socket events
   const updatedMembers = await db
     .select({
       id: users.id,
@@ -424,7 +386,6 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
     .innerJoin(users, eq(roomMembers.userId, users.id))
     .where(eq(roomMembers.roomId, roomId));
 
-  // Convert to Player format for socket events
   const players = updatedMembers.map((member, index) => ({
     id: member.id,
     username: member.username,
@@ -440,7 +401,6 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
 
   const aiPlayer = players.find(p => p.id === aiUser[0].id)!;
   
-  // Emit events to all players in the room
   io.to(roomId).emit('player-joined', { player: aiPlayer });
   
   const updatedRoomData = {
@@ -458,20 +418,16 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
   
   io.to(roomId).emit('room-updated', { room: updatedRoomData });
 
-  // **NEW**: Check if room is full and auto-start the game
   if (players.length === room.maxPlayers) {
     console.log(`🎮 Room ${roomId} is full after AI addition, auto-starting game`);
     
-    // Update room status to 'playing'
     await db
       .update(rooms)
       .set({ status: 'playing' })
       .where(eq(rooms.id, roomId));
 
-    // Create game state
     const gameState = await gameStateService.createGame(roomId);
     
-    // Emit game-started event to all players
     io.to(roomId).emit('game-started', { gameState });
     
     console.log(`✅ Game auto-started for room ${roomId} with ${players.length} players`);

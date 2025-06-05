@@ -1,45 +1,27 @@
-/* Pawn Image System - Enhanced for Voxel Board
- * Images are loaded from /images/pawns/{themeName}/{color}.png
- * CSS provides positioning, sizing, and hover effects
- * Pawn size scales with board size using CSS custom properties
- * Enhanced to match isometric voxel board aesthetic
- */
-
-/* Base Pawn Image Classes */
 .pawn-image {
-  /* Dynamic sizing based on board size */
   width: calc(var(--board-size, 90vw) / 12);
   height: calc(var(--board-size, 90vw) / 12);
   min-width: 2rem;
   min-height: 2rem;
   max-width: 4.5rem;
   max-height: 4.5rem;
-  
   object-fit: contain;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
-  /* Enhanced voxel-style drop shadow with ambient lighting */
-  filter: 
+  filter:
     drop-shadow(0 0.3vw 0.6vw rgba(100, 116, 139, 0.25))
     drop-shadow(0 0.1vw 0.2vw rgba(100, 116, 139, 0.15))
     brightness(1.05)
     contrast(1.1);
     
-  pointer-events: none; /* Clicks go through to parent container */
-  
-  /* Pawns should appear above walls and valid move indicators */
+  pointer-events: none;
   position: relative;
-  z-index: 5 !important; /* Within the pawn-square stacking context */
-  
-  /* Offset the pawn image to the top by 10px */
+  z-index: 5 !important;
   transform: translateY(-10px) perspective(1000px) rotateX(2deg);
-  
-  /* Center the pawn perfectly in its container */
   display: block;
   margin: auto;
 }
 
-/* Responsive adjustments for smaller screens */
 @media (max-width: 640px) {
   .pawn-image {
     width: calc(var(--board-size, 90vw) / 12);
@@ -62,32 +44,26 @@
   }
 }
 
-/* Pawn square needs to allow overflow but maintain proper layering */
 .pawn-square {
   overflow: visible !important;
   position: relative;
-  z-index: 25 !important; /* Higher than walls (20) to create proper stacking context */
-  
-  /* Ensure the square maintains its click area */
+  z-index: 25 !important;
   min-height: 0;
   min-width: 0;
 }
 
-/* Valid move indicators should be above pawns and properly centered */
 .valid-move-indicator {
   z-index: 10 !important;
   position: relative;
   margin: auto !important;
-  /* Make sure it stays visible above large pawns */
   border: 2px solid rgba(255, 255, 255, 0.9) !important;
   box-shadow: 
     0 2px 8px rgba(16, 185, 129, 0.5),
     0 0 16px rgba(16, 185, 129, 0.3) !important;
 }
 
-/* Hover effects for pawn images - Enhanced voxel style */
 .pawn-square:hover {
-  z-index: 30 !important; /* Higher when hovering */
+  z-index: 30 !important;
 }
 
 .pawn-square:hover .pawn-image {
@@ -98,12 +74,11 @@
     drop-shadow(0 0 1.5vw rgba(59, 130, 246, 0.2))
     brightness(1.1)
     contrast(1.15);
-  z-index: 10 !important; /* Within the hovering pawn-square */
+  z-index: 10 !important;
 }
 
-/* Current player highlight effect - Magical voxel glow */
 .pawn-square.ring-2 {
-  z-index: 28 !important; /* Higher than normal pawns but lower than hovering */
+  z-index: 28 !important;
 }
 
 .pawn-square.ring-2 .pawn-image {
@@ -116,7 +91,7 @@
     contrast(1.15);
     
   animation: voxel-pawn-glow 2s ease-in-out infinite;
-  z-index: 8 !important; /* Within the current player pawn-square */
+  z-index: 8 !important;
 }
 
 @keyframes voxel-pawn-glow {
@@ -140,42 +115,31 @@
   }
 }
 
-/* Ensure wall elements stay below pawns */
 .wall,
 .wall-preview {
-  z-index: 20 !important; /* Below pawns (25+) */
+  z-index: 20 !important;
   position: relative;
 }
 
-/* Game board should establish stacking context */
 .game-board {
   position: relative;
   z-index: 0;
-  
-  /* Prevent any scrolling from large pawns */
   overflow: visible;
-  
-  /* Ensure perfect centering and add edge gaps */
   margin: 1rem auto;
   box-sizing: border-box;
-  
-  /* Add subtle padding for edge spacing */
   padding: 0.5rem;
 }
 
-/* Ensure grid cells don't get disrupted by large content */
 .game-board > * {
   min-width: 0;
   min-height: 0;
 }
 
-/* Legacy CSS classes - kept for any remaining references */
 .theme-pawn-default,
 .theme-pawn-knights,
 .theme-pawn-robots,
 .theme-pawn-animals,
 .theme-pawn-gems {
-  /* These are now handled by images */
   display: contents;
 }
 
@@ -183,6 +147,5 @@
 .color-blue,
 .color-green,
 .color-yellow {
-  /* Colors are now handled by separate image files */
   display: contents;
 } 

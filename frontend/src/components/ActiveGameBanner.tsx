@@ -42,7 +42,6 @@ const ActiveGameBanner: React.FC<ActiveGameBannerProps> = ({ onRoomChange }) => 
   useEffect(() => {
     checkActiveRoom();
     
-    // **ENHANCEMENT**: Refresh every 30 seconds to keep in sync
     const interval = setInterval(checkActiveRoom, 30000);
     
     return () => clearInterval(interval);
@@ -60,7 +59,7 @@ const ActiveGameBanner: React.FC<ActiveGameBannerProps> = ({ onRoomChange }) => 
   }
 
   if (error || !activeRoom) {
-    return null; // Don't show anything if no active room or error
+    return null;
   }
 
   const isGame = activeRoom.roomStatus === 'playing';
