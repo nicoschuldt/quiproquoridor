@@ -13,12 +13,12 @@ import type {
     private engine: GameEngine = quoridorEngine;
   
     constructor() {
-      console.log('🎮 GameEngineManager initialized with mock engine');
+      console.log('GameEngineManager initialized with mock engine');
     }
 
     setEngine(engine: GameEngine): void {
       this.engine = engine;
-      console.log('🚀 Advanced game engine connected - replacing mock engine');
+      console.log('Advanced game engine connected - replacing mock engine');
     }
 
     isEngineReady(): boolean {
@@ -30,7 +30,7 @@ import type {
     }
 
     createGame(playerIds: string[], maxPlayers: 2 | 4): GameState {
-      console.log(`🎲 Creating game with ${this.engine ? 'advanced' : 'mock'} engine`);
+      console.log(`Creating game with ${this.engine ? 'advanced' : 'mock'} engine`);
       return this.getActiveEngine().createGame(playerIds, maxPlayers);
     }
   

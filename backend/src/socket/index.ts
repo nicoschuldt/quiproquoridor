@@ -43,7 +43,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     const authenticatedSocket = socket as any;
     const user = authenticatedSocket.user;
     
-    console.log(`🔌 User ${user.username} connected (${socket.id})`);
+    console.log(`User ${user.username} connected (${socket.id})`);
 
     let userCurrentRoomId: string | null = null;
 
@@ -53,10 +53,10 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     authenticatedSocket.on('join-room', async (data: { roomId: string }) => {
       try {
         const { roomId } = data;
-        console.log(`👤 ${user.username} joining room ${roomId}`);
+        console.log(`${user.username} joining room ${roomId}`);
         
         if (userCurrentRoomId && userCurrentRoomId !== roomId) {
-          console.log(`👤 ${user.username} leaving previous socket room ${userCurrentRoomId}`);
+          console.log(`${user.username} leaving previous socket room ${userCurrentRoomId}`);
           await authenticatedSocket.leave(userCurrentRoomId);
           socket.to(userCurrentRoomId).emit('player-left', {
             playerId: user.id
@@ -105,7 +105,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
         const existingGame = await gameStateService.hasActiveGame(roomId);
         if (existingGame) {
-          console.log(`🎮 Player ${user.username} joining existing game in room ${roomId}`);
+          console.log(`Player ${user.username} joining existing game in room ${roomId}`);
           
           const hadTimeout = gameStateService.cancelDisconnectionTimeout(roomId, user.id);
           
@@ -171,7 +171,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         authenticatedSocket.emit('room-updated', { room: roomData });
 
         if (players.length === room.maxPlayers && room.status === 'lobby') {
-          console.log(`🎮 Room ${roomId} is full, auto-starting game`);
+          console.log(`Room ${roomId} is full, auto-starting game`);
           
           await db
             .update(rooms)
@@ -183,9 +183,9 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
             
             io.to(roomId).emit('game-started', { gameState });
             
-            console.log(`✅ Game auto-started for room ${roomId} with ${gameState.players.length} players`);
+            console.log(`Game auto-started for room ${roomId} with ${gameState.players.length} players`);
           } catch (error) {
-            console.error('❌ Error auto-starting game:', error);
+            console.error('Error auto-starting game:', error);
             
             await db
               .update(rooms)
@@ -217,7 +217,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     authenticatedSocket.on('leave-room', async (data: { roomId: string }) => {
       try {
         const { roomId } = data;
-        console.log(`👤 ${user.username} leaving room ${roomId}`);
+        console.log(`${user.username} leaving room ${roomId}`);
         
         await authenticatedSocket.leave(roomId);
         userCurrentRoomId = null;
@@ -234,7 +234,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     });
 
     authenticatedSocket.on('disconnect', async (reason: string) => {
-      console.log(`🔌 User ${user.username} disconnected (${reason})`);
+      console.log(`User ${user.username} disconnected (${reason})`);
       
       try {
         const userRooms = await db
@@ -299,7 +299,7 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
               timeoutSeconds: 60
             });
             
-            console.log(`⏱️ Started 60s disconnection timeout for ${user.username} in room ${roomId}`);
+            console.log(`Started 60s disconnection timeout for ${user.username} in room ${roomId}`);
           } else if (userRoom.roomStatus === 'finished') {
             await db
               .delete(roomMembers)
@@ -324,5 +324,5 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
     });
   });
 
-  console.log('🔌 Socket.io server initialized with full room management and game integration');
+  console.log('Socket.io server initialized with full room management and game integration');
 };

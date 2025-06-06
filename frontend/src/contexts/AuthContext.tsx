@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           const roomStatus: UserRoomStatus | null = await roomApi.getCurrentRoom();
           if (roomStatus) {
-            console.log(`🎯 Found active room ${roomStatus.roomId} (${roomStatus.roomStatus})`);
+            console.log(`Found active room ${roomStatus.roomId} (${roomStatus.roomStatus})`);
 
             const currentPath = window.location.pathname;
             if (currentPath === '/' || currentPath === '/home') {
@@ -53,14 +53,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               : `/room/${roomStatus.roomId}`;
             
             if (window.location.pathname !== path) {
-              console.log(`🚀 Auto-redirecting to ${path}`);
+              console.log(`Auto-redirecting to ${path}`);
               window.location.href = path;
             }
           } else {
-            console.log('✅ No active room found');
+            console.log('No active room found');
           }
         } catch (error) {
-          console.error('❌ Failed to check room status:', error);
+          console.error('Failed to check room status:', error);
         } finally {
           setIsReconnecting(false);
         }

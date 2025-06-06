@@ -106,9 +106,9 @@ export async function seedShopItems(): Promise<void> {
         .onConflictDoNothing();
     }
     
-    console.log(`✅ Successfully seeded ${INITIAL_SHOP_ITEMS.length} shop items`);
+    console.log(`Successfully seeded ${INITIAL_SHOP_ITEMS.length} shop items`);
   } catch (error) {
-    console.error('❌ Error seeding shop items:', error);
+    console.error('Error seeding shop items:', error);
     throw error;
   }
 }
@@ -118,9 +118,9 @@ export async function resetShopItems(): Promise<void> {
     console.log('🔄 Resetting shop items...');
     await db.delete(shopItems);
     await seedShopItems();
-    console.log('✅ Shop items reset successfully');
+    console.log('Shop items reset successfully');
   } catch (error) {
-    console.error('❌ Error resetting shop items:', error);
+    console.error('Error resetting shop items:', error);
     throw error;
   }
 } 
