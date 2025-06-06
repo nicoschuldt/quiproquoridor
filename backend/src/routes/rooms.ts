@@ -419,7 +419,7 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
   io.to(roomId).emit('room-updated', { room: updatedRoomData });
 
   if (players.length === room.maxPlayers) {
-    console.log(`🎮 Room ${roomId} is full after AI addition, auto-starting game`);
+    console.log(`Room ${roomId} is full after AI addition, auto-starting game`);
     
     await db
       .update(rooms)
@@ -430,7 +430,7 @@ router.post('/:roomId/ai', asyncHandler(async (req: Request, res: Response): Pro
     
     io.to(roomId).emit('game-started', { gameState });
     
-    console.log(`✅ Game auto-started for room ${roomId} with ${players.length} players`);
+    console.log(`Game auto-started for room ${roomId} with ${players.length} players`);
   }
 
   res.json({

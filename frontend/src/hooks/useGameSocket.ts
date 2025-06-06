@@ -61,7 +61,7 @@ export const useGameSocket = ({
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    console.log('🎮 Setting up game socket listeners for room:', roomId);
+    console.log('Setting up game socket listeners for room:', roomId);
 
     if (onGameStarted) socket.on('game-started', onGameStarted);
     if (onMoveMade) socket.on('move-made', onMoveMade);
@@ -74,7 +74,7 @@ export const useGameSocket = ({
     if (onError) socket.on('error', onError);
 
     return () => {
-      console.log('🧹 Cleaning up game socket listeners');
+      console.log('Cleaning up game socket listeners');
       if (onGameStarted) socket.off('game-started', onGameStarted);
       if (onMoveMade) socket.off('move-made', onMoveMade);
       if (onGameFinished) socket.off('game-finished', onGameFinished);
@@ -92,7 +92,7 @@ export const useGameSocket = ({
       console.warn('Cannot start game: no socket or roomId');
       return;
     }
-    console.log('🚀 Starting game in room:', roomId);
+    console.log('Starting game in room:', roomId);
     socket.emit('start-game', { roomId });
   }, [socket, roomId]);
 
@@ -101,7 +101,7 @@ export const useGameSocket = ({
       console.warn('Cannot make move: no socket or roomId');
       return;
     }
-    console.log('🎯 Making move:', move);
+    console.log('Making move:', move);
     socket.emit('make-move', { roomId, move });
   }, [socket, roomId]);
 
@@ -110,7 +110,7 @@ export const useGameSocket = ({
       console.warn('Cannot request game state: no socket or roomId');
       return;
     }
-    console.log('📊 Requesting game state for room:', roomId);
+    console.log('Requesting game state for room:', roomId);
     socket.emit('request-game-state', { roomId });
   }, [socket, roomId]);
 

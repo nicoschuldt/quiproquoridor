@@ -29,9 +29,9 @@ const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
     if (!item.owned && onPurchase) {
       try {
         await onPurchase();
-        setMessage(`✅ Achat réussi : ${item.name}`);
+        // setMessage(`Achat réussi : ${item.name}`);
       } catch (error: any) {
-        setMessage(`❌ Achat échoué : ${error.message || 'Erreur inconnue'}`);
+        setMessage(`Achat échoué : ${error.message || 'Erreur inconnue'}`);
       }
     }
   };
@@ -40,9 +40,9 @@ const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
     if (item.owned && onSelect) {
       try {
         await onSelect();
-        setMessage(`✅ Sélectionné : ${item.name}`);
+        setMessage(`Sélectionné : ${item.name}`);
       } catch (error: any) {
-        setMessage(`❌ Sélection échouée : ${error.message || 'Erreur inconnue'}`);
+        setMessage(`Sélection échouée : ${error.message || 'Erreur inconnue'}`);
       }
     }
   };

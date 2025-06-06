@@ -210,10 +210,10 @@ class ShopAPITester {
   }
 
   async runAllTests(): Promise<void> {
-    console.log('🧪 Starting Shop API Tests...\n');
+    console.log('Starting Shop API Tests...\n');
 
     if (!(await this.login())) {
-      console.log('❌ Authentication failed, stopping tests');
+      console.log('Authentication failed, stopping tests');
       return;
     }
 
@@ -226,12 +226,12 @@ class ShopAPITester {
     const passed = this.results.filter(r => r.passed).length;
     const total = this.results.length;
     
-    console.log(`\n📊 Test Results: ${passed}/${total} passed`);
+    console.log(`\nTest Results: ${passed}/${total} passed`);
     
     if (passed === total) {
-      console.log('🎉 All shop API tests passed!');
+      console.log('All shop API tests passed!');
     } else {
-      console.log('❌ Some tests failed. Review the errors above.');
+      console.log('Some tests failed. Review the errors above.');
       process.exit(1);
     }
   }

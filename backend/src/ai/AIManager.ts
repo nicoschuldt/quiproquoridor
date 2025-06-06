@@ -6,7 +6,7 @@ export class AIManager {
   private aiInstances = new Map<string, AIEngine>();
 
   createAI(playerId: string, difficulty: AIDifficulty): AIEngine {
-    console.log(`🤖 Creating AI instance for player ${playerId} with difficulty ${difficulty}`);
+    console.log(`Creating AI instance for player ${playerId} with difficulty ${difficulty}`);
 
     let ai: AIEngine;
 
@@ -46,27 +46,6 @@ export class AIManager {
         console.error(`AIManager: Error during AI move generation for player ${playerId} (difficulty: ${ai.constructor.name}).`, error);
         throw new Error(`AI ${playerId} failed to generate a move: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
-
-  isAIPlayer(gameState: GameState, playerId: string): boolean {
-    const player = gameState.players.find(p => p.id === playerId);
-    return player?.isAI || false;
-  }
-
-  removeAI(playerId: string): void {
-    if (this.aiInstances.has(playerId)) {
-      console.log(`🗑️ Removing AI instance for player ${playerId}`);
-      this.aiInstances.delete(playerId);
-    }
-  }
-
-  getActiveAICount(): number {
-    return this.aiInstances.size;
-  }
-
-  clearAll(): void {
-    console.log(`🧹 Clearing all AI instances (${this.aiInstances.size} total)`);
-    this.aiInstances.clear();
   }
 }
 

@@ -24,14 +24,14 @@ exports.app = app;
 const server = (0, http_1.createServer)(app);
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: config_1.config.corsOrigin,
+        origin: '*',
         methods: ['GET', 'POST']
     }
 });
 exports.io = io;
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: config_1.config.corsOrigin,
+    origin: '*',
     credentials: true
 }));
 app.use('/api/payments/webhook', express_1.default.raw({ type: 'application/json' }));

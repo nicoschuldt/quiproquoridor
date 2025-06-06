@@ -79,7 +79,7 @@ const PawnSquare: React.FC<PawnSquareProps> = ({
   disabled
 }) => {
   const handleClick = useCallback(() => {
-    console.log(`🎯 Pawn square clicked:`, {
+    console.log(`Pawn square clicked:`, {
       gamePosition: position,
       gridPosition: { row: gridRow, col: gridCol },
       isValidMove,
@@ -225,7 +225,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   disabled = false,
   boardTheme
 }) => {
-  console.log(`🎮 GameBoard render:`, {
+  console.log(`GameBoard render:`, {
     gameState,
     currentPlayerId,
     validMovesCount: validMoves.length,
@@ -262,11 +262,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   const handlePawnMove = useCallback((toPosition: Position) => {
     if (!currentPlayerPosition) {
-      console.error('❌ No current player position');
+      console.error('No current player position');
       return;
     }
     
-    console.log(`👤 Pawn move:`, {
+    console.log(`Pawn move:`, {
       from: currentPlayerPosition,
       to: toPosition,
       player: currentPlayer?.username

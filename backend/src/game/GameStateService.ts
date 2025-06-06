@@ -7,7 +7,7 @@ import type { GameState, Player } from '../../shared/types';
 export class GameStateService {
   async createGame(roomId: string): Promise<GameState> {
     try {
-      console.log(`🎮 Creating game for room ${roomId}`);
+      console.log(`Creating game for room ${roomId}`);
 
       const room = await db
         .select()
@@ -52,7 +52,7 @@ export class GameStateService {
       for (const playerData of playersData) {
         if (playerData.isAI && playerData.aiDifficulty) {
           aiManager.createAI(playerData.userId, playerData.aiDifficulty);
-          console.log(`🤖 AI instance created for player ${playerData.userId} (${playerData.aiDifficulty})`);
+          console.log(`AI instance created for player ${playerData.userId} (${playerData.aiDifficulty})`);
         }
       }
 
@@ -77,11 +77,11 @@ export class GameStateService {
 
       await db.insert(gamePlayers).values(gamePlayerRecords);
 
-      console.log(`✅ Game created: ${gameRecord.id}`);
+      console.log(`Game created: ${gameRecord.id}`);
       return gameState;
 
     } catch (error) {
-      console.error('❌ Error creating game:', error);
+      console.error('Error creating game:', error);
       throw error;
     }
   }
@@ -120,7 +120,7 @@ export class GameStateService {
       return gameState;
 
     } catch (error) {
-      console.error('❌ Error retrieving game state:', error);
+      console.error('Error retrieving game state:', error);
       return null;
     }
   }
@@ -147,7 +147,7 @@ export class GameStateService {
       await this.processAITurns(roomId, gameState);
 
     } catch (error) {
-      console.error('❌ Error saving game state:', error);
+      console.error('Error saving game state:', error);
       throw error;
     }
   }
@@ -168,19 +168,19 @@ export class GameStateService {
       }
 
       try {
-        console.log(`🤖 Processing AI turn for player ${currentPlayer.id} (${currentPlayer.username})`);
+        console.log(`Processing AI turn for player ${currentPlayer.id} (${currentPlayer.username})`);
         
         const aiMove = await aiManager.generateMove(currentState, currentPlayer.id);
         
         if (!gameEngineManager.validateMove(currentState, aiMove)) {
-          console.error(`❌ AI generated invalid move for player ${currentPlayer.id}`);
+          console.error(`AI generated invalid move for player ${currentPlayer.id}`);
           break;
         }
 
         currentState = gameEngineManager.applyMove(currentState, aiMove);
         processedAIMove = true;
 
-        console.log(`✅ AI move applied for player ${currentPlayer.id}`);
+        console.log(`AI move applied for player ${currentPlayer.id}`);
 
         await db
           .update(games)
@@ -201,7 +201,7 @@ export class GameStateService {
         }
 
       } catch (error) {
-        console.error(`❌ Error processing AI turn for player ${currentPlayer.id}:`, error);
+        console.error(`Error processing AI turn for player ${currentPlayer.id}:`, error);
         break;
       }
     }
@@ -240,17 +240,17 @@ export class GameStateService {
         await this.cleanupFinishedRoom(roomId);
       }, 30 * 60 * 1000);
 
-      console.log(`✅ Game completion processed for room ${roomId}`);
+      console.log(`Game completion processed for room ${roomId}`);
 
     } catch (error) {
-      console.error('❌ Error completing game:', error);
+      console.error('Error completing game:', error);
       throw error;
     }
   }
 
   async cleanupFinishedRoom(roomId: string): Promise<void> {
     try {
-      console.log(`🧹 Cleaning up finished room ${roomId}`);
+      console.log(`Cleaning up finished room ${roomId}`);
 
       await db
         .delete(roomMembers)
@@ -260,10 +260,10 @@ export class GameStateService {
         .delete(rooms)
         .where(eq(rooms.id, roomId));
 
-      console.log(`✅ Room ${roomId} cleaned up successfully`);
+      console.log(`Room ${roomId} cleaned up successfully`);
 
     } catch (error) {
-      console.error('❌ Error cleaning up finished room:', error);
+      console.error('Error cleaning up finished room:', error);
     }
   }
 
@@ -280,7 +280,7 @@ export class GameStateService {
 
       return count.length > 0;
     } catch (error) {
-      console.error('❌ Error checking for active game:', error);
+      console.error('Error checking for active game:', error);
       return false;
     }
   }
@@ -309,7 +309,7 @@ export class GameStateService {
       return gameState;
 
     } catch (error) {
-      console.error('❌ Error retrieving finished game:', error);
+      console.error('Error retrieving finished game:', error);
       return null;
     }
   }
@@ -319,7 +319,7 @@ export class GameStateService {
       const gameState = await this.getGameState(roomId);
       return gameState?.players || [];
     } catch (error) {
-      console.error('❌ Error getting game players:', error);
+      console.error('Error getting game players:', error);
       return [];
     }
   }
@@ -337,7 +337,7 @@ export class GameStateService {
       
       console.log(`🔗 Player ${playerId} ${isConnected ? 'connected' : 'disconnected'} in room ${roomId}`);
     } catch (error) {
-      console.error('❌ Error updating player connection:', error);
+      console.error('Error updating player connection:', error);
     }
   }
 
@@ -353,7 +353,7 @@ export class GameStateService {
         .limit(1);
 
       if (gameRecord.length === 0) {
-        console.error('❌ No finished game record found for room:', roomId);
+        console.error('No finished game record found for room:', roomId);
         return;
       }
 
@@ -364,7 +364,7 @@ export class GameStateService {
         const isWinner = player.id === gameState.winner;
         const wallsUsed = player.wallsRemaining;
 
-        console.log(`📊 Updating stats for player ${player.username} (${player.id}): winner=${isWinner}, wallsUsed=${wallsUsed}`);
+        console.log(`Updating stats for player ${player.username} (${player.id}): winner=${isWinner}, wallsUsed=${wallsUsed}`);
 
         await db
           .update(gamePlayers)
@@ -387,18 +387,18 @@ export class GameStateService {
           .where(eq(users.id, player.id));
       }
       
-      console.log(`✅ Player stats updated successfully for game ${gameId}`);
+      console.log(`Player stats updated successfully for game ${gameId}`);
     } catch (error) {
-      console.error('❌ Error updating player stats:', error);
+      console.error('Error updating player stats:', error);
     }
   }
 
   async cleanupAbandonedGames(): Promise<void> {
     try {
       // This will be implemented as part of a cleanup job
-      console.log('🧹 Cleanup abandoned games - TODO');
+      console.log('Cleanup abandoned games - TODO');
     } catch (error) {
-      console.error('❌ Error cleaning up abandoned games:', error);
+      console.error('Error cleaning up abandoned games:', error);
     }
   }
 
@@ -434,11 +434,11 @@ export class GameStateService {
 
       await this.saveGameState(roomId, gameState);
 
-      console.log(`✅ Player forfeit processed for ${playerId}`);
+      console.log(`Player forfeit processed for ${playerId}`);
       return gameState;
 
     } catch (error) {
-      console.error('❌ Error processing forfeit:', error);
+      console.error('Error processing forfeit:', error);
       return null;
     }
   }
@@ -453,7 +453,7 @@ export class GameStateService {
       clearTimeout(this.disconnectionTimeouts.get(key)!);
     }
 
-    console.log(`⏱️ Starting ${timeoutSeconds}s disconnection timeout for player ${playerId} in room ${roomId}`);
+    console.log(`Starting ${timeoutSeconds}s disconnection timeout for player ${playerId} in room ${roomId}`);
 
     const timeout = setTimeout(async () => {
       console.log(`⏰ Disconnection timeout expired for player ${playerId}, auto-forfeiting...`);
@@ -464,7 +464,7 @@ export class GameStateService {
           this.disconnectionTimeouts.set(`${key}:expired`, setTimeout(() => {}, 0));
         }
       } catch (error) {
-        console.error('❌ Error during auto-forfeit:', error);
+        console.error('Error during auto-forfeit:', error);
       }
       
       this.disconnectionTimeouts.delete(key);
@@ -479,7 +479,7 @@ export class GameStateService {
     if (this.disconnectionTimeouts.has(key)) {
       clearTimeout(this.disconnectionTimeouts.get(key)!);
       this.disconnectionTimeouts.delete(key);
-      console.log(`✅ Disconnection timeout cancelled for player ${playerId}`);
+      console.log(`Disconnection timeout cancelled for player ${playerId}`);
       return true;
     }
     

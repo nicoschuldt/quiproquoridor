@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Script de lancement de l'application Quoridor
-# Lance le backend et le frontend sans Docker
-
 set -e
 
 echo "=== Lancement de l'application Quoridor ==="

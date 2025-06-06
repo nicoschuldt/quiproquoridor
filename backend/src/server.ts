@@ -20,14 +20,14 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: config.corsOrigin,
+    origin: '*',
     methods: ['GET', 'POST']
   }
 });
 
 app.use(helmet());
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: '*',
   credentials: true
 }));
 

@@ -11,7 +11,7 @@ export class RandomAI implements AIEngine {
   }
 
   async generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {
-    console.log(`🤖 ${this.getName()} thinking for player ${playerId}...`);
+    console.log(`${this.getName()} thinking for player ${playerId}...`);
     
     await this.delay(this.thinkingTimeMs);
     const validMoves = gameEngineManager.getValidMoves(gameState, playerId);
@@ -22,7 +22,7 @@ export class RandomAI implements AIEngine {
     const randomIndex = Math.floor(Math.random() * validMoves.length);
     const selectedMove = validMoves[randomIndex];
 
-    console.log(`🤖 ${this.getName()} selected ${selectedMove.type} move`);
+    console.log(`${this.getName()} selected ${selectedMove.type} move`);
     return selectedMove;
   }
 
