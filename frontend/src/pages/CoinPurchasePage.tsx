@@ -22,11 +22,11 @@ const CoinPurchasePage: React.FC = () => {
     loadCoinPackages();
     
     if (paymentStatus === 'success' && sessionId) {
-      setSuccessMessage('Payment successful! Your coins will be added to your account shortly.');
+      setSuccessMessage('Payement réussit.');
       refreshProfile();
       window.history.replaceState({}, '', '/buy-coins');
     } else if (paymentStatus === 'cancelled') {
-      setError('Payment was cancelled. You can try again below.');
+      setError('Payement interrompu.');
       window.history.replaceState({}, '', '/buy-coins');
     }
   }, [paymentStatus, sessionId, refreshProfile]);
@@ -72,7 +72,7 @@ const CoinPurchasePage: React.FC = () => {
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-900">Loading coin packages...</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Chargement des jetons...</h2>
           </div>
         </div>
       </PageLayout>
@@ -83,9 +83,9 @@ const CoinPurchasePage: React.FC = () => {
     <PageLayout showBackButton title="Buy Coins" maxWidth="4xl">
       <div className="text-center mb-8">
         <div className="text-6xl mb-4">🪙</div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Buy Coins</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Achète des jetons</h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Purchase coins to unlock premium themes and features in Quoridor
+          Achète des jetons pour débloquer des thèmes, des avatars et plus encore dans Quiproquoridor.
         </p>
       </div>
 
@@ -96,13 +96,13 @@ const CoinPurchasePage: React.FC = () => {
               <span className="text-red-600 text-sm">⚠</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-red-800 mb-1">Error</h3>
+              <h3 className="font-semibold text-red-800 mb-1">Erreur</h3>
               <p className="text-red-600">{error}</p>
               <button
                 onClick={loadCoinPackages}
                 className="mt-2 text-sm font-medium text-red-800 underline hover:text-red-900"
               >
-                Try again
+                Recommence
               </button>
             </div>
           </div>
@@ -116,7 +116,7 @@ const CoinPurchasePage: React.FC = () => {
               <span className="text-green-600 text-sm">✓</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-green-800 mb-1">Success</h3>
+              <h3 className="font-semibold text-green-800 mb-1">Confirmation</h3>
               <p className="text-green-600">{successMessage}</p>
             </div>
           </div>
@@ -139,13 +139,13 @@ const CoinPurchasePage: React.FC = () => {
         !loading && (
           <div className="card text-center py-16 mb-12">
             <div className="text-6xl mb-4">🪙</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No coin packages available</h3>
-            <p className="text-gray-600">Please try again later.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun pack de jetons disponible</h3>
+            <p className="text-gray-600">Réessaye plus tard.</p>
             <button
               onClick={loadCoinPackages}
               className="btn btn-primary mt-4"
             >
-              Retry
+              Recommence
             </button>
           </div>
         )

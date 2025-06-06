@@ -17,17 +17,17 @@ const RegisterPage: React.FC = () => {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Les mots de passe ne correspondent pas');
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Le mot de passe doit comporter au moins 6 caractères');
       return;
     }
 
     if (username.length < 3) {
-      setError('Username must be at least 3 characters');
+      setError('Le pseudo doit comporter au moins 3 caractères');
       return;
     }
 
@@ -37,7 +37,7 @@ const RegisterPage: React.FC = () => {
       await register(username, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.error?.message || 'Registration failed');
+      setError(err.error?.message || 'Erreur lors de la création du compte');
     } finally {
       setIsLoading(false);
     }
@@ -48,12 +48,12 @@ const RegisterPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            Créer un compte
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
+            Ou{' '}
             <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
-              sign in to existing account
+              se connecter à un compte existant
             </Link>
           </p>
         </div>
@@ -66,7 +66,7 @@ const RegisterPage: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
+                Pseudo
               </label>
               <input
                 id="username"
@@ -82,7 +82,7 @@ const RegisterPage: React.FC = () => {
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                Mot de passe
               </label>
               <input
                 id="password"
@@ -98,7 +98,7 @@ const RegisterPage: React.FC = () => {
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+                Confirmer le mot de passe
               </label>
               <input
                 id="confirmPassword"
@@ -120,7 +120,7 @@ const RegisterPage: React.FC = () => {
               disabled={isLoading}
               className="btn-primary w-full flex justify-center py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? 'Création en cours...' : 'Compte créé'}
             </button>
           </div>
         </form>

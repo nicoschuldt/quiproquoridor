@@ -162,7 +162,7 @@ const RoomLobbyPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading room...</p>
+          <p className="mt-2 text-gray-600">Chargement du salon...</p>
         </div>
       </div>
     );
@@ -175,7 +175,7 @@ const RoomLobbyPage: React.FC = () => {
           <h1 className="text-xl font-bold text-red-600 mb-4">Error</h1>
           <p className="text-gray-600 mb-4">{error || 'Room not found'}</p>
           <Link to="/" className="btn-primary">
-            Back to Home
+            Retour à l'acceuil
           </Link>
         </div>
       </div>
@@ -190,7 +190,7 @@ const RoomLobbyPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold text-gray-900">Quoridor</Link>
+              <Link to="/" className="text-2xl font-bold text-gray-900">Quiproquoridor </Link>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -200,7 +200,7 @@ const RoomLobbyPage: React.FC = () => {
                 </span>
               </div>
               <button onClick={handleLeaveRoom} className="btn-secondary">
-                Leave Room
+                Quitter le salon
               </button>
             </div>
           </div>
@@ -211,15 +211,15 @@ const RoomLobbyPage: React.FC = () => {
         <div className="card mb-6">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-2xl font-bold">Game Lobby</h1>
+              <h1 className="text-2xl font-bold">Salon de la partie</h1>
               <p className="text-gray-600">
-                {room.maxPlayers === 2 ? '2-Player' : '4-Player'} Game
+                {room.maxPlayers === 2 ? '2-Player' : '4-Player'} Partie
                 {room.isPrivate && ' • Private'}
                 {room.hasTimeLimit && ` • ${room.timeLimitSeconds}s per move`}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500">Room Code</p>
+              <p className="text-sm text-gray-500">Code du salon</p>
               <button
                 onClick={copyRoomCode}
                 className="text-2xl font-mono font-bold text-blue-600 hover:text-blue-500 transition-colors"
@@ -238,7 +238,7 @@ const RoomLobbyPage: React.FC = () => {
 
           {roomIsFull && room.status === 'lobby' && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-              🎮 Room is full! Game will start automatically...
+              🎮 Le salon est plein ! La partie va commencer
             </div>
           )}
         </div>
@@ -246,7 +246,7 @@ const RoomLobbyPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">
-              Players ({players.length}/{room.maxPlayers})
+              Joueurs ({players.length}/{room.maxPlayers})
             </h2>
             
             <div className="space-y-3">
@@ -285,12 +285,12 @@ const RoomLobbyPage: React.FC = () => {
                               ) : player.isConnected ? (
                                 <span className="text-green-600 flex items-center">
                                   <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                                  Online
+                                  En ligne
                                 </span>
                               ) : (
                                 <span className="text-orange-600 flex items-center">
                                   <span className="w-2 h-2 bg-orange-500 rounded-full mr-1 animate-pulse"></span>
-                                  Reconnecting...
+                                  Reconnexion...
                                 </span>
                               )}
                             </p>
@@ -302,7 +302,7 @@ const RoomLobbyPage: React.FC = () => {
                       </div>
                     ) : (
                       <div className="text-center text-gray-500">
-                        <p>Waiting for player...</p>
+                        <p>En attente de joueurs...</p>
                       </div>
                     )}
                   </div>
@@ -312,7 +312,7 @@ const RoomLobbyPage: React.FC = () => {
 
             {isHost && !roomIsFull && room.status === 'lobby' && (
               <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="text-sm font-medium text-blue-900 mb-3">Add AI Opponent</h3>
+                <h3 className="text-sm font-medium text-blue-900 mb-3">Ajouter un joueur IA</h3>
                 <div className="flex items-center space-x-3">
                   <select
                     value={selectedDifficulty}
@@ -320,9 +320,9 @@ const RoomLobbyPage: React.FC = () => {
                     className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     disabled={addingAI}
                   >
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
+                    <option value="easy">Facile</option>
+                    <option value="medium">Moyen</option>
+                    <option value="hard">Difficile</option>
                   </select>
                   <button
                     onClick={handleAddAIPlayer}
@@ -333,7 +333,7 @@ const RoomLobbyPage: React.FC = () => {
                   </button>
                 </div>
                 <p className="text-xs text-blue-700 mt-2">
-                  AI players will respond automatically during the game
+                  Les joueurs IA jouent automatiquement ! 
                 </p>
               </div>
             )}
@@ -341,39 +341,40 @@ const RoomLobbyPage: React.FC = () => {
             <div className="mt-6">
               {roomIsFull ? (
                 <div className="w-full py-3 px-4 bg-green-100 text-green-800 rounded-lg font-medium text-center">
-                  🎮 Ready to start! Game will begin automatically...
+                  🎮 La partie va démarrer automatique ! 
                 </div>
               ) : (
                 <div className="w-full py-3 px-4 bg-gray-100 text-gray-600 rounded-lg text-center">
-                  Waiting for {room.maxPlayers - players.length} more player{room.maxPlayers - players.length !== 1 ? 's' : ''}...
+                  En attente de {room.maxPlayers - players.length} joueurs supplémentaires {room.maxPlayers - players.length !== 1 ? 's' : ''}...
                 </div>
               )}
             </div>
           </div>
 
           <div className="card">
-            <h2 className="text-xl font-semibold mb-4">How to Play</h2>
+            <h2 className="text-xl font-semibold mb-4">Comment jouer ?</h2>
             <div className="prose prose-sm text-gray-600">
               <p>
-                <strong>Objective:</strong> Be the first to reach the opposite side of the board.
+                <strong>Objective:</strong> Soyez le premier à atteindre le côté opposé du plateau.
               </p>
               <p>
-                <strong>Movement:</strong> Move your pawn one space up, down, left, or right.
+                <strong>Movement:</strong> Déplacez votre pion d'une case vers le haut, le bas, la gauche ou la droite
+.
               </p>
               <p>
-                <strong>Walls:</strong> Place walls to block opponents' paths. You have{' '}
-                {room.maxPlayers === 2 ? '10' : '5'} walls.
+                <strong>Walls:</strong> Placez des murs pour bloquer l'adversaire. Vous avez{' '}
+                {room.maxPlayers === 2 ? '10' : '5'} murs.
               </p>
               <p>
-                <strong>Victory:</strong> Reach any square on the opposite side to win!
+                <strong>Victory:</strong> Atteignez n'importe quelle case du côté opposé pour gagner!
               </p>
               {room.hasTimeLimit && (
                 <p>
-                  <strong>Time Limit:</strong> You have {room.timeLimitSeconds} seconds per move.
+                  <strong>Time Limit:</strong> Vous avez {room.timeLimitSeconds} seconds par tour !
                 </p>
               )}
               <p className="mt-4 text-blue-600">
-                <strong>Auto-Start:</strong> The game will start automatically when the room is full.
+                <strong>Auto-Start:</strong> Le jeu démarrera automatiquement lorsque la salle sera pleine.
               </p>
             </div>
           </div>

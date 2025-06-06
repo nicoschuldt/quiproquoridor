@@ -10,7 +10,7 @@ interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ 
-  title = "Quoridor", 
+  title = "Quiproquoridor", 
   showBackButton = false, 
   backTo = "/",
   className = ""
@@ -28,7 +28,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 className="text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
               >
                 <span aria-hidden="true">←</span>
-                <span>Back to {backTo === "/" ? "Home" : "Previous"}</span>
+                <span>Retour à {backTo === "/" ? "Home" : "Previous"}</span>
               </Link>
             ) : (
               <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
@@ -39,7 +39,7 @@ const Navigation: React.FC<NavigationProps> = ({
             {user ? (
               <>
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-700 font-medium whitespace-nowrap">Hi, {user.username}!</span>
+                  <span className="text-gray-700 font-medium whitespace-nowrap">Bonjour, {user.username}!</span>
                   <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 px-3 py-1.5 rounded-lg whitespace-nowrap">
                     <div className="w-4 h-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       ¤
@@ -50,28 +50,28 @@ const Navigation: React.FC<NavigationProps> = ({
                 
                 <div className="flex items-center space-x-3">
                   <Link to="/buy-coins" className="btn btn-warning">
-                    Buy Coins
+                    Jetons
                   </Link>
 
                   <Link to="/shop" className="btn btn-primary">
-                    Shop
+                    Boutique
                   </Link>
 
                   <Link to="/profile" className="btn btn-secondary">
                     Profile
                   </Link>
                   <button onClick={logout} className="btn btn-secondary">
-                    Logout
+                    Déconnexion
                   </button>
                 </div>
               </>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link to="/login" className="btn btn-secondary">
-                  Login
+                  Connexion
                 </Link>
                 <Link to="/register" className="btn btn-primary">
-                  Register
+                  Créer un compte
                 </Link>
               </div>
             )}

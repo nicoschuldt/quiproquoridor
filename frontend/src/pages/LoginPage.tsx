@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
       await login(username, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.error?.message || 'Login failed');
+      setError(err.error?.message || 'Erreur de connexion');
     } finally {
       setIsLoading(false);
     }
@@ -31,12 +31,12 @@ const LoginPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            Se connecter
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
-              create a new account
+              Créer un compte
             </Link>
           </p>
         </div>
@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
+                Pseudo
               </label>
               <input
                 id="username"
@@ -65,7 +65,7 @@ const LoginPage: React.FC = () => {
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                Mot de passe
               </label>
               <input
                 id="password"
@@ -87,7 +87,7 @@ const LoginPage: React.FC = () => {
               disabled={isLoading}
               className="btn-primary w-full flex justify-center py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Connecte toi...' : 'Se connecter'}
             </button>
           </div>
         </form>

@@ -16,7 +16,7 @@ const HomePage: React.FC = () => {
         
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Play Quoridor!
+            Jouons à Quiproquoridor !
           </h2>
           
         </div>
@@ -31,9 +31,9 @@ const HomePage: React.FC = () => {
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
                   <span className="text-2xl">🎮</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Create Game</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Créer une partie</h3>
                 <p className="text-gray-600">
-                  Start a new game and invite friends with a room code
+                  Créé une partie et invite tes amis à jouer
                 </p>
               </div>
             </Link>
@@ -46,9 +46,9 @@ const HomePage: React.FC = () => {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
                   <span className="text-2xl">🔗</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Join Game</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Rejoindre un salon</h3>
                 <p className="text-gray-600">
-                  Enter a room code to join an existing game
+                  Entre le code du salon pour rejoindre une partie
                 </p>
               </div>
             </Link>
@@ -56,12 +56,12 @@ const HomePage: React.FC = () => {
         ) : (
           <div className="text-center">
             <Link to="/register" className="btn-primary btn-lg">
-              Get Started
+              Commencons 
             </Link>
             <p className="mt-4 text-gray-600">
-              Already have an account?{' '}
+              Tu as déjà un compte ?{' '}
               <Link to="/login" className="text-blue-600 hover:text-blue-500">
-                Sign in
+                Connecte toi
               </Link>
             </p>
           </div>
@@ -72,9 +72,9 @@ const HomePage: React.FC = () => {
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <span className="text-xl">⚡</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Fast & Fun</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Rapide et amusant</h3>
             <p className="text-gray-600">
-              Quick games that you can finish in 10-15 minutes
+              Partie rapide, facile à apprendre et amusante à jouer
             </p>
           </div>
 
@@ -82,9 +82,9 @@ const HomePage: React.FC = () => {
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <span className="text-xl">🌐</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Play Online</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Jouer en ligne</h3>
             <p className="text-gray-600">
-              Real-time multiplayer with friends around the world
+              Multijoueur en ligne avec des joueurs du monde entier en temps réel
             </p>
           </div>
 
@@ -92,9 +92,9 @@ const HomePage: React.FC = () => {
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <span className="text-xl">🧠</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Strategic</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Stratégique</h3>
             <p className="text-gray-600">
-              Plan your moves and outsmart your opponents
+              Un jeu de stratégie où chaque mouvement compte !
             </p>
           </div>
         </div>

@@ -43,7 +43,7 @@ const CreateGamePage: React.FC = () => {
                 onClick={() => navigate('/')}
                 className="text-2xl font-bold text-gray-900 hover:text-blue-600"
               >
-                Quoridor
+                Quiproquoridor
               </button>
             </div>
           </div>
@@ -53,7 +53,7 @@ const CreateGamePage: React.FC = () => {
       <main className="max-w-md mx-auto px-4 py-12">
         <div className="card">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Create New Game
+            Créer une partie
           </h1>
 
           {error && (
@@ -65,7 +65,7 @@ const CreateGamePage: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Players
+                Nombre de joueurs
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
@@ -77,8 +77,8 @@ const CreateGamePage: React.FC = () => {
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="text-lg font-semibold">2 Players</div>
-                  <div className="text-sm text-gray-500">Classic duel</div>
+                  <div className="text-lg font-semibold">2 joueurs</div>
+                  <div className="text-sm text-gray-500">duel classique</div>
                 </button>
                 <button
                   type="button"
@@ -89,8 +89,8 @@ const CreateGamePage: React.FC = () => {
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="text-lg font-semibold">4 Players</div>
-                  <div className="text-sm text-gray-500">Battle royale</div>
+                  <div className="text-lg font-semibold">4 joueurs</div>
+                  <div className="text-sm text-gray-500">plus de fun</div>
                 </button>
               </div>
             </div>
@@ -102,7 +102,7 @@ const CreateGamePage: React.FC = () => {
               disabled={loading}
               className="w-full btn-primary py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating Game...' : 'Create Game'}
+              {loading ? 'Creating Game...' : 'Créer la partie'}
             </button>
           </form>
 
@@ -111,7 +111,7 @@ const CreateGamePage: React.FC = () => {
               onClick={() => navigate('/')}
               className="text-gray-500 hover:text-gray-700"
             >
-              Back to Home
+              retour à l'accueil
             </button>
           </div>
         </div>

@@ -65,8 +65,8 @@ const ProfilePage: React.FC = () => {
         <div className="flex items-center justify-center py-16">
           <div className="card text-center max-w-md">
             <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Please log in to view your profile</h2>
-            <Link to="/login" className="btn btn-primary">Login</Link>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Connecte toi pour voir ton profil</h2>
+            <Link to="/login" className="btn btn-primary">Connection</Link>
           </div>
         </div>
       </PageLayout>
@@ -87,7 +87,7 @@ const ProfilePage: React.FC = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
               <p className="text-gray-600 mt-1">
-                Member since {formatDate(user.createdAt)}
+                Membre depuis {formatDate(user.createdAt)}
               </p>
             </div>
           </div>
@@ -96,19 +96,19 @@ const ProfilePage: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-900 mb-1">{user.gamesPlayed}</div>
-            <div className="text-sm font-medium text-gray-600">Games Played</div>
+            <div className="text-sm font-medium text-gray-600">Parties jouées</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600 mb-1">{stats.gamesWon}</div>
-            <div className="text-sm font-medium text-gray-600">Games Won</div>
+            <div className="text-sm font-medium text-gray-600">Parties gagnées</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-600 mb-1">{stats.winRate.toFixed(1)}%</div>
-            <div className="text-sm font-medium text-gray-600">Win Rate</div>
+            <div className="text-sm font-medium text-gray-600">Pourcentage de victoire</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-yellow-600 mb-1">{user.coinBalance}</div>
-            <div className="text-sm font-medium text-gray-600">Current Coins</div>
+            <div className="text-sm font-medium text-gray-600">Portefeuille</div>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@ const ProfilePage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Game History ({gameHistory.length})
+              Historique des parties ({gameHistory.length})
             </button>
             <button
               onClick={() => setActiveTab('transactions')}
@@ -134,7 +134,7 @@ const ProfilePage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Transaction History ({transactionHistory.length})
+              Historique des achats ({transactionHistory.length})
             </button>
           </nav>
         </div>
@@ -143,7 +143,7 @@ const ProfilePage: React.FC = () => {
           {loading ? (
             <div className="text-center py-16">
               <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading...</p>
+              <p className="text-gray-600 font-medium">Chargement...</p>
             </div>
           ) : (
             <>
@@ -152,10 +152,10 @@ const ProfilePage: React.FC = () => {
                   {gameHistory.length === 0 ? (
                     <div className="text-center py-16 text-gray-500">
                       <div className="text-6xl mb-4">🎮</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No games played yet</h3>
-                      <p className="text-gray-600 mb-6">Start your first game to see your history here!</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune partie jouée</h3>
+                      <p className="text-gray-600 mb-6">Joue une partie pour avoir l'historique!</p>
                       <Link to="/create-game" className="btn btn-primary">
-                        Start Your First Game
+                        Lance ta première partie
                       </Link>
                     </div>
                   ) : (
@@ -175,7 +175,7 @@ const ProfilePage: React.FC = () => {
                                   {game.isWinner ? '🏆 Victory' : '😔 Defeat'}
                                 </span>
                                 <p className="text-sm text-gray-500">
-                                  Player {game.playerIndex + 1} • {game.wallsUsed} walls used
+                                  Joueur {game.playerIndex + 1} • {game.wallsUsed} Murs utilisés
                                 </p>
                               </div>
                             </div>
@@ -206,10 +206,10 @@ const ProfilePage: React.FC = () => {
                   {transactionHistory.length === 0 ? (
                     <div className="text-center py-16 text-gray-500">
                       <div className="text-6xl mb-4">💰</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No transactions yet</h3>
-                      <p className="text-gray-600 mb-6">Purchase coins to see your transaction history!</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun achat </h3>
+                      <p className="text-gray-600 mb-6">Achète des jetons pour voir l'historique!</p>
                       <Link to="/buy-coins" className="btn btn-warning">
-                        Buy Your First Coins
+                        Achète des jetons
                       </Link>
                     </div>
                   ) : (
@@ -248,7 +248,7 @@ const ProfilePage: React.FC = () => {
                               }`}>
                                 {transaction.amount > 0 ? '+' : ''}{transaction.amount}
                               </span>
-                              <p className="text-sm text-gray-500">coins</p>
+                              <p className="text-sm text-gray-500">Jetons</p>
                             </div>
                           </div>
                         </div>

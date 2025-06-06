@@ -23,13 +23,13 @@ const JoinGamePage: React.FC = () => {
       navigate(`/room/${roomData.room.id}`);
     } catch (err: any) {
       if (err.code === 'ROOM_NOT_FOUND') {
-        setError('Room not found. Please check the code and try again.');
+        setError('Salon introuvable.');
       } else if (err.code === 'ROOM_FULL') {
-        setError('This room is full.');
+        setError('Salon complet.');
       } else if (err.code === 'ALREADY_IN_ROOM') {
-        setError('You are already in this room.');
+        setError('Tu es déjà dans ce salon.');
       } else {
-        setError(err.message || 'Failed to join room');
+        setError(err.message || 'Erreur lors de la connexion au salon.');
       }
     } finally {
       setLoading(false);
@@ -53,7 +53,7 @@ const JoinGamePage: React.FC = () => {
                 onClick={() => navigate('/')}
                 className="text-2xl font-bold text-gray-900 hover:text-blue-600"
               >
-                Quoridor
+                Quiproquoridor
               </button>
             </div>
           </div>
@@ -63,11 +63,11 @@ const JoinGamePage: React.FC = () => {
       <main className="max-w-md mx-auto px-4 py-12">
         <div className="card">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Join Game
+            Rejoindre une partie
           </h1>
 
           <p className="text-gray-600 text-center mb-6">
-            Enter the 6-character room code to join an existing game.
+            ENtre le code du salon.
           </p>
 
           {error && (
@@ -79,7 +79,7 @@ const JoinGamePage: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="roomCode" className="block text-sm font-medium text-gray-700 mb-2">
-                Room Code
+                Code du salon
               </label>
               <input
                 type="text"
@@ -92,7 +92,7 @@ const JoinGamePage: React.FC = () => {
                 autoFocus
               />
               <p className="text-sm text-gray-500 mt-1 text-center">
-                {roomCode.length}/6 characters
+                {roomCode.length}/6 caractères
               </p>
             </div>
 
@@ -107,20 +107,20 @@ const JoinGamePage: React.FC = () => {
 
           <div className="mt-6 text-center space-y-3">
             <div className="text-sm text-gray-500">
-              Don't have a room code?
+              Tu n'as pas de code de salon ?
             </div>
             <button
               onClick={() => navigate('/create-game')}
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
-              Create a new game
+              Créer une partie 
             </button>
             <div>
               <button
                 onClick={() => navigate('/')}
                 className="text-gray-500 hover:text-gray-700"
               >
-                Back to Home
+                Retour à l'accueil
               </button>
             </div>
           </div>
