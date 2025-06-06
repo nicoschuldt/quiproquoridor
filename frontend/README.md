@@ -33,10 +33,9 @@ src/
 
 ### Interface de jeu
 - Plateau Quoridor interactif 9x9
-- Placement pions et murs par drag & drop
+- Placement pions et murs par simple clic
 - Validation visuelle des coups possibles
 - Animations fluides des deplacements
-- Support tactile pour mobile
 
 ### Gestion utilisateur
 - Authentification complete
@@ -47,7 +46,6 @@ src/
 ### Multijoueur temps reel
 - Rooms de jeu avec websockets
 - Statut joueurs en temps reel
-- Chat integre (si implemente)
 - Reconnexion automatique
 
 ### Boutique integree
