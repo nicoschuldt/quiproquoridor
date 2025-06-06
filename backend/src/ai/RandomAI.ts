@@ -38,7 +38,3 @@ export class RandomAI implements AIEngine {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-
-export function createAI(difficulty: AIDifficulty): RandomAI {
-  return new RandomAI(difficulty);
-} 

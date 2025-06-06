@@ -254,7 +254,3 @@ export class GreedyAI implements AIEngine {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-
-export function createGreedyAI(difficulty: AIDifficulty): GreedyAI {
-  return new GreedyAI(difficulty);
-}
