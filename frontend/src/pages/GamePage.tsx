@@ -288,9 +288,9 @@ const GamePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">Quiproquoridor Game</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Quiproquoridor</h1>
               <div className="hidden sm:block">
-                <span className="text-sm text-gray-500">salon: </span>
+                <span className="text-sm text-gray-500">salon :</span>
                 <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{roomId}</span>
               </div>
             </div>
@@ -470,7 +470,7 @@ const GamePage: React.FC = () => {
                           } ${state.disconnectedPlayers.has(player.id) ? 'line-through text-gray-400' : ''}`}>
                             {player.username}
                             {player.id === user.id && (
-                              <span className="ml-1 text-xs text-blue-600">(You)</span>
+                              <span className="ml-1 text-xs text-blue-600">(Toi)</span>
                             )}
                           </span>
                           {state.disconnectedPlayers.has(player.id) && (

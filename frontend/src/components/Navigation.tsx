@@ -58,7 +58,7 @@ const Navigation: React.FC<NavigationProps> = ({
                   </Link>
 
                   <Link to="/profile" className="btn btn-secondary">
-                    Profile
+                    Profil
                   </Link>
                   <button onClick={logout} className="btn btn-secondary">
                     Déconnexion
