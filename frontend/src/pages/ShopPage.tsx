@@ -40,6 +40,8 @@ const ShopPage: React.FC = () => {
 
     try {
       await shopApi.selectTheme(themeType, cosmeticId);
+      // pour refresh les styles css
+      window.location.reload();
     } catch (error) {
       console.error("Erreur lors de la sélection du cosmétique:", error);
     }
@@ -59,6 +61,9 @@ const ShopPage: React.FC = () => {
             theme.id === shopItemId ? { ...theme, owned: true, previewImageUrl: response.purchasedItem.previewImageUrl || "/images/pawns/default.png" } : theme
           )
         );
+        
+        // pour refresh les coins
+        setTimeout(() => window.location.reload(), 1500);
       } else {
         setPurchaseMessage(`❌ Achat échoué : ${response.message || 'Donnée manquante dans la réponse'}`);
       }
