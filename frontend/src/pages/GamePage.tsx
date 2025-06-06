@@ -61,7 +61,7 @@ const GamePage: React.FC = () => {
   const gameSocket = useGameSocket({
     roomId: roomId!,
     onGameStarted: useCallback((data: { gameState: GameState }) => {
-      console.log('🚀 Game started:', data);
+      console.log('Game started:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -73,7 +73,7 @@ const GamePage: React.FC = () => {
     }, []),
     
     onMoveMade: useCallback((data: { move: Move; gameState: GameState }) => {
-      console.log('🎯 Move made:', data);
+      console.log('Move made:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -103,7 +103,7 @@ const GamePage: React.FC = () => {
     }, [user]),
     
     onGameStateSync: useCallback((data: { gameState: GameState; validMoves?: Move[] }) => {
-      console.log('📊 Game state sync:', data);
+      console.log('Game state sync:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -115,7 +115,7 @@ const GamePage: React.FC = () => {
     }, []),
     
     onInvalidMove: useCallback((data: { error: string }) => {
-      console.log('❌ Invalid move:', data);
+      console.log('Invalid move:', data);
       setState(prev => ({
         ...prev,
         error: `Invalid move: ${data.error}`,

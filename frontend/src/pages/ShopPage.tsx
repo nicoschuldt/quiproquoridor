@@ -52,7 +52,7 @@ const ShopPage: React.FC = () => {
       const response = await shopApi.purchaseTheme(shopItemId);
 
       if (response.success && response.purchasedItem) {
-        setPurchaseMessage(`✅ Achat réussi : ${response.purchasedItem.name}`);
+        setPurchaseMessage(`Achat réussi : ${response.purchasedItem.name}`);
 
         setThemes(prevThemes =>
           prevThemes.map(theme =>
@@ -60,10 +60,10 @@ const ShopPage: React.FC = () => {
           )
         );
       } else {
-        setPurchaseMessage(`❌ Achat échoué : ${response.message || 'Donnée manquante dans la réponse'}`);
+        setPurchaseMessage(`Achat échoué : ${response.message || 'Donnée manquante dans la réponse'}`);
       }
     } catch (err: any) {
-      setPurchaseMessage(`❌ Erreur d'achat : ${err.message || 'Échec inconnu'}`);
+      setPurchaseMessage(`Erreur d'achat : ${err.message || 'Échec inconnu'}`);
     } finally {
       setLoading(false);
     }

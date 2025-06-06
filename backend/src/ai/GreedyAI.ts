@@ -46,7 +46,7 @@ export class GreedyAI implements AIEngine {
   }
 
   async generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {
-    console.log(`🤖 ${this.getName()} thinking for player ${playerId}...`);
+    console.log(`${this.getName()} thinking for player ${playerId}...`);
     await this.delay(this.thinkingTimeMs);
 
     const currentPlayer = gameState.players.find(p => p.id === playerId);
@@ -74,7 +74,7 @@ export class GreedyAI implements AIEngine {
 
         const oppPathLength = this.computeShortestPath(opp.position, gameState, opp.id, oppIndex);
         
-        console.log(`🤖 Opponent ${opp.id} (P${oppIndex}) is ${oppPathLength} moves away from their goal.`);
+        console.log(`Opponent ${opp.id} (P${oppIndex}) is ${oppPathLength} moves away from their goal.`);
 
         if (oppPathLength < minOpponentPathToGoal) {
           minOpponentPathToGoal = oppPathLength;
@@ -85,24 +85,24 @@ export class GreedyAI implements AIEngine {
 
       if (mostThreateningOpponent && mostThreateningOpponentIndex !== -1) {
         if (minOpponentPathToGoal <= this.opponentCloseThresholdValue) {
-          console.log(`🤖 Opponent ${mostThreateningOpponent.id} (P${mostThreateningOpponentIndex}) is close (${minOpponentPathToGoal} moves)! Attempting to block.`);
+          console.log(`Opponent ${mostThreateningOpponent.id} (P${mostThreateningOpponentIndex}) is close (${minOpponentPathToGoal} moves)! Attempting to block.`);
           const blockingWallMove = this.chooseBlockingWallMove(currentPlayer, mostThreateningOpponent, mostThreateningOpponentIndex, gameState, minOpponentPathToGoal);
           if (blockingWallMove) {
-            console.log(`🤖 ${this.getName()} chose blocking wall for ${mostThreateningOpponent.id}: ${JSON.stringify(blockingWallMove.wallPosition)} ${blockingWallMove.wallOrientation}`);
+            console.log(`${this.getName()} chose blocking wall for ${mostThreateningOpponent.id}: ${JSON.stringify(blockingWallMove.wallPosition)} ${blockingWallMove.wallOrientation}`);
             return blockingWallMove;
           }
-          console.log(`🤖 Could not find an effective blocking wall for ${mostThreateningOpponent.id}.`);
+          console.log(`Could not find an effective blocking wall for ${mostThreateningOpponent.id}.`);
         }
       }
     }
 
     const pawnMove = this.chooseGreedyPawnMove(currentPlayer, gameState, currentPlayerIndex);
     if (pawnMove) {
-      console.log(`🤖 ${this.getName()} chose greedy pawn move to Y:${pawnMove.toPosition?.y}, X:${pawnMove.toPosition?.x}`);
+      console.log(`${this.getName()} chose greedy pawn move to Y:${pawnMove.toPosition?.y}, X:${pawnMove.toPosition?.x}`);
       return pawnMove;
     }
 
-    console.warn(`🤖 ${this.getName()} could not find a strategic move. Making a random move.`);
+    console.warn(`${this.getName()} could not find a strategic move. Making a random move.`);
     return this.getRandomMove(gameState, playerId);
   }
 
@@ -238,7 +238,7 @@ export class GreedyAI implements AIEngine {
     }
     const randomIndex = Math.floor(Math.random() * validMoves.length);
     const randomMove = validMoves[randomIndex];
-    console.log(`🤖 ${this.getName()} making random move: ${randomMove.type} to ${randomMove.toPosition ? `Y:${randomMove.toPosition.y},X:${randomMove.toPosition.x}` : `wall at Y:${randomMove.wallPosition?.y},X:${randomMove.wallPosition?.x} ${randomMove.wallOrientation}` }`);
+    console.log(`${this.getName()} making random move: ${randomMove.type} to ${randomMove.toPosition ? `Y:${randomMove.toPosition.y},X:${randomMove.toPosition.x}` : `wall at Y:${randomMove.wallPosition?.y},X:${randomMove.wallPosition?.x} ${randomMove.wallOrientation}` }`);
     return randomMove;
   }
 

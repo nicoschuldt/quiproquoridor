@@ -86,7 +86,7 @@ const RoomLobbyPage: React.FC = () => {
       setError(data.error.message || 'An error occurred');
       
       if (data.error.code === 'NOT_ROOM_MEMBER') {
-        console.log('❌ Not a room member, attempting to rejoin...');
+        console.log('Not a room member, attempting to rejoin...');
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -148,7 +148,7 @@ const RoomLobbyPage: React.FC = () => {
     
     try {
       await roomApi.addAIPlayer(roomId, selectedDifficulty);
-      console.log(`✅ AI player (${selectedDifficulty}) added successfully`);
+      console.log(`AI player (${selectedDifficulty}) added successfully`);
     } catch (err: any) {
       console.error('Failed to add AI player:', err);
       setError(err.message || 'Failed to add AI player');
