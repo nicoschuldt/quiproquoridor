@@ -40,6 +40,8 @@ const ShopPage: React.FC = () => {
 
     try {
       await shopApi.selectTheme(themeType, cosmeticId);
+      // pour refresh les styles css
+      window.location.reload();
     } catch (error) {
       console.error("Erreur lors de la sélection du cosmétique:", error);
     }
@@ -59,6 +61,9 @@ const ShopPage: React.FC = () => {
             theme.id === shopItemId ? { ...theme, owned: true, previewImageUrl: response.purchasedItem.previewImageUrl || "/images/pawns/default.png" } : theme
           )
         );
+        
+        // pour refresh les coins
+        setTimeout(() => window.location.reload(), 1500);
       } else {
         setPurchaseMessage(`Achat échoué : ${response.message || 'Donnée manquante dans la réponse'}`);
       }
@@ -75,7 +80,7 @@ const ShopPage: React.FC = () => {
         <div className="text-6xl mb-2">🎨</div>
         <h1 className="text-4xl font-bold text-gray-900 mb-1">Shop</h1>
         <p className="text-lg text-gray-600 mb-4">
-          Choose your favorite pawn and board style below and bring your battles to life with flair!
+        Choisissez votre style de pion et de plateau préféré ci-dessous et donnez vie à vos batailles avec brio
         </p>
       </div>
 
@@ -86,9 +91,9 @@ const ShopPage: React.FC = () => {
       {error && <p className="text-red-600 text-center mb-4">{error}</p>}
 
       <section className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">🎨 Sélectionner un cosmétique</h2>
+        <h2 className="text-2xl font-semibold mb-4"> Sélectionner un cosmétique</h2>
 
-        <h3 className="text-lg font-semibold mt-4">🛑 Sélectionner un Board</h3>
+        <h3 className="text-lg font-semibold mt-4"> Sélectionner un Plateau</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => theme.owned && theme.type === 'board').map(theme => (
             <ThemePreviewCard
@@ -101,7 +106,7 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        <h3 className="text-lg font-semibold mt-8">♟️ Sélectionner un Pawn</h3>
+        <h3 className="text-lg font-semibold mt-8">♟️ Sélectionner un Pion</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => theme.owned && theme.type === 'pawn').map(theme => (
             <ThemePreviewCard
@@ -114,7 +119,7 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Board</h3>
+        <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Plateau</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => !theme.owned && theme.type === 'board').map(theme => (
             <ThemePreviewCard
@@ -126,7 +131,7 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Pawn</h3>
+        <h3 className="text-lg font-semibold mt-8">🛒 Acheter un Pion</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {themes.filter(theme => !theme.owned && theme.type === 'pawn').map(theme => (
             <ThemePreviewCard

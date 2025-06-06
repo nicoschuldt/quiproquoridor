@@ -61,7 +61,8 @@ const GamePage: React.FC = () => {
   const gameSocket = useGameSocket({
     roomId: roomId!,
     onGameStarted: useCallback((data: { gameState: GameState }) => {
-      console.log('Game started:', data);
+
+      console.log('Début de la partie:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -73,7 +74,7 @@ const GamePage: React.FC = () => {
     }, []),
     
     onMoveMade: useCallback((data: { move: Move; gameState: GameState }) => {
-      console.log('Move made:', data);
+      console.log('Coup effectué:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -86,7 +87,7 @@ const GamePage: React.FC = () => {
     }, [user]),
     
     onGameFinished: useCallback((data: { gameState: GameState; winner: Player }) => {
-      console.log('🏆 Game finished:', data);
+      console.log('🏆 Partie terminée:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -96,14 +97,14 @@ const GamePage: React.FC = () => {
           winner: data.winner,
           reason: 'normal',
           message: data.winner.id === user?.id ? 
-            'Congratulations! You won the game!' : 
-            `${data.winner.username} won the game!`
+            'Félicitations ! TU as gagné la partie !' : 
+            `${data.winner.username} a gagné la partie !`
         }
       }));
     }, [user]),
     
     onGameStateSync: useCallback((data: { gameState: GameState; validMoves?: Move[] }) => {
-      console.log('Game state sync:', data);
+      console.log('Synchronisation du jeu:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -115,16 +116,16 @@ const GamePage: React.FC = () => {
     }, []),
     
     onInvalidMove: useCallback((data: { error: string }) => {
-      console.log('Invalid move:', data);
+      console.log('déplacement incorrecte :', data);
       setState(prev => ({
         ...prev,
-        error: `Invalid move: ${data.error}`,
+        error: `déplacement incorrecte: ${data.error}`,
       }));
       setTimeout(() => setState(prev => ({ ...prev, error: null })), 3000);
     }, []),
 
     onPlayerForfeited: useCallback((data: { playerId: string; playerName: string; gameState: GameState }) => {
-      console.log('🏳️ Player forfeited:', data);
+      console.log('🏳️ un joueur a abandonné :', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
@@ -141,32 +142,32 @@ const GamePage: React.FC = () => {
             winner: winner || null,
             reason: 'forfeit',
             message: isCurrentUser ? 
-              'You forfeited the game' : 
+              'Tu as abandonné la partie' : 
               winner ? 
                 (winner.id === user?.id ? 
-                  `You won! ${data.playerName} forfeited` : 
-                  `${winner.username} won! ${data.playerName} forfeited`) :
-                `${data.playerName} forfeited the game`
+                  `Tu as gagné ! ${data.playerName} a abandonné` : 
+                  `${winner.username} a gagné ! ${data.playerName} a a bandonné `) :
+                `${data.playerName} a abandonné la partie`
           }
         }));
       } else {
         const isCurrentUser = data.playerId === user?.id;
         const message = isCurrentUser ? 
-          'You have forfeited the game' : 
-          `${data.playerName} has forfeited the game`;
+          'Tu as abandonné la partie' : 
+          `${data.playerName} a abandonné la partie`;
         
         addNotification('info', message, 5000);
       }
     }, [user?.id, addNotification]),
 
     onDisconnectionWarning: useCallback((data: { playerId: string; playerName: string; timeoutSeconds: number }) => {
-      console.log('⚠️ Player disconnected:', data);
+      console.log('⚠️ Un joueur est déconnecté :', data);
       setState(prev => ({
         ...prev,
         disconnectedPlayers: new Set([...prev.disconnectedPlayers, data.playerId])
       }));
       
-      addNotification('warning', `${data.playerName} disconnected. Auto-forfeit in ${data.timeoutSeconds}s if they don't reconnect.`, 8000);
+      addNotification('warning', `${data.playerName} a été déconnecté. Fin de la partie dans ${data.timeoutSeconds}s si il ne se reconnecte pas.`, 8000);
       
       if (data.playerId === user?.id) {
         setTimeout(() => {
@@ -176,7 +177,7 @@ const GamePage: React.FC = () => {
               isOpen: true,
               winner: null,
               reason: 'timeout',
-              message: 'You were disconnected and the game timed out'
+              message: 'Tu as été déconnecté de la partie'
             }
           }));
         }, data.timeoutSeconds * 1000);
@@ -184,14 +185,14 @@ const GamePage: React.FC = () => {
     }, [addNotification, user?.id]),
 
     onReconnectionSuccess: useCallback((data: { playerId: string; playerName: string; gameState: GameState }) => {
-      console.log('🔗 Player reconnected:', data);
+      console.log('🔗 joueur reconnecté:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
         disconnectedPlayers: new Set([...prev.disconnectedPlayers].filter(id => id !== data.playerId))
       }));
       
-      addNotification('success', `${data.playerName} reconnected!`, 3000);
+      addNotification('success', `${data.playerName} a été reconnecté !`, 3000);
     }, [addNotification]),
     
     onError: useCallback((data: { error: ApiError }) => {
@@ -231,7 +232,7 @@ const GamePage: React.FC = () => {
     state.gameState.players[state.gameState.currentPlayerIndex].id === user.id;
 
   const handleForfeit = useCallback(() => {
-    if (!window.confirm('Are you sure you want to forfeit this game? This action cannot be undone.')) {
+    if (!window.confirm('Tu es sûr de vouloir abandonné.')) {
       return;
     }
     gameSocket.forfeitGame();
@@ -257,17 +258,17 @@ const GamePage: React.FC = () => {
                     {state.endGameModal.winner.id === user?.id ? '🏆' : '🎯'}
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {state.endGameModal.winner.id === user?.id ? 'Victory!' : 'Game Over'}
+                    {state.endGameModal.winner.id === user?.id ? 'Victoire!' : 'Défaite'}
                   </h2>
                   <p className="text-lg text-gray-600">{state.endGameModal.message}</p>
                   {state.endGameModal.reason === 'forfeit' && (
-                    <p className="text-sm text-gray-500 mt-2">Game ended by forfeit</p>
+                    <p className="text-sm text-gray-500 mt-2">Partie terminée par forfait</p>
                   )}
                 </div>
               ) : (
                 <div>
                   <div className="text-6xl mb-4">🤝</div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Game Ended</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Partie terminée</h2>
                   <p className="text-lg text-gray-600">{state.endGameModal.message}</p>
                 </div>
               )}
@@ -277,7 +278,7 @@ const GamePage: React.FC = () => {
               onClick={handleEndGameModalClose}
               className="btn btn-primary w-full"
             >
-              Return to Lobby
+              retour à l'accueil
             </button>
           </div>
         </div>
@@ -287,9 +288,9 @@ const GamePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">Quoridor Game</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Quiproquoridor Game</h1>
               <div className="hidden sm:block">
-                <span className="text-sm text-gray-500">Room: </span>
+                <span className="text-sm text-gray-500">salon: </span>
                 <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{roomId}</span>
               </div>
             </div>
@@ -396,7 +397,7 @@ const GamePage: React.FC = () => {
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading game...</p>
+              <p className="text-gray-600 font-medium">Chargement de la partie...</p>
             </div>
           </div>
         )}
@@ -405,14 +406,14 @@ const GamePage: React.FC = () => {
           <div className="text-center py-16">
             <div className="card max-w-md mx-auto">
               <div className="text-6xl mb-4">🎮</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Game Room Ready</h2>
-              <p className="text-gray-600 mb-6">All players are connected and ready to start!</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Salon prêt</h2>
+              <p className="text-gray-600 mb-6">Tous les joueurs sont connectés!</p>
               <button 
                 onClick={gameSocket.startGame}
                 className="btn btn-primary btn-lg w-full"
                 disabled={gameSocket.connectionStatus !== 'connected'}
               >
-                Start Game
+                Commencer la partie
               </button>
             </div>
           </div>
@@ -434,7 +435,7 @@ const GamePage: React.FC = () => {
             
             <div className="space-y-6">
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Turn</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tour actuel</h3>
                 <div className={`p-3 rounded-xl font-medium text-center ${
                   isCurrentTurn 
                     ? 'bg-green-100 text-green-800 border border-green-200' 
@@ -443,7 +444,7 @@ const GamePage: React.FC = () => {
                   {isCurrentTurn ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span>Your turn!</span>
+                      <span>C'est ton tour!</span>
                     </div>
                   ) : (
                     `${state.gameState.players[state.gameState.currentPlayerIndex].username}'s turn`
@@ -452,7 +453,7 @@ const GamePage: React.FC = () => {
               </div>
 
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Players</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Joueurs</h3>
                 <div className="space-y-3">
                   {state.gameState.players.map((player) => (
                     <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
@@ -473,7 +474,7 @@ const GamePage: React.FC = () => {
                             )}
                           </span>
                           {state.disconnectedPlayers.has(player.id) && (
-                            <div className="text-xs text-red-500 font-medium">Disconnected</div>
+                            <div className="text-xs text-red-500 font-medium">Déconnecté</div>
                           )}
                         </div>
                       </div>
@@ -481,7 +482,7 @@ const GamePage: React.FC = () => {
                         <div className="text-sm font-semibold text-gray-900">
                           {player.wallsRemaining}
                         </div>
-                        <div className="text-xs text-gray-500">walls</div>
+                        <div className="text-xs text-gray-500">murs</div>
                       </div>
                     </div>
                   ))}
