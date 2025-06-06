@@ -318,7 +318,7 @@ const GamePage: React.FC = () => {
                   onClick={handleForfeit}
                   className="btn btn-danger"
                 >
-                  Forfeit
+                  Abandonné
                 </button>
               )}
               
