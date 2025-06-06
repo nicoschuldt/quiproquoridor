@@ -371,6 +371,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
     return cells;
   };
 
+const nbPlayers = gameState?.players?.length || 0;
+const classPlayers = nbPlayers === 2 ? 'two-players' : 'four-players';
+
   return (
     <div className="w-full p-2 sm:p-4">
       <div className="mb-2 sm:mb-4 text-center">
@@ -395,8 +398,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
       <div className="flex justify-center">
         <div className="board-wrapper p-4 sm:p-6 lg:p-8">
           <div 
-            className={`game-board aspect-square relative max-w-[90vw] max-h-[90vh] w-full 
-                       sm:max-w-[min(90vw,90vh)] lg:max-w-4xl xl:max-w-5xl ${boardTheme || ''}`}
+className={`game-board aspect-square relative max-w-[90vw] max-h-[90vh] w-full 
+            sm:max-w-[min(90vw,90vh)] lg:max-w-4xl xl:max-w-5xl ${classPlayers} ${boardTheme || ''}`}
+
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr calc(var(--wall-size, 1rem)) 1fr',
