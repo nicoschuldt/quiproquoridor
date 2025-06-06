@@ -418,18 +418,23 @@ export class GameStateService {
 
       const remainingPlayers = gameState.players.filter(p => p.id !== playerId && p.isConnected);
       
-      if (remainingPlayers.length === 1) {
-        const winner = remainingPlayers[0];
+      if (gameState.players.length > 2) {
         gameState.status = 'finished';
-        gameState.winner = winner.id;
         gameState.finishedAt = new Date();
-      } else if (remainingPlayers.length > 1) {
-        gameState.players = gameState.players.map(p =>
-          p.id === playerId ? { ...p, isConnected: false } : p
-        );
+        
+        if (remainingPlayers.length > 0) {
+          gameState.winner = remainingPlayers[0].id;
+        }
       } else {
-        gameState.status = 'finished';
-        gameState.finishedAt = new Date();
+        if (remainingPlayers.length === 1) {
+          const winner = remainingPlayers[0];
+          gameState.status = 'finished';
+          gameState.winner = winner.id;
+          gameState.finishedAt = new Date();
+        } else {
+          gameState.status = 'finished';
+          gameState.finishedAt = new Date();
+        }
       }
 
       await this.saveGameState(roomId, gameState);

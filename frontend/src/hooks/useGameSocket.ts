@@ -139,6 +139,10 @@ export const useGameSocket = ({
     }
     console.log('🏳️ Forfeiting game in room:', roomId);
     socket.emit('forfeit-game', { roomId });
+    
+    setTimeout(() => {
+      socket.emit('leave-room', { roomId });
+    }, 1000);
   }, [socket, roomId]);
 
   const makePawnMove = useCallback((from: Position, to: Position) => {
