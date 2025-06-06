@@ -1,33 +1,12 @@
 {
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "sqlite",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1748507354311,
-      "tag": "0000_huge_lily_hollister",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
       "version": "6",
-      "when": 1748605404451,
-      "tag": "0001_foamy_randall",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1748948410839,
-      "tag": "0002_lucky_ultron",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1748980764430,
-      "tag": "0003_add_ai_support",
+      "when": 1749199705794,
+      "tag": "0000_panoramic_snowbird",
       "breakpoints": true
     }
   ]
