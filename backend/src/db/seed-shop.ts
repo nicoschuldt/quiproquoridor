@@ -5,8 +5,8 @@ import type { NewShopItem } from './schema';
 export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   {
     id: 'board_forest',
-    name: 'Forest Theme',
-    description: 'Mystical forest themed board with wooden textures',
+    name: 'Forêt',
+    description: 'Theme de forêt',
     type: 'board',
     priceCoins: 100,
     cssClass: 'theme-board-forest',
@@ -15,8 +15,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'board_ocean',
-    name: 'Ocean Theme',
-    description: 'Deep blue ocean board with water effects',
+    name: 'Océan',
+    description: 'Theme de l\'océan',
     type: 'board',
     priceCoins: 100,
     cssClass: 'theme-board-ocean',
@@ -25,8 +25,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'board_neon',
-    name: 'Neon Theme',
-    description: 'Cyberpunk neon board with glowing effects',
+    name: 'Neon',
+    description: 'Theme cyberpunk',
     type: 'board',
     priceCoins: 125,
     cssClass: 'theme-board-neon',
@@ -35,8 +35,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'board_desert',
-    name: 'Desert Theme',
-    description: 'Sandy desert board with ancient stone textures',
+    name: 'Désert',
+    description: 'Theme de désert',
     type: 'board',
     priceCoins: 100,
     cssClass: 'theme-board-desert',
@@ -46,8 +46,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
 
   {
     id: 'pawn_knights',
-    name: 'Medieval Knights',
-    description: 'Castle and knight pieces with heraldic designs',
+    name: 'Chevaliers médiévaux',
+    description: 'Chevaliers médiévaux',
     type: 'pawn',
     priceCoins: 75,
     cssClass: 'theme-pawn-knights',
@@ -56,8 +56,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'pawn_robots',
-    name: 'Future Robots',
-    description: 'Sci-fi robot pieces with metallic finish',
+    name: 'Robots',
+    description: 'Robots',
     type: 'pawn',
     priceCoins: 75,
     cssClass: 'theme-pawn-robots',
@@ -66,8 +66,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'pawn_animals',
-    name: 'Animal Kingdom',
-    description: 'Cute animal pieces with different species per color',
+    name: 'Oiseaux',
+    description: 'Oiseaux de toutes les couleurs',
     type: 'pawn',
     priceCoins: 75,
     cssClass: 'theme-pawn-animals',
@@ -76,8 +76,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'pawn_gems',
-    name: 'Precious Gems',
-    description: 'Sparkling gem pieces with crystal effects',
+    name: 'Minéraux',
+    description: 'Minéraux',
     type: 'pawn',
     priceCoins: 90,
     cssClass: 'theme-pawn-gems',
@@ -86,8 +86,8 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
   },
   {
     id: 'pawn_frogs',
-    name: 'Frogs',
-    description: 'Frogs',
+    name: 'Grenouilles',
+    description: 'Grenouilles',
     type: 'pawn',
     priceCoins: 60,
     cssClass: 'theme-pawn-frogs',
@@ -98,7 +98,7 @@ export const INITIAL_SHOP_ITEMS: NewShopItem[] = [
 
 export async function seedShopItems(): Promise<void> {
   try {
-    console.log('🌱 Seeding shop items...');
+    console.log('Seeding shop items...');
     
     for (const item of INITIAL_SHOP_ITEMS) {
       await db.insert(shopItems)
@@ -106,21 +106,21 @@ export async function seedShopItems(): Promise<void> {
         .onConflictDoNothing();
     }
     
-    console.log(`✅ Successfully seeded ${INITIAL_SHOP_ITEMS.length} shop items`);
+    console.log(`Successfully seeded ${INITIAL_SHOP_ITEMS.length} shop items`);
   } catch (error) {
-    console.error('❌ Error seeding shop items:', error);
+    console.error('Error seeding shop items:', error);
     throw error;
   }
 }
 
 export async function resetShopItems(): Promise<void> {
   try {
-    console.log('🔄 Resetting shop items...');
+    console.log('Resetting shop items...');
     await db.delete(shopItems);
     await seedShopItems();
-    console.log('✅ Shop items reset successfully');
+    console.log('Shop items reset successfully');
   } catch (error) {
-    console.error('❌ Error resetting shop items:', error);
+    console.error('Error resetting shop items:', error);
     throw error;
   }
 } 
