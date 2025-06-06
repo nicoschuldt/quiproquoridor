@@ -18,7 +18,7 @@ Application web pour jouer au jeu de plateau Quoridor en ligne. Supporte parties
 ├── frontend/           # Application React
 ├── backend/            # API Express + logique jeu + base de donnees SQLite + authentification + websockets + ia
 ├── shared/            # Types partages entre front/back
-├── data/              # Base de donnees SQLite
+├── data/              # Base de donnees SQLite (sur docker)
 └── docker-compose.yml # Configuration conteneurs
 ```
 
