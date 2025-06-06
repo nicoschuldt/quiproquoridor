@@ -376,7 +376,7 @@ const classPlayers = nbPlayers === 2 ? 'two-players' : 'four-players';
 
   return (
     <div className="w-full p-2 sm:p-4">
-      <div className="mb-2 sm:mb-4 text-center">
+      {/* <div className="mb-2 sm:mb-4 text-center">
         <div className="flex justify-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
           {gameState.players.map(player => (
             <div key={player.id} className={`flex items-center space-x-1 ${
@@ -393,7 +393,7 @@ const classPlayers = nbPlayers === 2 ? 'two-players' : 'four-players';
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div className="flex justify-center">
         <div className="board-wrapper p-4 sm:p-6 lg:p-8">
@@ -414,11 +414,11 @@ className={`game-board aspect-square relative max-w-[90vw] max-h-[90vh] w-full
         </div>
       </div>
 
-      <div className="mt-2 sm:mt-4 text-xs text-gray-500 text-center">
+      {/* <div className="mt-2 sm:mt-4 text-xs text-gray-500 text-center">
         <div className="hidden sm:block">Valid moves: {validMoves.length}</div>
         <div className="hidden sm:block">Walls placed: {gameState.walls.length}</div>
         <div className="hidden lg:block">Current player ID: {currentPlayerId}</div>
-      </div>
+      </div> */}
     </div>
   );
 };
