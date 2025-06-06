@@ -13,6 +13,7 @@ interface GamePageState {
   error: string | null;
   isGameStarted: boolean;
   disconnectedPlayers: Set<string>;
+  isSpectator: boolean;
   notifications: Array<{
     id: string;
     type: 'info' | 'warning' | 'success';
@@ -39,6 +40,7 @@ const GamePage: React.FC = () => {
     error: null,
     isGameStarted: false,
     disconnectedPlayers: new Set(),
+    isSpectator: false,
     notifications: [],
     endGameModal: null,
   });
@@ -103,12 +105,13 @@ const GamePage: React.FC = () => {
       }));
     }, [user]),
     
-    onGameStateSync: useCallback((data: { gameState: GameState; validMoves?: Move[] }) => {
+    onGameStateSync: useCallback((data: { gameState: GameState; validMoves?: Move[]; isSpectator?: boolean }) => {
       console.log('Synchronisation du jeu:', data);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
         validMoves: data.validMoves || [],
+        isSpectator: data.isSpectator || false,
         isLoading: false,
         error: null,
         isGameStarted: true,
@@ -209,6 +212,25 @@ const GamePage: React.FC = () => {
 
   useEffect(() => {
     if (roomId && gameSocket.isConnected) {
+      // verif si l'utilisateur est un spectateur
+      fetch(`/api/rooms/${roomId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setState(prev => ({
+            ...prev,
+            isSpectator: data.data.isSpectator || false
+          }));
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch room data:', err);
+      });
+
       gameSocket.joinRoom();
       gameSocket.requestGameState();
     }
@@ -231,6 +253,7 @@ const GamePage: React.FC = () => {
   }
 
   const isCurrentTurn = state.gameState &&
+    !state.isSpectator &&
     state.gameState.players[state.gameState.currentPlayerIndex].id === user.id;
 
   const handleForfeit = useCallback(() => {
@@ -302,6 +325,11 @@ const GamePage: React.FC = () => {
                 <span className="text-sm text-gray-500">salon :</span>
                 <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{roomId}</span>
               </div>
+              {state.isSpectator && (
+                <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                  🔍 Spectateur
+                </div>
+              )}
             </div>
             
             <div className="flex items-center space-x-4">
@@ -322,7 +350,7 @@ const GamePage: React.FC = () => {
                 </span>
               </div>
               
-              {state.isGameStarted && state.gameState?.status === 'playing' && (
+              {state.isGameStarted && state.gameState?.status === 'playing' && !state.isSpectator && (
                 <button 
                   onClick={handleForfeit}
                   className="btn btn-danger"
@@ -415,15 +443,24 @@ const GamePage: React.FC = () => {
           <div className="text-center py-16">
             <div className="card max-w-md mx-auto">
               <div className="text-6xl mb-4">🎮</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Salon prêt</h2>
-              <p className="text-gray-600 mb-6">Tous les joueurs sont connectés!</p>
-              <button 
-                onClick={gameSocket.startGame}
-                className="btn btn-primary btn-lg w-full"
-                disabled={gameSocket.connectionStatus !== 'connected'}
-              >
-                Commencer la partie
-              </button>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {state.isSpectator ? 'Salon en cours' : 'Salon prêt'}
+              </h2>
+              <p className="text-gray-600 mb-6">
+                {state.isSpectator ? 
+                  'Tu observes ce salon en tant que spectateur' : 
+                  'Tous les joueurs sont connectés!'
+                }
+              </p>
+              {!state.isSpectator && (
+                <button 
+                  onClick={gameSocket.startGame}
+                  className="btn btn-primary btn-lg w-full"
+                  disabled={gameSocket.connectionStatus !== 'connected'}
+                >
+                  Commencer la partie
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -431,15 +468,15 @@ const GamePage: React.FC = () => {
         {!state.isLoading && state.isGameStarted && state.gameState && (
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
             <div className="xl:col-span-3">
-              <GameBoard
-                gameState={state.gameState}
-                currentPlayerId={user.id}
-                onPawnMove={gameSocket.makePawnMove}
-                onWallPlace={gameSocket.placeWall}
-                validMoves={state.validMoves}
-                disabled={!isCurrentTurn || gameSocket.connectionStatus !== 'connected'}
-                boardTheme={getBoardThemeClass(user.selectedBoardTheme)}
-              />
+                              <GameBoard
+                  gameState={state.gameState}
+                  currentPlayerId={user.id}
+                  onPawnMove={gameSocket.makePawnMove}
+                  onWallPlace={gameSocket.placeWall}
+                  validMoves={state.validMoves}
+                  disabled={state.isSpectator || !isCurrentTurn || gameSocket.connectionStatus !== 'connected'}
+                  boardTheme={getBoardThemeClass(user.selectedBoardTheme)}
+                />
             </div>
             
             <div className="space-y-6">
@@ -450,7 +487,9 @@ const GamePage: React.FC = () => {
                     ? 'bg-green-100 text-green-800 border border-green-200' 
                     : 'bg-gray-100 text-gray-700 border border-gray-200'
                 }`}>
-                  {isCurrentTurn ? (
+                  {state.isSpectator ? (
+                    `${state.gameState.players[state.gameState.currentPlayerIndex].username}'s turn`
+                  ) : isCurrentTurn ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                       <span>C'est ton tour !</span>
@@ -462,7 +501,12 @@ const GamePage: React.FC = () => {
               </div>
 
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Joueurs</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Joueurs
+                  {state.isSpectator && (
+                    <span className="ml-2 text-sm font-normal text-blue-600">(Tu spectates)</span>
+                  )}
+                </h3>
                 <div className="space-y-3">
                   {state.gameState.players.map((player) => (
                     <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
@@ -478,7 +522,7 @@ const GamePage: React.FC = () => {
                             player.id === user.id ? 'text-blue-700' : 'text-gray-900'
                           } ${state.disconnectedPlayers.has(player.id) ? 'line-through text-gray-400' : ''}`}>
                             {player.username}
-                            {player.id === user.id && (
+                            {player.id === user.id && !state.isSpectator && (
                               <span className="ml-1 text-xs text-blue-600">(Toi)</span>
                             )}
                           </span>

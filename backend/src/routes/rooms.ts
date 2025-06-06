@@ -165,6 +165,7 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
 
   const room = roomResult[0];
 
+  // verif si l'utilisateur est un membre
   const membership = await db
     .select()
     .from(roomMembers)
@@ -174,9 +175,8 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
     ))
     .limit(1);
 
-  if (membership.length === 0) {
-    throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
-  }
+  const isSpectator = membership.length === 0;
+  const isHost = membership.length > 0 ? membership[0].isHost : false;
 
   const membersWithUsers = await db
     .select({
@@ -219,7 +219,8 @@ router.get('/:roomId', asyncHandler(async (req: Request, res: Response): Promise
         timeLimitSeconds: room.timeLimitSeconds,
         createdAt: room.createdAt,
       },
-      isHost: membership[0].isHost,
+      isHost: isHost,
+      isSpectator: isSpectator,
     },
   });
 }));

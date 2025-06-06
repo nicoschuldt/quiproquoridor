@@ -41,6 +41,13 @@ export class GameHandlers {
     try {
       console.log(`Starting game in room ${data.roomId} by ${this.socket.user.username}`);
 
+      // Verif si l'utilisateur est un membre (pas un spectateur)
+      const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
+      if (!isMember) {
+        this.emitError('PERMISSION_DENIED', 'Spectators cannot start games');
+        return;
+      }
+
       const room = await this.getRoomWithValidation(data.roomId);
       if (!room) return;
 
@@ -89,6 +96,13 @@ export class GameHandlers {
         type: data.move.type,
         roomId: data.roomId
       });
+
+      // Check if user is a member (not spectator)
+      const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
+      if (!isMember) {
+        this.emitError('PERMISSION_DENIED', 'Spectators cannot make moves');
+        return;
+      }
 
       const gameState = await gameStateService.getGameState(data.roomId);
       if (!gameState) {
@@ -179,15 +193,14 @@ export class GameHandlers {
     try {
       console.log(`Game state requested by ${this.socket.user.username} for room ${data.roomId}`);
 
-      const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
-      if (!isMember) {
-        this.emitError('ACCESS_DENIED', 'You are not a member of this room');
-        return;
-      }
+      // Allow both members and spectators to request game state
+      // No membership check needed here - authenticated users can spectate
 
       const gameState = await gameStateService.getGameState(data.roomId);
       if (gameState) {
-        const validMoves = gameEngineManager.getValidMoves(gameState, this.socket.user.id);
+        // Only provide valid moves if user is a member (not spectator)
+        const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
+        const validMoves = isMember ? gameEngineManager.getValidMoves(gameState, this.socket.user.id) : [];
 
         this.socket.emit('game-state-sync', { 
           gameState,
@@ -198,7 +211,8 @@ export class GameHandlers {
           }))
         });
 
-        console.log(`Active game state sent to ${this.socket.user.username}`);
+        const userType = isMember ? 'player' : 'spectator';
+        console.log(`Active game state sent to ${this.socket.user.username} (${userType})`);
         return;
       }
 
@@ -229,7 +243,7 @@ export class GameHandlers {
 
       const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
       if (!isMember) {
-        this.emitError('ACCESS_DENIED', 'You are not a member of this room');
+        this.emitError('PERMISSION_DENIED', 'Spectators cannot forfeit games');
         return;
       }
 

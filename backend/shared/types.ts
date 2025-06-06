@@ -26,7 +26,7 @@ export interface Player {
   joinedAt: Date;
   selectedPawnTheme: string;
 
-  // AI fields
+  // AI
   isAI: boolean;
   aiDifficulty?: AIDifficulty;
 }

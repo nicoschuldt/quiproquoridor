@@ -72,15 +72,8 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           ))
           .limit(1);
 
-        if (membership.length === 0) {
-          authenticatedSocket.emit('error', {
-            error: {
-              code: 'NOT_ROOM_MEMBER',
-              message: 'You are not a member of this room'
-            }
-          });
-          return;
-        }
+        const isSpectator = membership.length === 0;
+        // permettre aux spectateurs de rejoindre la room
         
         await authenticatedSocket.join(roomId);
         userCurrentRoomId = roomId;
@@ -105,6 +98,13 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
 
         const existingGame = await gameStateService.hasActiveGame(roomId);
         if (existingGame) {
+          if (isSpectator) {
+            console.log(`🔍 Spectator ${user.username} joining active game in room ${roomId}`);
+            // Spectators don't affect game state, just send them the current state
+            authenticatedSocket.emit('request-game-state', { roomId });
+            return;
+          }
+          
           console.log(`Player ${user.username} joining existing game in room ${roomId}`);
           
           const hadTimeout = gameStateService.cancelDisconnectionTimeout(roomId, user.id);
@@ -125,6 +125,53 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
           return;
         }
 
+        if (isSpectator) {
+          console.log(`🔍 Spectator ${user.username} joined room ${roomId} (lobby)`);
+          // Spectators just observe - send them current room state but don't announce their presence
+          const membersWithUsers = await db
+            .select({
+              id: users.id,
+              username: users.username,
+              isHost: roomMembers.isHost,
+              joinedAt: roomMembers.joinedAt,
+              isAI: users.isAI,
+              aiDifficulty: users.aiDifficulty,
+            })
+            .from(roomMembers)
+            .innerJoin(users, eq(roomMembers.userId, users.id))
+            .where(eq(roomMembers.roomId, roomId));
+
+          const players = membersWithUsers.map((member, index) => ({
+            id: member.id,
+            username: member.username,
+            color: ['red', 'blue', 'green', 'yellow'][index] as 'red' | 'blue' | 'green' | 'yellow',
+            position: { x: 4, y: index === 0 ? 0 : 8 },
+            wallsRemaining: room.maxPlayers === 2 ? 10 : 5,
+            isConnected: true,
+            joinedAt: member.joinedAt,
+            selectedPawnTheme: 'theme-pawn-default',
+            isAI: member.isAI || false,
+            aiDifficulty: member.aiDifficulty || undefined,
+          }));
+
+          const roomData = {
+            id: room.id,
+            code: room.code,
+            hostId: room.hostId,
+            players,
+            maxPlayers: room.maxPlayers as 2 | 4,
+            status: room.status,
+            isPrivate: room.isPrivate,
+            hasTimeLimit: room.hasTimeLimit,
+            timeLimitSeconds: room.timeLimitSeconds || undefined,
+            createdAt: room.createdAt,
+          };
+
+          authenticatedSocket.emit('room-updated', { room: roomData });
+          return;
+        }
+
+        // Handle regular player joining
         const membersWithUsers = await db
           .select({
             id: users.id,
@@ -222,11 +269,26 @@ export const socketHandler = (io: Server<ClientToServerEvents, ServerToClientEve
         await authenticatedSocket.leave(roomId);
         userCurrentRoomId = null;
         
-        await gameStateService.updatePlayerConnection(roomId, user.id, false);
+        // Check if user is a member (not spectator)
+        const membership = await db
+          .select()
+          .from(roomMembers)
+          .where(and(
+            eq(roomMembers.roomId, roomId),
+            eq(roomMembers.userId, user.id)
+          ))
+          .limit(1);
 
-        socket.to(roomId).emit('player-left', {
-          playerId: user.id
-        });
+        const isSpectator = membership.length === 0;
+
+        if (!isSpectator) {
+          // Only update game state and notify others for actual players
+          await gameStateService.updatePlayerConnection(roomId, user.id, false);
+
+          socket.to(roomId).emit('player-left', {
+            playerId: user.id
+          });
+        }
         
       } catch (error) {
         console.error('Error leaving room:', error);

@@ -37,6 +37,7 @@ router.get('/:roomId/state', asyncHandler(async (req: Request, res: Response): P
   const user = req.user as any;
   const { roomId } = req.params;
 
+  // verif si l'utilisateur est un membre
   const membership = await db
     .select()
     .from(roomMembers)
@@ -46,22 +47,23 @@ router.get('/:roomId/state', asyncHandler(async (req: Request, res: Response): P
     ))
     .limit(1);
 
-  if (membership.length === 0) {
-    throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
-  }
+  const isSpectator = membership.length === 0;
+  // permettre aux spectateurs de voir le jeu
 
   const gameState = await gameStateService.getGameState(roomId);
   if (!gameState) {
     throw new AppError(404, 'GAME_NOT_FOUND', 'No active game found for this room');
   }
 
-  const validMoves = gameEngineManager.getValidMoves(gameState, user.id);
+  // spectateurs peuvent voir les valid moves mais ne peuvent pas jouer
+  const validMoves = isSpectator ? [] : gameEngineManager.getValidMoves(gameState, user.id);
 
   res.json({
     success: true,
     data: {
       gameState,
       validMoves,
+      isSpectator,
     },
   });
 }));
@@ -81,7 +83,7 @@ router.post('/:roomId/move', asyncHandler(async (req: Request, res: Response): P
     .limit(1);
 
   if (membership.length === 0) {
-    throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
+    throw new AppError(403, 'PERMISSION_DENIED', 'Spectators cannot make moves');
   }
 
   if (move.playerId !== user.id) {
@@ -144,22 +146,24 @@ router.get('/:roomId/valid-moves', asyncHandler(async (req: Request, res: Respon
     ))
     .limit(1);
 
-  if (membership.length === 0) {
-    throw new AppError(403, 'NOT_ROOM_MEMBER', 'You are not a member of this room');
-  }
+  const isSpectator = membership.length === 0;
+  // les spectateurs peuvent voir les valid moves mais ne peuvent pas jouer
 
   const gameState = await gameStateService.getGameState(roomId);
   if (!gameState) {
     throw new AppError(404, 'GAME_NOT_FOUND', 'No active game found for this room');
   }
 
-  const validMoves = gameEngineManager.getValidMoves(gameState, user.id);
+  //spectateurs peuvent voir les valid moves mais ne peuvent pas jouer
+  const validMoves = isSpectator ? [] : gameEngineManager.getValidMoves(gameState, user.id);
+  const canMove = isSpectator ? false : gameEngineManager.getCurrentPlayer(gameState).id === user.id;
 
   res.json({
     success: true,
     data: {
       validMoves,
-      canMove: gameEngineManager.getCurrentPlayer(gameState).id === user.id,
+      canMove,
+      isSpectator,
     },
   });
 }));

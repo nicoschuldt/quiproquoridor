@@ -25,7 +25,7 @@ export interface Player {
   isConnected: boolean;
   joinedAt: Date;
   selectedPawnTheme: string;
-  
+
   // AI fields
   isAI: boolean;
   aiDifficulty?: AIDifficulty;
@@ -36,10 +36,10 @@ export interface Move {
   type: MoveType;
   playerId: string;
   timestamp: Date;
-  
+
   fromPosition?: Position;
   toPosition?: Position;
-  
+
   wallPosition?: Position;
   wallOrientation?: WallOrientation;
 }
@@ -55,7 +55,7 @@ export interface GameState {
   createdAt: Date;
   startedAt?: Date;
   finishedAt?: Date;
-  
+
   maxPlayers: 2 | 4;
   timeLimit?: number;
 }
@@ -69,7 +69,7 @@ export interface Room {
   status: RoomStatus;
   gameState?: GameState;
   createdAt: Date;
-  
+
   isPrivate: boolean;
   hasTimeLimit: boolean;
   timeLimitSeconds?: number;
@@ -116,7 +116,7 @@ export interface UserProfile {
   gamesPlayed: number;
   gamesWon: number;
   createdAt: Date;
-  
+
   isAI: boolean;
   aiDifficulty?: AIDifficulty;
 }
@@ -156,12 +156,12 @@ export interface ClientToServerEvents {
   'join-room': (data: { roomId: string }) => void;
   'leave-room': (data: { roomId: string }) => void;
   'player-ready': (data: { roomId: string; ready: boolean }) => void;
-  
+
   'start-game': (data: { roomId: string }) => void;
   'make-move': (data: { roomId: string; move: Omit<Move, 'id' | 'timestamp'> }) => void;
   'request-game-state': (data: { roomId: string }) => void;
   'forfeit-game': (data: { roomId: string }) => void;
-  
+
   'ping': () => void;
 }
 
@@ -170,7 +170,7 @@ export interface ServerToClientEvents {
   'player-joined': (data: { player: Player }) => void;
   'player-left': (data: { playerId: string }) => void;
   'player-ready-changed': (data: { playerId: string; ready: boolean }) => void;
-  
+
   'game-started': (data: { gameState: GameState }) => void;
   'move-made': (data: { move: Move; gameState: GameState }) => void;
   'game-finished': (data: { gameState: GameState; winner: Player }) => void;
@@ -179,7 +179,7 @@ export interface ServerToClientEvents {
   'player-forfeited': (data: { playerId: string; playerName: string; gameState: GameState }) => void;
   'disconnection-warning': (data: { playerId: string; playerName: string; timeoutSeconds: number }) => void;
   'reconnection-success': (data: { playerId: string; playerName: string; gameState: GameState }) => void;
-  
+
   'player-disconnected': (data: { playerId: string }) => void;
   'player-reconnected': (data: { playerId: string }) => void;
   'error': (data: { error: ApiError }) => void;
@@ -190,16 +190,16 @@ export interface GameEngine {
   createGame(playerIds: string[], maxPlayers: 2 | 4): GameState;
   validateMove(gameState: GameState, move: Omit<Move, 'id' | 'timestamp'>): boolean;
   applyMove(gameState: GameState, move: Omit<Move, 'id' | 'timestamp'>): GameState;
-  
+
   isGameFinished(gameState: GameState): boolean;
   getWinner(gameState: GameState): string | null;
   getCurrentPlayer(gameState: GameState): Player;
   getValidMoves(gameState: GameState, playerId: string): Omit<Move, 'id' | 'timestamp'>[];
-  
+
   isValidPawnMove(gameState: GameState, fromPos: Position, toPos: Position, playerId: string): boolean;
   isValidWallPlacement(gameState: GameState, wallPos: Position, orientation: WallOrientation): boolean;
   hasValidPathToGoal(gameState: GameState, playerId: string): boolean;
-  
+
   getPlayerById(gameState: GameState, playerId: string): Player | null;
   getPlayerStartPosition(playerIndex: number, maxPlayers: 2 | 4): Position;
   getPlayerGoalRow(playerIndex: number, maxPlayers: 2 | 4): number;
@@ -289,26 +289,26 @@ export type CreatePlayerInput = Optional<Player, 'id' | 'joinedAt' | 'isConnecte
 export type CreateRoomInput = Optional<Room, 'id' | 'code' | 'createdAt' | 'players' | 'gameState'>;
 
 export const isPosition = (obj: any): obj is Position => {
-  return typeof obj === 'object' && 
-         typeof obj.x === 'number' && 
-         typeof obj.y === 'number' &&
-         obj.x >= 0 && obj.x <= 8 &&
-         obj.y >= 0 && obj.y <= 8;
+  return typeof obj === 'object' &&
+      typeof obj.x === 'number' &&
+      typeof obj.y === 'number' &&
+      obj.x >= 0 && obj.x <= 8 &&
+      obj.y >= 0 && obj.y <= 8;
 };
 
 export const isMove = (obj: any): obj is Move => {
   return typeof obj === 'object' &&
-         typeof obj.type === 'string' &&
-         (obj.type === 'pawn' || obj.type === 'wall') &&
-         typeof obj.playerId === 'string';
+      typeof obj.type === 'string' &&
+      (obj.type === 'pawn' || obj.type === 'wall') &&
+      typeof obj.playerId === 'string';
 };
 
 export const isPlayer = (obj: any): obj is Player => {
   return typeof obj === 'object' &&
-         typeof obj.id === 'string' &&
-         typeof obj.username === 'string' &&
-         isPosition(obj.position) &&
-         typeof obj.wallsRemaining === 'number';
+      typeof obj.id === 'string' &&
+      typeof obj.username === 'string' &&
+      isPosition(obj.position) &&
+      typeof obj.wallsRemaining === 'number';
 };
 
 export const BOARD_SIZE = 9;
@@ -347,7 +347,7 @@ export interface ShopItem {
   previewImageUrl?: string;
   isActive: boolean;
   createdAt: Date;
-  owned?: boolean; 
+  owned?: boolean;
 }
 
 export interface UserPurchase {
@@ -395,7 +395,7 @@ export interface PurchaseThemeResponse {
   success: boolean;
   newBalance: number;
   purchasedItem: ShopItem;
-  message?: string; 
+  message?: string;
 }
 
 export interface SelectThemeRequest {
