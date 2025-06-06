@@ -29,7 +29,7 @@ const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
     if (!item.owned && onPurchase) {
       try {
         await onPurchase();
-        setMessage(`Achat réussi : ${item.name}`);
+        // setMessage(`Achat réussi : ${item.name}`);
       } catch (error: any) {
         setMessage(`Achat échoué : ${error.message || 'Erreur inconnue'}`);
       }
