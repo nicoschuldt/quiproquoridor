@@ -15,10 +15,6 @@ import {
   MAX_WALLS_4P,
 } from '../../shared/types';
 
-/**
- * Moteur de jeu Quoridor - logique complète du jeu
- * Gère règles, validations, pathfinding
- */
 export class QuoridorEngine implements GameEngine {
   createGame(playerIds: string[], maxPlayers: 2 | 4): GameState {
     if (playerIds.length < 2 || playerIds.length > 4) {
@@ -33,7 +29,6 @@ export class QuoridorEngine implements GameEngine {
     const colors: PlayerColor[] = ['red', 'blue', 'green', 'yellow'];
     const maxWalls = maxPlayers === 2 ? MAX_WALLS_2P : MAX_WALLS_4P;
 
-    // positionnement initial des joueurs selon nb participants
     const players: Player[] = playerIds.map((id, index) => ({
       id,
       username: `Joueur ${index + 1}`,
@@ -63,10 +58,6 @@ export class QuoridorEngine implements GameEngine {
     return gameState;
   }
 
-  /**
-   * Validation complète d'un coup
-   * Vérif joueur actuel, type coup, règles spécifiques
-   */
   validateMove(
     gameState: GameState,
     move: Omit<Move, 'id' | 'timestamp'>
@@ -76,11 +67,10 @@ export class QuoridorEngine implements GameEngine {
     }
     const currentPlayer = this.getCurrentPlayer(gameState);
     if (move.playerId !== currentPlayer.id) {
-      return false; // pas le tour du joueur
+      return false;
     }
 
     if (move.type === 'pawn') {
-      // vérif position départ correspond à position actuelle
       if (
         !move.fromPosition ||
         !this.arePositionsEqual(currentPlayer.position, move.fromPosition)
@@ -104,10 +94,6 @@ export class QuoridorEngine implements GameEngine {
     return false;
   }
 
-  /**
-   * Application d'un coup - modifie l'état de jeu
-   * Deep copy pour immutabilité
-   */
   applyMove(
     gameState: GameState,
     move: Omit<Move, 'id' | 'timestamp'>
@@ -141,11 +127,9 @@ export class QuoridorEngine implements GameEngine {
     }
 
     newState.moves.push(fullMove);
-    // passage au joueur suivant
     newState.currentPlayerIndex =
       (newState.currentPlayerIndex + 1) % newState.players.length;
 
-    // vérif fin de partie
     if (this.isGameFinished(newState)) {
       newState.status = 'finished';
       newState.finishedAt = new Date();
@@ -175,10 +159,6 @@ export class QuoridorEngine implements GameEngine {
     return gameState.players[gameState.currentPlayerIndex];
   }
 
-  /**
-   * Génération de tous les coups valides pour un joueur
-   * Utilisé par l'IA pour explorer possibilités
-   */
   getValidMoves(
     gameState: GameState,
     playerId: string
@@ -189,7 +169,6 @@ export class QuoridorEngine implements GameEngine {
       return [];
     }
 
-    // coups de pion valides
     const validPawnPositions = this.getValidPawnMoves(gameState, player);
     for (const toPos of validPawnPositions) {
       moves.push({
@@ -200,7 +179,6 @@ export class QuoridorEngine implements GameEngine {
       });
     }
 
-    // placements de murs si il en reste
     if (player.wallsRemaining > 0) {
       for (let x = 0; x < BOARD_SIZE - 1; x++) {
         for (let y = 0; y < BOARD_SIZE - 1; y++) {
@@ -228,123 +206,126 @@ export class QuoridorEngine implements GameEngine {
     return moves;
   }
 
-  /**
-   * Validation déplacement pion
-   * Gère déplacements simples et sauts par-dessus adversaires
-   */
   isValidPawnMove(
     gameState: GameState,
     fromPos: Position,
     toPos: Position,
     playerId: string
   ): boolean {
-    if (!this.isPositionValid(toPos)) {
+    if (!this.isPositionValid(fromPos) || !this.isPositionValid(toPos)) {
       return false;
     }
-
-    // vérif case destination libre
-    if (gameState.players.some(p => this.arePositionsEqual(p.position, toPos))) {
+    const player = this.getPlayerById(gameState, playerId);
+    if (!player || !this.arePositionsEqual(player.position, fromPos)) {
       return false;
     }
-
-    const dx = toPos.x - fromPos.x;
-    const dy = toPos.y - fromPos.y;
-
-    // déplacement simple adjacent
-    if ((Math.abs(dx) === 1 && dy === 0) || (Math.abs(dy) === 1 && dx === 0)) {
-      return !this.isWallBlocking(gameState.walls, fromPos, toPos);
-    }
-
-    // saut par-dessus adversaire (distance 2)
-    if ((Math.abs(dx) === 2 && dy === 0) || (Math.abs(dy) === 2 && dx === 0)) {
-      const middlePos: Position = {
-        x: fromPos.x + dx / 2,
-        y: fromPos.y + dy / 2,
-      };
-
-      // vérif adversaire en position intermédiaire
-      const playerAtMiddle = gameState.players.find(p => 
-        this.arePositionsEqual(p.position, middlePos)
-      );
-      if (!playerAtMiddle) {
-        return false;
-      }
-
-      // vérif pas de mur bloquant les deux segments
-      return !this.isWallBlocking(gameState.walls, fromPos, middlePos) &&
-             !this.isWallBlocking(gameState.walls, middlePos, toPos);
-    }
-
-    return false;
+    const valid = this.getValidPawnMoves(gameState, player);
+    return valid.some((pos) => this.arePositionsEqual(pos, toPos));
   }
 
-  /**
-   * Validation placement mur - règle critique du jeu
-   * Vérif position valide + pas de blocage complet des chemins
-   */
   isValidWallPlacement(
     gameState: GameState,
     wallPos: Position,
     orientation: WallOrientation
   ): boolean {
-    // vérif position dans limites plateau
     if (!this.isWallPositionValid(wallPos, orientation)) {
       return false;
     }
-
-    // vérif pas de collision avec murs existants
-    for (const existingWall of gameState.walls) {
-      if (this.arePositionsEqual(existingWall.position, wallPos)) {
-        return false; // même position
+  
+    for (const existing of gameState.walls) {
+      if (
+        existing.position.x === wallPos.x &&
+        existing.position.y === wallPos.y &&
+        existing.orientation === orientation
+      ) {
+        return false;
       }
-
-      // vérif intersection perpendiculaire au centre
-      if (existingWall.orientation !== orientation) {
-        if (orientation === 'horizontal') {
-          // nouveau mur horizontal vs existant vertical
-          if (existingWall.position.x === wallPos.x + 1 && 
-              existingWall.position.y === wallPos.y) {
-            return false;
-          }
-        } else {
-          // nouveau mur vertical vs existant horizontal
-          if (existingWall.position.x === wallPos.x && 
-              existingWall.position.y === wallPos.y + 1) {
-            return false;
-          }
-        }
+      if (
+        orientation === 'horizontal' &&
+        existing.orientation === 'horizontal' &&
+        existing.position.y === wallPos.y &&
+        Math.abs(existing.position.x - wallPos.x) === 1
+      ) {
+        return false;
+      }
+      if (
+        orientation === 'vertical' &&
+        existing.orientation === 'vertical' &&
+        existing.position.x === wallPos.x &&
+        Math.abs(existing.position.y - wallPos.y) === 1
+      ) {
+        return false;
       }
     }
 
-    // test critique - vérif pas de blocage complet
-    const tempWalls = [...gameState.walls, {
-      id: 'temp',
-      position: wallPos,
-      orientation,
-      playerId: 'temp'
-    }];
-
-    // chaque joueur doit garder un chemin vers son goal
+    if (orientation === 'horizontal') {
+      const wx = wallPos.x;
+      const wy = wallPos.y;
+      if (
+        gameState.walls.some(
+          (w) =>
+            w.orientation === 'vertical' &&
+            w.position.x === wx && 
+            w.position.y === wy
+        )
+      ) {
+        return false;
+      }
+    } else {
+      const wx = wallPos.x;
+      const wy = wallPos.y;
+      if (
+        gameState.walls.some(
+          (w) =>
+            w.orientation === 'horizontal' &&
+            w.position.x === wx && 
+            w.position.y === wy
+        )
+      ) {
+        return false;
+      }
+    }
+  
+    const currentPlayer = this.getCurrentPlayer(gameState);
+    if (currentPlayer.wallsRemaining <= 0) {
+      return false;
+    }
+  
+    const tempWalls: Wall[] = [
+      ...gameState.walls,
+      {
+        id: 'temp',
+        position: { ...wallPos },
+        orientation,
+        playerId: currentPlayer.id,
+      },
+    ];
     for (let i = 0; i < gameState.players.length; i++) {
-      const player = gameState.players[i];
-      if (!this.hasPathToGoalWithWalls(player, gameState.players, tempWalls, gameState.maxPlayers)) {
-        return false; // mur bloque complètement ce joueur
+      const p = gameState.players[i];
+      if (
+        !this.hasPathToGoalWithWalls(
+          p,
+          gameState.players,
+          tempWalls,
+          gameState.maxPlayers
+        )
+      ) {
+        return false;
       }
     }
-
+  
     return true;
   }
 
-  /**
-   * Pathfinding BFS pour vérifier chemin vers goal
-   * Crucial pour validation placement murs
-   */
   hasValidPathToGoal(gameState: GameState, playerId: string): boolean {
     const player = this.getPlayerById(gameState, playerId);
     if (!player) return false;
-    
-    const playerIndex = gameState.players.findIndex(p => p.id === playerId);
-    return this.hasPathToGoalWithWalls(player, gameState.players, gameState.walls, gameState.maxPlayers);
+    return this.hasPathToGoalWithWalls(
+      player,
+      gameState.players,
+      gameState.walls,
+      gameState.maxPlayers
+    );
   }
 
   getPlayerById(gameState: GameState, playerId: string): Player | null {
@@ -486,83 +467,6 @@ export class QuoridorEngine implements GameEngine {
     return unique;
   }
 
-  private getValidPawnMovesFromPos(
-    from: Position,
-    allPlayers: Player[],
-    walls: Wall[]
-  ): Position[] {
-    const destinations: Position[] = [];
-
-    const directions = [
-      { dx: 0, dy: -1 },
-      { dx: 1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: -1, dy: 0 },
-    ];
-
-    for (const dir of directions) {
-      const adj: Position = { x: from.x + dir.dx, y: from.y + dir.dy };
-      if (!this.isPositionValid(adj)) continue;
-      if (this.isWallBlocking(walls, from, adj)) continue;
-
-      const blockingPawn = allPlayers.find(
-        (p) => p.position.x === adj.x && p.position.y === adj.y
-      );
-      if (!blockingPawn) {
-        destinations.push(adj);
-      } else {
-        const jump: Position = { x: adj.x + dir.dx, y: adj.y + dir.dy };
-        if (
-          this.isPositionValid(jump) &&
-          !this.isWallBlocking(walls, adj, jump) &&
-          !allPlayers.some(
-            (p) => p.position.x === jump.x && p.position.y === jump.y
-          )
-        ) {
-          destinations.push(jump);
-        } else {
-          const sideDirs =
-            dir.dx === 0
-              ? [
-                  { dx: -1, dy: 0 },
-                  { dx: 1, dy: 0 },
-                ]
-              : [
-                  { dx: 0, dy: -1 },
-                  { dx: 0, dy: 1 },
-                ];
-
-          for (const side of sideDirs) {
-            const sidePos: Position = {
-              x: adj.x + side.dx,
-              y: adj.y + side.dy,
-            };
-            if (!this.isPositionValid(sidePos)) continue;
-            if (
-              this.isWallBlocking(walls, adj, sidePos) ||
-              allPlayers.some(
-                (p) =>
-                  p.position.x === sidePos.x &&
-                  p.position.y === sidePos.y
-              )
-            ) {
-              continue;
-            }
-            destinations.push(sidePos);
-          }
-        }
-      }
-    }
-
-    const unique: Position[] = [];
-    for (const pos of destinations) {
-      if (!unique.some((u) => this.arePositionsEqual(u, pos))) {
-        unique.push(pos);
-      }
-    }
-    return unique;
-  }
-
   private isWallBlocking(
     walls: Wall[],
     from: Position,
@@ -629,15 +533,20 @@ export class QuoridorEngine implements GameEngine {
         return true;
       }
   
-      const possibleMoves = this.getValidPawnMovesFromPos(
-        current,
-        allPlayers,
-        walls
-      );
-      for (const next of possibleMoves) {
-        if (!visited.has(`${next.x},${next.y}`)) {
-          queue.push(next);
-        }
+      const deltas = [
+        { dx: 0, dy: -1 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 },
+      ];
+      for (const delta of deltas) {
+        const next: Position = {
+          x: current.x + delta.dx,
+          y: current.y + delta.dy,
+        };
+        if (!this.isPositionValid(next)) continue;
+        if (this.isWallBlocking(walls, current, next)) continue;
+        queue.push(next);
       }
     }
     return false;
