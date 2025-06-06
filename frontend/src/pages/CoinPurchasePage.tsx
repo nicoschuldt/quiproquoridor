@@ -24,10 +24,10 @@ const CoinPurchasePage: React.FC = () => {
     if (paymentStatus === 'success' && sessionId) {
       setSuccessMessage('Payment successful! Your coins will be added to your account shortly.');
       refreshProfile();
-      window.history.replaceState({}, '', '/coin-purchase');
+      window.history.replaceState({}, '', '/buy-coins');
     } else if (paymentStatus === 'cancelled') {
       setError('Payment was cancelled. You can try again below.');
-      window.history.replaceState({}, '', '/coin-purchase');
+      window.history.replaceState({}, '', '/buy-coins');
     }
   }, [paymentStatus, sessionId, refreshProfile]);
 
