@@ -232,7 +232,7 @@ const GamePage: React.FC = () => {
     state.gameState.players[state.gameState.currentPlayerIndex].id === user.id;
 
   const handleForfeit = useCallback(() => {
-    if (!window.confirm('Tu es sûr de vouloir abandonné.')) {
+    if (!window.confirm('Tu es sûr de vouloir abandonner ?')) {
       return;
     }
     gameSocket.forfeitGame();
