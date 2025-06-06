@@ -486,6 +486,83 @@ export class QuoridorEngine implements GameEngine {
     return unique;
   }
 
+  private getValidPawnMovesFromPos(
+    from: Position,
+    allPlayers: Player[],
+    walls: Wall[]
+  ): Position[] {
+    const destinations: Position[] = [];
+
+    const directions = [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 },
+    ];
+
+    for (const dir of directions) {
+      const adj: Position = { x: from.x + dir.dx, y: from.y + dir.dy };
+      if (!this.isPositionValid(adj)) continue;
+      if (this.isWallBlocking(walls, from, adj)) continue;
+
+      const blockingPawn = allPlayers.find(
+        (p) => p.position.x === adj.x && p.position.y === adj.y
+      );
+      if (!blockingPawn) {
+        destinations.push(adj);
+      } else {
+        const jump: Position = { x: adj.x + dir.dx, y: adj.y + dir.dy };
+        if (
+          this.isPositionValid(jump) &&
+          !this.isWallBlocking(walls, adj, jump) &&
+          !allPlayers.some(
+            (p) => p.position.x === jump.x && p.position.y === jump.y
+          )
+        ) {
+          destinations.push(jump);
+        } else {
+          const sideDirs =
+            dir.dx === 0
+              ? [
+                  { dx: -1, dy: 0 },
+                  { dx: 1, dy: 0 },
+                ]
+              : [
+                  { dx: 0, dy: -1 },
+                  { dx: 0, dy: 1 },
+                ];
+
+          for (const side of sideDirs) {
+            const sidePos: Position = {
+              x: adj.x + side.dx,
+              y: adj.y + side.dy,
+            };
+            if (!this.isPositionValid(sidePos)) continue;
+            if (
+              this.isWallBlocking(walls, adj, sidePos) ||
+              allPlayers.some(
+                (p) =>
+                  p.position.x === sidePos.x &&
+                  p.position.y === sidePos.y
+              )
+            ) {
+              continue;
+            }
+            destinations.push(sidePos);
+          }
+        }
+      }
+    }
+
+    const unique: Position[] = [];
+    for (const pos of destinations) {
+      if (!unique.some((u) => this.arePositionsEqual(u, pos))) {
+        unique.push(pos);
+      }
+    }
+    return unique;
+  }
+
   private isWallBlocking(
     walls: Wall[],
     from: Position,
@@ -552,20 +629,15 @@ export class QuoridorEngine implements GameEngine {
         return true;
       }
   
-      const deltas = [
-        { dx: 0, dy: -1 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: -1, dy: 0 },
-      ];
-      for (const delta of deltas) {
-        const next: Position = {
-          x: current.x + delta.dx,
-          y: current.y + delta.dy,
-        };
-        if (!this.isPositionValid(next)) continue;
-        if (this.isWallBlocking(walls, current, next)) continue;
-        queue.push(next);
+      const possibleMoves = this.getValidPawnMovesFromPos(
+        current,
+        allPlayers,
+        walls
+      );
+      for (const next of possibleMoves) {
+        if (!visited.has(`${next.x},${next.y}`)) {
+          queue.push(next);
+        }
       }
     }
     return false;
