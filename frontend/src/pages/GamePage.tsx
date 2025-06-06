@@ -126,14 +126,23 @@ const GamePage: React.FC = () => {
 
     onPlayerForfeited: useCallback((data: { playerId: string; playerName: string; gameState: GameState }) => {
       console.log('🏳️ un joueur a abandonné :', data);
+      
+      const isCurrentUser = data.playerId === user?.id;
+      
+      if (isCurrentUser) {
+        console.log('Current user forfeited, redirecting to home');
+        navigate('/');
+        return;
+      }
+      
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
       }));
       
+      // Handle game end due to forfeit
       if (data.gameState.status === 'finished') {
         const winner = data.gameState.players.find(p => p.id === data.gameState.winner);
-        const isCurrentUser = data.playerId === user?.id;
         
         setState(prev => ({
           ...prev,
@@ -141,24 +150,17 @@ const GamePage: React.FC = () => {
             isOpen: true,
             winner: winner || null,
             reason: 'forfeit',
-            message: isCurrentUser ? 
-              'Tu as abandonné la partie' : 
-              winner ? 
-                (winner.id === user?.id ? 
-                  `Tu as gagné ! ${data.playerName} a abandonné` : 
-                  `${winner.username} a gagné ! ${data.playerName} a a bandonné `) :
-                `${data.playerName} a abandonné la partie`
+            message: winner ? 
+              (winner.id === user?.id ? 
+                `Tu as gagné ! ${data.playerName} a abandonné` : 
+                `${winner.username} a gagné ! ${data.playerName} a abandonné`) :
+              `${data.playerName} a abandonné la partie`
           }
         }));
       } else {
-        const isCurrentUser = data.playerId === user?.id;
-        const message = isCurrentUser ? 
-          'Tu as abandonné la partie' : 
-          `${data.playerName} a abandonné la partie`;
-        
-        addNotification('info', message, 5000);
+        addNotification('info', `${data.playerName} a abandonné la partie`, 5000);
       }
-    }, [user?.id, addNotification]),
+    }, [user?.id, addNotification, navigate]),
 
     onDisconnectionWarning: useCallback((data: { playerId: string; playerName: string; timeoutSeconds: number }) => {
       console.log('⚠️ Un joueur est déconnecté :', data);
@@ -232,11 +234,18 @@ const GamePage: React.FC = () => {
     state.gameState.players[state.gameState.currentPlayerIndex].id === user.id;
 
   const handleForfeit = useCallback(() => {
-    if (!window.confirm('Tu es sûr de vouloir abandonné.')) {
+    if (!window.confirm('Tu es sûr de vouloir abandonner la partie ? Tu seras redirigé vers l\'accueil.')) {
       return;
     }
+    console.log('Player forfeiting game...');
     gameSocket.forfeitGame();
-  }, [gameSocket]);
+    
+    // Fallback: redirect after 3 seconds if no response
+    setTimeout(() => {
+      console.log('Forfeit fallback redirect triggered');
+      navigate('/');
+    }, 3000);
+  }, [gameSocket, navigate]);
 
   const handleEndGameModalClose = useCallback(() => {
     setState(prev => ({
@@ -318,7 +327,7 @@ const GamePage: React.FC = () => {
                   onClick={handleForfeit}
                   className="btn btn-danger"
                 >
-                  Abandonné
+                  Abandonner
                 </button>
               )}
               
