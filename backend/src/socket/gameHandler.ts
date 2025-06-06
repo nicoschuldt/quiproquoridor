@@ -9,7 +9,7 @@ import type {
   Move, 
   GameState,
   ApiError 
-} from '../../../shared/types';
+} from '../../shared/types';
 
 type AuthenticatedSocket = Socket<ClientToServerEvents, ServerToClientEvents> & {
   user: { id: string; username: string };
