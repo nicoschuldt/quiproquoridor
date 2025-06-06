@@ -25,12 +25,12 @@ const ActiveGameBanner: React.FC<ActiveGameBannerProps> = ({ onRoomChange }) => 
       onRoomChange?.(roomStatus);
       
       if (roomStatus) {
-        console.log(`✅ Found active room: ${roomStatus.roomId} (${roomStatus.roomStatus})`);
+        console.log(`Found active room: ${roomStatus.roomId} (${roomStatus.roomStatus})`);
       } else {
-        console.log('✅ No active room found');
+        console.log('No active room found');
       }
     } catch (err: any) {
-      console.error('❌ Error checking active room:', err);
+      console.error('Error checking active room:', err);
       setError(err.message || 'Failed to check room status');
       setActiveRoom(null);
       onRoomChange?.(null);

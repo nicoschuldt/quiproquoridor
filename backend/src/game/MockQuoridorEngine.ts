@@ -48,7 +48,7 @@ import type {
         maxPlayers,
       };
   
-      console.log(`🎮 Mock game created with ${playerIds.length} players`);
+      console.log(`Mock game created with ${playerIds.length} players`);
       return gameState;
     }
   
@@ -57,12 +57,12 @@ import type {
   
       const currentPlayer = this.getCurrentPlayer(gameState);
       if (move.playerId !== currentPlayer.id) {
-        console.log(`❌ Not player's turn: expected ${currentPlayer.id}, got ${move.playerId}`);
+        console.log(`Not player's turn: expected ${currentPlayer.id}, got ${move.playerId}`);
         return false;
       }
   
       if (gameState.status !== 'playing') {
-        console.log(`❌ Game not active: ${gameState.status}`);
+        console.log(`Game not active: ${gameState.status}`);
         return false;
       }
   
@@ -76,7 +76,7 @@ import type {
     }
   
     applyMove(gameState: GameState, move: Omit<Move, 'id' | 'timestamp'>): GameState {
-      console.log(`🎯 Applying move:`, { type: move.type, playerId: move.playerId });
+      console.log(`Applying move:`, { type: move.type, playerId: move.playerId });
   
       const newGameState: GameState = {
         ...gameState,
@@ -147,7 +147,7 @@ import type {
         moves.push(...wallMoves);
       }
   
-      console.log(`📋 Generated ${moves.length} valid moves for ${playerId}`);
+      console.log(`Generated ${moves.length} valid moves for ${playerId}`);
       return moves;
     }
   
@@ -216,7 +216,7 @@ import type {
   
     private validatePawnMove(gameState: GameState, move: Omit<Move, 'id' | 'timestamp'>): boolean {
       if (!move.fromPosition || !move.toPosition) {
-        console.log(`❌ Pawn move missing positions`);
+        console.log(`Pawn move missing positions`);
         return false;
       }
   
@@ -225,13 +225,13 @@ import type {
   
     private validateWallMove(gameState: GameState, move: Omit<Move, 'id' | 'timestamp'>): boolean {
       if (!move.wallPosition || !move.wallOrientation) {
-        console.log(`❌ Wall move missing position or orientation`);
+        console.log(`Wall move missing position or orientation`);
         return false;
       }
   
       const player = this.getPlayerById(gameState, move.playerId);
       if (!player || player.wallsRemaining <= 0) {
-        console.log(`❌ Player has no walls remaining`);
+        console.log(`Player has no walls remaining`);
         return false;
       }
   

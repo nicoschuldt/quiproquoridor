@@ -16,8 +16,6 @@ import {
 } from '../../shared/types';
 
 export class QuoridorEngine implements GameEngine {
-  private pathCache: Map<string, boolean> = new Map();
-
   createGame(playerIds: string[], maxPlayers: 2 | 4): GameState {
     if (playerIds.length < 2 || playerIds.length > 4) {
       throw new Error('Le nombre de joueurs doit être compris entre 2 et 4');

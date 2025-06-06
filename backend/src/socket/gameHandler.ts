@@ -34,12 +34,12 @@ export class GameHandlers {
     this.socket.on('request-game-state', this.handleRequestGameState.bind(this));
     this.socket.on('forfeit-game', this.handleForfeitGame.bind(this));
     
-    console.log(`🎮 Game handlers setup for user ${this.socket.user.username}`);
+    console.log(`Game handlers setup for user ${this.socket.user.username}`);
   }
 
   private async handleStartGame(data: { roomId: string }): Promise<void> {
     try {
-      console.log(`🚀 Starting game in room ${data.roomId} by ${this.socket.user.username}`);
+      console.log(`Starting game in room ${data.roomId} by ${this.socket.user.username}`);
 
       const room = await this.getRoomWithValidation(data.roomId);
       if (!room) return;
@@ -75,17 +75,17 @@ export class GameHandlers {
 
       this.io.to(data.roomId).emit('game-started', { gameState });
       
-      console.log(`✅ Game started successfully in room ${data.roomId}`);
+      console.log(`Game started successfully in room ${data.roomId}`);
 
     } catch (error) {
-      console.error('❌ Error starting game:', error);
+      console.error('Error starting game:', error);
       this.emitError('GAME_START_FAILED', 'Failed to start game');
     }
   }
 
   private async handleMakeMove(data: { roomId: string; move: Omit<Move, 'id' | 'timestamp'> }): Promise<void> {
     try {
-      console.log(`🎯 Processing move from ${this.socket.user.username}:`, {
+      console.log(`Processing move from ${this.socket.user.username}:`, {
         type: data.move.type,
         roomId: data.roomId
       });
@@ -130,7 +130,7 @@ export class GameHandlers {
 
       const aiProcessedState = gameStateService.getProcessedAIMove(data.roomId);
       if (aiProcessedState) {
-        console.log(`🤖 AI moves detected, broadcasting updated state for room ${data.roomId}`);
+        console.log(`AI moves detected, broadcasting updated state for room ${data.roomId}`);
         
         this.io.to(data.roomId).emit('move-made', {
           move: {
@@ -167,17 +167,17 @@ export class GameHandlers {
         }
       }
 
-      console.log(`✅ Move processed successfully for ${this.socket.user.username}`);
+      console.log(`Move processed successfully for ${this.socket.user.username}`);
 
     } catch (error) {
-      console.error('❌ Error processing move:', error);
+      console.error('Error processing move:', error);
       this.emitError('MOVE_PROCESSING_FAILED', 'Failed to process move');
     }
   }
 
   private async handleRequestGameState(data: { roomId: string }): Promise<void> {
     try {
-      console.log(`📊 Game state requested by ${this.socket.user.username} for room ${data.roomId}`);
+      console.log(`Game state requested by ${this.socket.user.username} for room ${data.roomId}`);
 
       const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
       if (!isMember) {
@@ -198,7 +198,7 @@ export class GameHandlers {
           }))
         });
 
-        console.log(`✅ Active game state sent to ${this.socket.user.username}`);
+        console.log(`Active game state sent to ${this.socket.user.username}`);
         return;
       }
 
@@ -218,7 +218,7 @@ export class GameHandlers {
       this.emitError('GAME_NOT_FOUND', 'No active game found for this room');
 
     } catch (error) {
-      console.error('❌ Error sending game state:', error);
+      console.error('Error sending game state:', error);
       this.emitError('GAME_STATE_FAILED', 'Failed to get game state');
     }
   }
@@ -268,10 +268,10 @@ export class GameHandlers {
         console.log(`🏆 Game finished due to forfeit in room ${data.roomId}`);
       }
 
-      console.log(`✅ Forfeit processed successfully for ${this.socket.user.username}`);
+      console.log(`Forfeit processed successfully for ${this.socket.user.username}`);
 
     } catch (error) {
-      console.error('❌ Error processing forfeit:', error);
+      console.error('Error processing forfeit:', error);
       this.emitError('FORFEIT_PROCESSING_FAILED', 'Failed to process forfeit');
     }
   }
