@@ -75,7 +75,7 @@ const RegisterPage: React.FC = () => {
                 autoComplete="username"
                 required
                 className="input-field w-full"
-                placeholder="Choose a username"
+                placeholder="Choisis un pseudo"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -91,7 +91,7 @@ const RegisterPage: React.FC = () => {
                 autoComplete="new-password"
                 required
                 className="input-field w-full"
-                placeholder="Choose a password"
+                placeholder="Choisis un mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -107,7 +107,7 @@ const RegisterPage: React.FC = () => {
                 autoComplete="new-password"
                 required
                 className="input-field w-full"
-                placeholder="Confirm your password"
+                placeholder="Confirme ton mot de passe"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -120,7 +120,7 @@ const RegisterPage: React.FC = () => {
               disabled={isLoading}
               className="btn-primary w-full flex justify-center py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Création en cours...' : 'Compte créé'}
+              {isLoading ? 'Création en cours...' : 'Créer le compte'}
             </button>
           </div>
         </form>

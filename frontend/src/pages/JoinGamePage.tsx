@@ -67,7 +67,7 @@ const JoinGamePage: React.FC = () => {
           </h1>
 
           <p className="text-gray-600 text-center mb-6">
-            ENtre le code du salon.
+            Entre le code du salon.
           </p>
 
           {error && (
@@ -101,7 +101,7 @@ const JoinGamePage: React.FC = () => {
               disabled={loading || roomCode.length !== 6}
               className="w-full btn-primary py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Joining Game...' : 'Join Game'}
+              {loading ? 'Joining Game...' : 'Rejoindre partie'}
             </button>
           </form>
 

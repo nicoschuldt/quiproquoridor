@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
                 autoComplete="username"
                 required
                 className="input-field w-full"
-                placeholder="Enter your username"
+                placeholder="Entre ton pseudo"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -74,7 +74,7 @@ const LoginPage: React.FC = () => {
                 autoComplete="current-password"
                 required
                 className="input-field w-full"
-                placeholder="Enter your password"
+                placeholder="Entre ton mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
