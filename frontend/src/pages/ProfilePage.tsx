@@ -95,7 +95,7 @@ const ProfilePage: React.FC = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900 mb-1">{user.gamesPlayed}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">{gameHistory.length}</div>
             <div className="text-sm font-medium text-gray-600">Parties jouées</div>
           </div>
           <div className="text-center">

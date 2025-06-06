@@ -56,7 +56,7 @@ const CoinPurchasePage: React.FC = () => {
         setSuccessMessage('Mock purchase successful! Your coin balance has been updated.');
         return;
       }
-      const checkout = await paymentApi.createCheckoutSession(packageId);
+      const checkout = await paymentApi.createCheckoutSession(packageId as 'starter' | 'popular' | 'pro');
       window.location.href = checkout.checkoutUrl;
     } catch (err: any) {
       console.error('Purchase failed:', err);
