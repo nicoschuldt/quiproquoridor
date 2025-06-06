@@ -26,7 +26,7 @@ export interface Player {
   joinedAt: Date;
   selectedPawnTheme: string;
 
-  // AI
+  // AI fields
   isAI: boolean;
   aiDifficulty?: AIDifficulty;
 }
@@ -175,7 +175,7 @@ export interface ServerToClientEvents {
   'move-made': (data: { move: Move; gameState: GameState }) => void;
   'game-finished': (data: { gameState: GameState; winner: Player }) => void;
   'invalid-move': (data: { error: string; originalMove: Omit<Move, 'id' | 'timestamp'> }) => void;
-  'game-state-sync': (data: { gameState: GameState; validMoves?: Move[] }) => void;
+  'game-state-sync': (data: { gameState: GameState; validMoves?: Move[]; isSpectator?: boolean }) => void;
   'player-forfeited': (data: { playerId: string; playerName: string; gameState: GameState }) => void;
   'disconnection-warning': (data: { playerId: string; playerName: string; timeoutSeconds: number }) => void;
   'reconnection-success': (data: { playerId: string; playerName: string; gameState: GameState }) => void;

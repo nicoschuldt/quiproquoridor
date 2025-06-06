@@ -9,7 +9,7 @@ import type {
   Move, 
   GameState,
   ApiError 
-} from '../../shared/types';
+} from '../../../shared/types';
 
 type AuthenticatedSocket = Socket<ClientToServerEvents, ServerToClientEvents> & {
   user: { id: string; username: string };
@@ -41,7 +41,7 @@ export class GameHandlers {
     try {
       console.log(`Starting game in room ${data.roomId} by ${this.socket.user.username}`);
 
-      // Verif si l'utilisateur est un membre (pas un spectateur)
+      // verif si l'utilisateur est un membre (pas un spectateur)
       const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
       if (!isMember) {
         this.emitError('PERMISSION_DENIED', 'Spectators cannot start games');
@@ -193,12 +193,12 @@ export class GameHandlers {
     try {
       console.log(`Game state requested by ${this.socket.user.username} for room ${data.roomId}`);
 
-      // Allow both members and spectators to request game state
-      // No membership check needed here - authenticated users can spectate
+      // permettre aux spectateurs de voir le jeu
+      // pas de verif si l'utilisateur est un membre
 
       const gameState = await gameStateService.getGameState(data.roomId);
       if (gameState) {
-        // Only provide valid moves if user is a member (not spectator)
+        // spectateurs peuvent voir les valid moves mais ne peuvent pas jouer
         const isMember = await this.isUserRoomMember(data.roomId, this.socket.user.id);
         const validMoves = isMember ? gameEngineManager.getValidMoves(gameState, this.socket.user.id) : [];
 
@@ -208,7 +208,8 @@ export class GameHandlers {
             ...move,
             id: crypto.randomUUID(),
             timestamp: new Date()
-          }))
+          })),
+          isSpectator: !isMember
         });
 
         const userType = isMember ? 'player' : 'spectator';

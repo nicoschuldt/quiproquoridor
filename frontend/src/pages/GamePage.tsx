@@ -106,12 +106,14 @@ const GamePage: React.FC = () => {
     }, [user]),
     
     onGameStateSync: useCallback((data: { gameState: GameState; validMoves?: Move[]; isSpectator?: boolean }) => {
-      console.log('Synchronisation du jeu:', data);
+      console.log('Game state sync received:', data);
+      const isSpectator = data.isSpectator !== undefined ? data.isSpectator : false;
+      console.log(`Spectator status from sync: ${isSpectator}`);
       setState(prev => ({
         ...prev,
         gameState: data.gameState,
         validMoves: data.validMoves || [],
-        isSpectator: data.isSpectator || false,
+        isSpectator: isSpectator,
         isLoading: false,
         error: null,
         isGameStarted: true,
@@ -212,7 +214,7 @@ const GamePage: React.FC = () => {
 
   useEffect(() => {
     if (roomId && gameSocket.isConnected) {
-      // verif si l'utilisateur est un spectateur
+      // Check if user is a spectator by fetching room data
       fetch(`/api/rooms/${roomId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -220,15 +222,23 @@ const GamePage: React.FC = () => {
       })
       .then(res => res.json())
       .then(data => {
+        console.log('🔍 Room data received:', data);
         if (data.success) {
+          const isSpectator = data.data.isSpectator || false;
+          console.log(`🔍 User is ${isSpectator ? 'spectator' : 'player'}`);
           setState(prev => ({
             ...prev,
-            isSpectator: data.data.isSpectator || false
+            isSpectator: isSpectator
           }));
         }
       })
       .catch(err => {
         console.error('Failed to fetch room data:', err);
+        // Assume not spectator if API call fails
+        setState(prev => ({
+          ...prev,
+          isSpectator: false
+        }));
       });
 
       gameSocket.joinRoom();
@@ -488,7 +498,7 @@ const GamePage: React.FC = () => {
                     : 'bg-gray-100 text-gray-700 border border-gray-200'
                 }`}>
                   {state.isSpectator ? (
-                    `${state.gameState.players[state.gameState.currentPlayerIndex].username}'s turn`
+                    `${state.gameState.players[state.gameState.currentPlayerIndex].username}`
                   ) : isCurrentTurn ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -504,7 +514,7 @@ const GamePage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Joueurs
                   {state.isSpectator && (
-                    <span className="ml-2 text-sm font-normal text-blue-600">(Tu spectates)</span>
+                    <span className="ml-2 text-sm font-normal text-blue-600">(Spectateur)</span>
                   )}
                 </h3>
                 <div className="space-y-3">
