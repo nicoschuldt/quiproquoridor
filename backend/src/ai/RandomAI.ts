@@ -1,15 +1,23 @@
 import type { AIEngine, GameState, Move, AIDifficulty } from '../../shared/types';
 import { gameEngineManager } from '../game/GameEngineManager';
 
+/**
+ * IA Aléatoire - niveau facile
+ * Choisit un coup valide au hasard sans stratégie
+ */
 export class RandomAI implements AIEngine {
   private difficulty: AIDifficulty;
   private thinkingTimeMs: number;
 
   constructor(difficulty: AIDifficulty = 'easy') {
     this.difficulty = difficulty;
-    this.thinkingTimeMs = 0;
+    this.thinkingTimeMs = 0; // pas de simulation de réflexion
   }
 
+  /**
+   * Génération coup aléatoire
+   * Prend tous les coups valides et en choisit un au hasard
+   */
   async generateMove(gameState: GameState, playerId: string): Promise<Omit<Move, 'id' | 'timestamp'>> {
     console.log(`${this.getName()} thinking for player ${playerId}...`);
     
@@ -19,6 +27,7 @@ export class RandomAI implements AIEngine {
       throw new Error(`No valid moves available for AI player ${playerId}`);
     }
 
+    // sélection purement aléatoire
     const randomIndex = Math.floor(Math.random() * validMoves.length);
     const selectedMove = validMoves[randomIndex];
 

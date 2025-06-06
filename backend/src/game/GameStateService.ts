@@ -4,11 +4,20 @@ import { gameEngineManager } from './GameEngineManager';
 import { aiManager } from '../ai/AIManager';
 import type { GameState, Player } from '../../shared/types';
 
+/**
+ * Service principal pour la gestion d'état des parties
+ * Gère persistence DB, tours IA, et déconnexions joueurs
+ */
 export class GameStateService {
+  /**
+   * Création nouvelle partie depuis une room
+   * Récupère joueurs, initialise IA si besoin, sauvegarde en DB
+   */
   async createGame(roomId: string): Promise<GameState> {
     try {
       console.log(`Creating game for room ${roomId}`);
 
+      // vérif room existe
       const room = await db
         .select()
         .from(rooms)
@@ -19,6 +28,7 @@ export class GameStateService {
         throw new Error('Room not found');
       }
 
+      // récupération joueurs avec leurs préférences
       const playersData = await db
         .select({
           userId: roomMembers.userId,
@@ -40,6 +50,7 @@ export class GameStateService {
       const playerIds = playersData.map(p => p.userId);
       const gameState = gameEngineManager.createGame(playerIds, room[0].maxPlayers as 2 | 4);
 
+      // ajout données utilisateur au gameState
       gameState.players = gameState.players.map((player, index) => ({
         ...player,
         username: playersData[index].username,
@@ -49,6 +60,7 @@ export class GameStateService {
         aiDifficulty: playersData[index].aiDifficulty || undefined,
       }));
 
+      // initialisation des IA si nécessaire
       for (const playerData of playersData) {
         if (playerData.isAI && playerData.aiDifficulty) {
           aiManager.createAI(playerData.userId, playerData.aiDifficulty);
@@ -56,6 +68,7 @@ export class GameStateService {
         }
       }
 
+      // sauvegarde en DB
       const [gameRecord] = await db
         .insert(games)
         .values({
@@ -86,6 +99,10 @@ export class GameStateService {
     }
   }
 
+  /**
+   * Récupération état partie depuis DB
+   * Convertit dates JSON en objets Date
+   */
   async getGameState(roomId: string): Promise<GameState | null> {
     try {
       const gameRecord = await db
@@ -103,6 +120,7 @@ export class GameStateService {
 
       const gameState = gameRecord[0].gameState as GameState;
       
+      // reconversion des dates depuis JSON
       gameState.createdAt = new Date(gameState.createdAt);
       if (gameState.startedAt) gameState.startedAt = new Date(gameState.startedAt);
       if (gameState.finishedAt) gameState.finishedAt = new Date(gameState.finishedAt);
@@ -125,6 +143,10 @@ export class GameStateService {
     }
   }
 
+  /**
+   * Sauvegarde état partie + traitement tours IA
+   * Point critique - enchaîne les coups IA automatiquement
+   */
   async saveGameState(roomId: string, gameState: GameState): Promise<void> {
     try {
       await db
@@ -144,6 +166,7 @@ export class GameStateService {
         await this.completeGame(roomId, gameState);
       }
 
+      // déclenchement automatique des tours IA
       await this.processAITurns(roomId, gameState);
 
     } catch (error) {
@@ -152,6 +175,10 @@ export class GameStateService {
     }
   }
 
+  /**
+   * Traitement automatique des tours IA consécutifs
+   * Boucle jusqu'à tomber sur un joueur humain ou fin de partie
+   */
   private async processAITurns(roomId: string, gameState: GameState): Promise<void> {
     if (gameState.status !== 'playing') {
       return;
@@ -160,11 +187,12 @@ export class GameStateService {
     let currentState = gameState;
     let processedAIMove = false;
 
+    // boucle pour enchaîner tous les tours IA consécutifs
     while (currentState.status === 'playing') {
       const currentPlayer = gameEngineManager.getCurrentPlayer(currentState);
       
       if (!currentPlayer.isAI) {
-        break;
+        break; // stop si joueur humain
       }
 
       try {
@@ -182,6 +210,7 @@ export class GameStateService {
 
         console.log(`AI move applied for player ${currentPlayer.id}`);
 
+        // sauvegarde après chaque coup IA
         await db
           .update(games)
           .set({
@@ -200,47 +229,55 @@ export class GameStateService {
           break;
         }
 
+        // petite pause pour éviter spam DB
+        await new Promise(resolve => setTimeout(resolve, 100));
+
       } catch (error) {
         console.error(`Error processing AI turn for player ${currentPlayer.id}:`, error);
         break;
       }
     }
 
+    // stockage pour récupération par websocket
     if (processedAIMove) {
       this.aiMoveProcessed.set(roomId, currentState);
     }
   }
 
+  // cache pour éviter double-envoi des coups IA via websocket
   private aiMoveProcessed = new Map<string, GameState>();
 
   getProcessedAIMove(roomId: string): GameState | null {
     const state = this.aiMoveProcessed.get(roomId);
     if (state) {
-      this.aiMoveProcessed.delete(roomId);
+      this.aiMoveProcessed.delete(roomId); // nettoyage après récupération
       return state;
     }
     return null;
   }
 
+  /**
+   * Finalisation partie - mise à jour stats joueurs
+   */
   async completeGame(roomId: string, gameState: GameState): Promise<void> {
     try {
-      console.log(`🏁 Completing game for room ${roomId}, winner: ${gameState.winner}`);
+      console.log(`Completing game for room ${roomId}. Winner: ${gameState.winner}`);
+
+      // marquer le gagnant
+      if (gameState.winner) {
+        await db
+          .update(gamePlayers)
+          .set({ isWinner: true })
+          .where(
+            and(
+              eq(gamePlayers.gameId, sql`(SELECT id FROM ${games} WHERE room_id = ${roomId} AND status = 'playing')`),
+              eq(gamePlayers.userId, gameState.winner)
+            )
+          );
+      }
 
       await this.updatePlayerStats(roomId, gameState);
-
-      await db
-        .update(rooms)
-        .set({ 
-          status: 'finished',
-          updatedAt: new Date()
-        })
-        .where(eq(rooms.id, roomId));
-
-      setTimeout(async () => {
-        await this.cleanupFinishedRoom(roomId);
-      }, 30 * 60 * 1000);
-
-      console.log(`Game completion processed for room ${roomId}`);
+      console.log(`Game completed for room ${roomId}`);
 
     } catch (error) {
       console.error('Error completing game:', error);

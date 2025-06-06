@@ -6,9 +6,12 @@ import type {
     Position, 
     WallOrientation 
   } from '../../shared/types';
-  import { mockQuoridorEngine } from './MockQuoridorEngine';
   import { quoridorEngine } from './QuoridorEngine';
 
+  /**
+   * Gestionnaire principal pour les moteurs de jeu Quoridor
+   * Pattern proxy permet de basculer entre différents moteurs de jeu
+   */
   export class GameEngineManager implements GameEngine {
     private engine: GameEngine = quoridorEngine;
   
@@ -16,15 +19,16 @@ import type {
       console.log('GameEngineManager initialized with mock engine');
     }
 
+    // changement dynamique du moteur de jeu si besoin
     setEngine(engine: GameEngine): void {
       this.engine = engine;
-      console.log('Advanced game engine connected - replacing mock engine');
     }
 
     isEngineReady(): boolean {
       return this.engine !== null;
     }
 
+    // récupère l'instance active du moteur
     private getActiveEngine(): GameEngine {
       return this.engine
     }
@@ -65,7 +69,8 @@ import type {
     isValidWallPlacement(gameState: GameState, wallPos: Position, orientation: WallOrientation): boolean {
       return this.getActiveEngine().isValidWallPlacement(gameState, wallPos, orientation);
     }
-  
+
+    // vérif chemin valide vers goal - critique pour placement murs
     hasValidPathToGoal(gameState: GameState, playerId: string): boolean {
       return this.getActiveEngine().hasValidPathToGoal(gameState, playerId);
     }
@@ -89,6 +94,10 @@ import type {
       };
     }
 
+    /**
+     * Validation complète de l'état de jeu
+     * Vérif cohérence positions, murs, joueurs actuel
+     */
     validateGameState(gameState: GameState): { isValid: boolean; errors: string[] } {
       const errors: string[] = [];
   
@@ -96,10 +105,12 @@ import type {
         errors.push('No players found');
       }
   
+      // vérif index joueur actuel cohérent
       if (gameState.currentPlayerIndex >= gameState.players.length) {
         errors.push('Invalid current player index');
       }
   
+      // vérif positions joueurs dans le plateau
       for (const player of gameState.players) {
         if (player.position.x < 0 || player.position.x > 8 || 
             player.position.y < 0 || player.position.y > 8) {
@@ -111,6 +122,7 @@ import type {
         }
       }
   
+      // vérif positions murs valides
       for (const wall of gameState.walls) {
         if (wall.position.x < 0 || wall.position.x > 7 || 
             wall.position.y < 0 || wall.position.y > 7) {
@@ -124,6 +136,9 @@ import type {
       };
     }
 
+    /**
+     * Statistiques utiles pour debug et métriques
+     */
     getGameStats(gameState: GameState): {
       totalMoves: number;
       wallsPlaced: number;
