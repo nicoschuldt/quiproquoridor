@@ -523,30 +523,42 @@ export class QuoridorEngine implements GameEngine {
     const playerIndex = allPlayers.findIndex((p) => p.id === player.id);
     if (playerIndex < 0) return false;
   
+    const mockGameState = {
+      players: [...allPlayers],
+      walls: walls,
+      maxPlayers: maxPlayers,
+      id: 'mock',
+      currentPlayerIndex: playerIndex,
+      status: 'playing',
+      moves: [],
+      createdAt: new Date(),
+    } as GameState;
+
     while (queue.length > 0) {
       const current = queue.shift()!;
       const key = `${current.x},${current.y}`;
       if (visited.has(key)) continue;
       visited.add(key);
-  
+
       if (this.isAtGoal(current, playerIndex, maxPlayers)) {
         return true;
       }
-  
-      const deltas = [
-        { dx: 0, dy: -1 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: -1, dy: 0 },
-      ];
-      for (const delta of deltas) {
-        const next: Position = {
-          x: current.x + delta.dx,
-          y: current.y + delta.dy,
-        };
-        if (!this.isPositionValid(next)) continue;
-        if (this.isWallBlocking(walls, current, next)) continue;
-        queue.push(next);
+
+      const tempPlayer: Player = { ...player, position: current };
+      const originalPlayer = mockGameState.players[playerIndex];
+      mockGameState.players[playerIndex] = tempPlayer;
+
+      const validDestinations = this.getValidPawnMoves(
+        mockGameState,
+        tempPlayer
+      );
+
+      mockGameState.players[playerIndex] = originalPlayer;
+
+      for (const dest of validDestinations) {
+        if (!visited.has(`${dest.x},${dest.y}`)) {
+          queue.push(dest);
+        }
       }
     }
     return false;
